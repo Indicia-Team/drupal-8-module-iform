@@ -1,0 +1,5 @@
+{
+    "name": "drupal/iform",
+    "description": "IForm module for Drupal integration with Indicia.",
+    "type": "drupal-module"
+}

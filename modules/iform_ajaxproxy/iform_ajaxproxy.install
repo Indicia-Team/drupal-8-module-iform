@@ -1,0 +1,20 @@
+<?php
+// $Id$
+ 
+/**
+ * Implementation of hook_install().
+ */
+function iform_ajaxproxy_install() {
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function iform_ajaxproxy_uninstall() {
+  // Get module variables
+  $results = db_query("SELECT v.name FROM {variable} AS v WHERE v.name LIKE 'iform_ajaxproxy_%'");
+  // Remove variables
+  foreach ($results as $row) {
+    variable_del($row->name);
+  }
+}

@@ -1,0 +1,20 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_params
+    - node.type.iform_page
+id: node.iform_page.field_params
+field_name: field_params
+entity_type: node
+bundle: iform_page
+label: Params
+description: 'Indicia form parameters in JSON format.'
+required: true
+translatable: false
+default_value:
+  -
+    value: ''
+default_value_callback: ''
+settings: {  }
+field_type: string_long

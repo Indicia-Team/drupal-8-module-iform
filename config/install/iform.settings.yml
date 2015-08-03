@@ -1,0 +1,14 @@
+base_url: ''
+warehouse: ''
+allow_connection_override: false
+geoserver_url: ''
+private_warehouse: false
+geoplanet_api_key: ''
+google_api_key: ''
+bing_api_key: ''
+website_id: null
+password: ''
+map_centroid_lat: 55
+map_centroid_long: -1
+map_zoom: 5,
+spatial_systems: OSGB

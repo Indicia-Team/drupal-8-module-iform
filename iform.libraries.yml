@@ -1,0 +1,27 @@
+base:
+  version: VERSION
+  js:
+    media/js/indicia.functions.js: {}
+  css:
+    media/css/default_site.css: {}
+  dependencies:
+    - core/jquery
+    - core/jquery.ui.sortable
+admin:
+  version: VERSION
+  js:
+    iform.admin.js: {}
+openlayers:
+  version: VERSION
+  js:
+    media/js/openlayers.js: {}
+jquery_cookie:
+  version: VERSION
+  js: media/js/jquery.cookie.js: {}
+indiciaMapPanel:
+  version: VERSION
+  js:
+    media/js/jquery.indiciaMapPanel.js: {}
+  dependencies:
+      - iform/openlayers
+      - iform/jquery_cookie

@@ -1,0 +1,16 @@
+<?php
+// $Id$
+ 
+/**
+ * Implements hook_install().
+ */
+function iform_openlayers_install() {
+  variable_set('iform_openlayers_mode', 'custom');
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function iform_openlayers_uninstall() {
+  variable_del('iform_openlayers_mode');
+}

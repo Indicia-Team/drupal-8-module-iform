@@ -1,0 +1,9 @@
+name: 'Indicia forms'
+description: 'Provides the Indicia Forms content type.'
+core: 8.x
+version: "8.x-1.0"
+package: "Indicia"
+configure: action.settings
+type: module
+dependencies:
+  - inlinejs

@@ -1,0 +1,36 @@
+<?php
+
+/**
+ * Implement hook_variable_info.
+ * Returns information about the variables used by this module, allowing an admin interface
+ * to be created. We use a single radio group to decide if we use the custom, minimised or
+ * full debug version of the OpenLayers.js file.
+ */
+function iform_openlayers_variable_info($options) {
+  $variable['iform_openlayers_mode']=array(
+    'title'=>t('Type of OpenLayers.js file used'),
+    'description'=>t('Whether to use the Indicia custom build of OpenLayers, the official '.
+      'minimised version, or the full debug version. The custom build has several classes '.
+      'omitted to further reduce the size, improving download times.'),
+      // TODO add list of classes omitted.
+    'type' => 'radios',
+    'options' => array('custom' => t('IForm Custom Build'),
+                       'minimised' => t('Official Minimised Version'),
+                       'debug' => t('Debug')),
+    'default'=>'custom',
+    'addToIndiciaSettingsPage'=>true
+  );
+  return $variable;
+}
+
+function iform_openlayers_get_file() {
+  switch(variable_get('iform_openlayers_mode', '')){
+    case 'debug':
+        return 'OpenLayers-debug.js';
+    case 'minimised':
+        return 'OpenLayers-min.js';
+    case 'custom':
+    default:
+        return 'OpenLayers.js';
+  }
+}

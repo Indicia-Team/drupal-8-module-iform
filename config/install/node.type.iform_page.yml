@@ -1,0 +1,19 @@
+langcode: en
+status: true
+name: 'Indicia page'
+type: iform_page
+description: 'Indicia pages provide the ability to add online recording forms and reports for an Indicia warehouse to your Drupal site.'
+help: ''
+new_revision: false
+preview_mode: 1
+display_submitted: false
+settings:
+  node:
+    preview: 0
+    options:
+      status: true
+      # Not promoted to front page.
+      promote: false
+      sticky: false
+      revision: false
+    submitted: true

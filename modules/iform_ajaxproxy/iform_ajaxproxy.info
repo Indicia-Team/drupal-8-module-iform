@@ -1,0 +1,6 @@
+; $Id$
+name = Indicia AJAX Proxy
+description = A module required to proxy of AJAX calls to Indicia services.
+core = 7.x
+package = "Indicia"
+dependencies[] = iform

@@ -1,0 +1,141 @@
+<?php
+// $Id$
+
+/**
+ * Implements hook_user_profile_form_alter.
+ * Adds radio buttons to the end of the preferences tab of a user account to allow the user to select from any
+ * available user interface configuration choices.
+ */
+function iform_user_ui_options_form_user_profile_form_alter(&$form) {
+  $currentOpts = json_decode(hostsite_get_user_field('iform_ui_options', '{}'), TRUE);
+  $config = iform_user_ui_options_load_config(); 
+  if (count($config)>0) {
+    $form['Preferences']['ui_options'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('User Interface Options')
+    );
+    foreach ($config as $name => $optionset) {
+      if (!isset($optionset['title']) || !isset($optionset['choices']))
+        throw new exception('Incorrect structure for $file. Missing title or choices.');
+      $radioOptions = array('default' => 'Use the default settings for each page');
+      foreach ($optionset['choices'] as $choiceName => $choiceSettings) {
+        $radioOptions[$choiceName] = t($choiceSettings['title']);
+      }
+      $form['Preferences']['ui_options']["iform_user_ui_$name"] = array(
+        '#type' => 'radios',
+        '#title' => check_plain(t($optionset['title'])),
+        '#options' => $radioOptions,
+        '#default_value' => !empty($currentOpts[$name]) ? $currentOpts[$name] : 'default'
+      );
+    }
+  }
+  $form['#validate'][] = 'iform_user_ui_options_form_submit';
+}
+
+/**
+ * Loads the configuration files which define the available user interface choices.
+ * These files are JSON files in files/iform_user_ui_options
+ */
+function iform_user_ui_options_load_config() {
+  static $config;
+  if (!isset($config)) {
+    $config=array();
+    $configPath=file_default_scheme() . ':/'  . '/iform_user_ui_options';
+    $files=scandir($configPath);
+    foreach ($files as $file) {
+      $parts = explode('.', $file);
+      if ($file==='.' || $file==='..' || count($parts)<2 || $parts[1]!=='json')
+        continue;
+      $jsstring=file_get_contents($configPath . '/' . $file);
+      $fileSettings=json_decode($jsstring, TRUE);
+      $config = array_merge($config, $fileSettings);
+    }
+  }
+  return $config;
+}
+
+/**
+ * Submit handler for the account form. 
+ * Store user preference options in their profile.
+ */
+function iform_user_ui_options_form_submit($form, &$form_state) {
+  $options = array();
+  $currentOpts = json_decode(hostsite_get_user_field('iform_ui_options', '{}'), TRUE);
+  foreach ($form_state['values'] as $key => $value) {
+    if (preg_match('/^iform_user_ui_(?P<key>.+)/', $key, $matches)) {
+      $options[$matches['key']] = $value;
+      if (!isset($currentOpts[$matches['key']]) || $currentOpts[$matches['key']]!==$value) {
+        // We are switching from one config set to another. This might mean we need to clear out cookies, e.g. if switching map layers from one
+        // projection to another then we don't want to remember the map position.
+        $config=iform_user_ui_options_load_config();
+        if (isset($config[$matches['key']]['clearCookies'])) {
+          foreach ($config[$matches['key']]['clearCookies'] as $cookie) {
+            setcookie($cookie, '', REQUEST_TIME+3600, "/");
+          }
+        }
+      }
+    } 
+  }
+  if (!empty($options)) 
+    form_set_value($form['field_iform_ui_options'], array(LANGUAGE_NONE => array(0 => array('value' => json_encode($options)))), $form_state);
+}
+
+/**
+ * Function that applies the current user's chosen options to an iform's params array.
+ *
+ * As well as updating the params array, this also stores any dynamic control override code in the helper_base::$data array
+ * so that these overrides can be applied to individual controls later.
+ * @param array $params Receives the form's params array, applies options to it and returns the updated array.
+ */
+function iform_user_ui_options_preprocess_iform(&$params) {
+  // use a static to hold the params, in case loading multiple nodes, e.g. when building the menu
+  static $paramsToApply;
+  if (!isset($paramsToApply)) {
+    iform_load_helpers(array('data_entry_helper'));
+    data_entry_helper::$data['structureControlOverrides'] = array();
+    $paramsToApply=array();
+    $userOpts = json_decode(hostsite_get_user_field('iform_ui_options', '{}'), TRUE);
+    if ($userOpts) {
+      $config = iform_user_ui_options_load_config();
+      foreach ($userOpts as $option => $choice) {
+        if (!empty($config[$option]) && !empty($config[$option]['choices'][$choice]) && !empty($config[$option]['choices'][$choice]['params'])) {
+          foreach ($config[$option]['choices'][$choice]['params'] as $param => $value) {
+            if (strpos($param, '|')===FALSE)
+              // an iform parameter override
+              $paramsToApply[$param]=$value;
+            else {
+              // a form structure control property override. Store it for later, will be used by dynamic.php in get_tab_content.
+              $tokens = explode('|', $param);
+              if (!isset(data_entry_helper::$data['structureControlOverrides'][$tokens[0]]))
+                data_entry_helper::$data['structureControlOverrides'][$tokens[0]]=array();
+              data_entry_helper::$data['structureControlOverrides'][$tokens[0]][$tokens[1]]=$value;           
+            }
+          }
+        }
+      }
+    }
+  }
+  $paramsAllowedToApply=$paramsToApply;
+  if (!empty($params['locked_params'])) {
+    $lockedParams = explode(',', $params['locked_params']);
+    foreach ($lockedParams as $lockedParam)
+      unset($paramsAllowedToApply[$lockedParam]);
+  }
+  $params = array_merge($params, $paramsAllowedToApply);
+}
+
+/**
+ * Declare that we want an additional param for all forms, allowing this functionality to be turned off by the form when a particular
+ * setting is critical.
+ * return Array List of parameters to add to each iform config form.
+ */
+function iform_user_ui_options_additional_params() {
+  return array(array(
+      'fieldname' => 'locked_params',
+      'label' => 'Params to lock',
+      'helpText' => 'Enter a comma separated list of the names of form parameters which are essential to the operation of this form and must not be overrridden by the ' .
+          'iform_user_ui_options module.',
+      'type' => 'text_input',
+      'required' => FALSE
+  ));
+} 

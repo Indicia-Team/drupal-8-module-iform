@@ -1,0 +1,14 @@
+iform.settings:
+  title: 'Indicia settings'
+  description: 'Settings page for the Indicia module'
+  parent: system.admin_config_system
+  route_name: iform.settings
+  weight: 1
+  base_route: iform.settings
+iform.cache:
+  title: 'Indicia cache management'
+  description: 'Manage the Indicia cache'
+  parent: iform.settings
+  route_name: iform.cache
+  weight: 100
+  base_route: iform.settings
