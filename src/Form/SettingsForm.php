@@ -143,7 +143,7 @@ class SettingsForm extends FormBase {
       '#markup' => '<p>' . t('Pan and zoom this map to set the default map position for your survey input and mapping pages.') . '</p>'
     );
     $form['map']['panel'] = array(
-      '#markup' => \map_helper::map_panel(array(
+      '#markup' => Utility\SafeMarkup::set(\map_helper::map_panel(array(
         'width' => '100%',
         'height' => 500,
         'presetLayers' => array('osm'),
@@ -154,7 +154,7 @@ class SettingsForm extends FormBase {
         'initial_zoom' => $config->get('map_zoom'),
         'standardControls' => array('panZoomBar'),
         'scroll_wheel_zoom' => 'false'
-      ))
+      )))
     );
     $form['map']['map_centroid_lat'] = array(
       '#attributes'=>array('id'=>'edit-map-centroid-lat'),
