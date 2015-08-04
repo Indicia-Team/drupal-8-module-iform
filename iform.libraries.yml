@@ -1,27 +1,72 @@
+# core iform libraries
 base:
   version: VERSION
   js:
     media/js/indicia.functions.js: {}
   css:
-    media/css/default_site.css: {}
+    component:
+      media/css/default_site.css: {}
   dependencies:
     - core/jquery
     - core/jquery.ui.sortable
+    - core/jquery.ui.datepicker
 admin:
   version: VERSION
   js:
     iform.admin.js: {}
-openlayers:
+# libraries to support client_helpers
+addrowtogrid:
   version: VERSION
   js:
-    media/js/openlayers.js: {}
-jquery_cookie:
+    media/js/addRowToGrid.js: {}
+  dependencies:
+    - iform/validation
+autocomplete:
   version: VERSION
-  js: media/js/jquery.cookie.js: {}
+  css:
+    component:
+      media/css/jquery.autocomplete.css: {}
+  js:
+    media/js/jquery.autocomplete.js: {}
+clearLayer:
+  version: VERSION
+  js:
+    media/js/clearLayer.js: {}
+    dependencies:
+      - iform/openlayers
+googlemaps:
+  version: VERSION
+  js:
+    http://maps.google.com/maps/api/js?v=3&amp;sensor=false: {}
+graticule:
+  version: VERSION
+  js:
+    media/js/indiciaGraticule.js: {}
+    dependencies:
+      - iform/openlayers
 indiciaMapPanel:
   version: VERSION
   js:
     media/js/jquery.indiciaMapPanel.js: {}
   dependencies:
-      - iform/openlayers
-      - iform/jquery_cookie
+    - iform/openlayers
+    - iform/jquery_cookie
+jquery_cookie:
+  version: VERSION
+  js: media/js/jquery.cookie.js: {}
+openlayers:
+  version: VERSION
+  js:
+    media/js/openlayers.js: {}
+tabs:
+  version: VERSION
+  js:
+    media/js/tabs.js: {}
+  dependencies:
+    - core/jquery.ui.tabs
+validation:
+  version: VERSION
+  js:
+    media/js/jquery.metadata.js: {}
+    media/js/jquery.validate.js: {}
+    media/js/additional-methods.js: {}

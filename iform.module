@@ -674,7 +674,7 @@ function iform_settings() {
 }
 
 /**
- * Implementation for hook_view. Prepares the displayed data entry form.
+ * Implementation for hook_view. Prepares the displayed Indicia page content.
  */
 function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $entity,
     \Drupal\Core\Entity\Display\EntityViewDisplayInterface $display, $view_mode, $langcode) {
@@ -778,7 +778,7 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
       }
        */
       /*
-       * @todo Linm in page custom JS files
+       * @todo Link in page custom JS files
       // Link in the form's custom js file if present.
       if (file_exists("$helperPath/prebuilt_forms/js/$iform.js"))
         drupal_add_js(iform_client_helpers_path() . "prebuilt_forms/js/$iform.js", array('preprocess'=>FALSE));
@@ -789,9 +789,22 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
         drupal_add_js("$filePath/indicia/js/node.$nid.js", array('preprocess'=>FALSE));*/
       ob_end_clean();
       $build['iform'] = array(
-        '#markup' => SafeMarkup::set('My markup : ' . $r),
-        '#weight' => 1
+        '#markup' => SafeMarkup::set($r),
+        '#weight' => 1,
+        '#cache' => [
+          'contexts' => [
+            // The "current user" is used above, which depends on the request,
+            // so we tell Drupal to vary by the 'user' cache context.
+            // @todo Could we separate out the user specific content and token specific content
+            // into a separate build array entry, then use JS to copy it into it's destinations?]
+            // Then whole page can get cached
+            'user',
+          ],
+          // @todo currently we've disabled caching until we work out handling of write tokens
+          'max-age' => 0
+        ],
       );
+
       // @todo Set page title is not working in Drupal 8 yet
       global $indicia_page_title;
       if (isset($indicia_page_title))
@@ -1136,10 +1149,12 @@ function iform_page_attachments(array &$attachments) {
 }
 
 function iform_inlinejs_alter() {
+  drupal_set_message('In inline JS');
   $js_asset = array();
   if (class_exists('helper_base')) {
     $script = helper_base::get_scripts(helper_base::$javascript, helper_base::$late_javascript,
         helper_base::$onload_javascript, false, true);
+    drupal_set_message('script length: '.strlen($script));
     if (!empty($script)) {
       $js_asset['header'][] = array(
         'data' => $script,
@@ -1495,6 +1510,8 @@ function hostsite_get_user_field($field, $default=false, $array=false, $uid=fals
   }
   elseif ($field==='name')
     return $account->getUsername();
+  elseif ($field==='mail')
+    return $account->getEmail();
   $fieldname = (substr($field, 0, 6)==='field_' ? '' : 'field_') . $field;
   if (isset($account->$fieldname)) {
     // @todo Test what happens if a multi-value field
