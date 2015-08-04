@@ -192,7 +192,7 @@ function iform_form_node_form_alter(&$form, \Drupal\Core\Form\FormStateInterface
     );
   }
   if ($iform) {
-    $form['iform_forms']['form-params'] = array(
+    $form['form-params'] = array(
       '#markup' => SafeMarkup::set(form_helper::prebuilt_form_params_form(array(
         'form' => $iform,
         // @todo Load params properly from node
@@ -200,15 +200,17 @@ function iform_form_node_form_alter(&$form, \Drupal\Core\Form\FormStateInterface
         'readAuth' => form_helper::get_read_auth($connection['website_id'], $connection['password'])
       ))),
       '#prefix' => '<div id="form-params">',
-      '#suffix' => '</div>'
+      '#suffix' => '</div>',
+      '#weight' => 36
     );
     form_helper::enable_validation('node-form');
   }
   else {
-    $form['iform_forms']['form-params'] = array(
+    $form['form-params'] = array(
       '#markup' => ' ', // must be a space or Drupal drops the div
       '#prefix' => '<div id="form-params">',
-      '#suffix' => '</div>'
+      '#suffix' => '</div>',
+      '#weight' => 36
     );
   }
 }
