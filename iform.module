@@ -168,8 +168,7 @@ function iform_node_access($node, $op, $account=NULL) {
 function iform_form_node_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
   if ($form_id==='node_iform_page_form' || $form_id==='node_iform_page_edit_form') {
     $node = $form_state->getFormObject()->getEntity();
-    $iformField = $node->field_iform->getValue();
-    $iform = $iformField[0]['value'];
+    $iform = $node->field_iform->value;
     iform_load_helpers(array('form_helper'));
     // Define the new form fields
     $form['iform_forms'] = array(
@@ -398,8 +397,7 @@ function iform_node_load($entities) {
   foreach ($entities as &$node) {
     unset($node->params);
     $node->params = array();
-    $paramsField = $node->field_params->getValue();
-    $params=json_decode($paramsField[0]['value'], TRUE);
+    $params=json_decode($node->field_params->value, TRUE);
     if (function_exists('iform_user_ui_options_preprocess_iform'))
       iform_user_ui_options_preprocess_iform($params);
     if (!is_array($params))
@@ -547,7 +545,7 @@ function iform_ajax_callback($form=NULL, $method=NULL, $nid=NULL) {
     $website_id=variable_get('indicia_website_id', '');
     $password=variable_get('indicia_password', '');
   }
-  call_user_func(array($class, $method), $website_id, $password, $node);
+  call_user_func(array($class, $method), $website_id, $password, $nid);
 }
 
 /**
@@ -677,29 +675,23 @@ function iform_settings() {
 
 /**
  * Implementation for hook_view. Prepares the displayed data entry form.
- * @param $node
- * @param $teaser
- * @param $page
- * @return unknown_type
  */
 function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $entity,
     \Drupal\Core\Entity\Display\EntityViewDisplayInterface $display, $view_mode, $langcode) {
-  drupal_set_message('bundle: '.$entity->bundle());
   if ($entity->bundle() === 'iform_page') {
     global $language;
     iform_load_helpers(array('data_entry_helper', 'form_helper'));
-    drupal_set_message('In iform_node_view');
     \Drupal::service('page_cache_kill_switch')->trigger();
 
     // @todo Handling of iform review mode
 
     $helperPath=realpath(iform_client_helpers_path());
-    $iformValue = $entity->field_iform->getValue();
-    if (!empty($iformValue[0]['value'])) {
-      $iform = $iformValue[0]['value'];
+    $iform = $entity->field_iform->value;
+    if (!empty($iform)) {
       $nid = $entity->id();
       iform_load_language_files($iform, $nid);
-      $args = array('language' => $language->language);
+      $language = \Drupal::service('language.default')->get();
+      $args = array('language' => $language->getId());
       require_once "$helperPath/prebuilt_forms/$iform.php";
       ob_start();
       // also force the theme path to be local
@@ -712,8 +704,8 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
       $params = form_helper::get_form_parameters($iform);
 
       foreach ($params as $param) {
-        if (isset($node->params[$param['fieldname']]))
-          $args[$param['fieldname']] = $node->params[$param['fieldname']];
+        if (isset($entity->params[$param['fieldname']]))
+          $args[$param['fieldname']] = $entity->params[$param['fieldname']];
         elseif (isset($param['default']))
           // apply the default, this was an old saved form configuration which doesn't have a new parameter.
           $args[$param['fieldname']] = $param['default'];
@@ -735,8 +727,8 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
       // preferred location for custom node configuration files now under Drupal files folder
       $filePath = \Drupal::config('system.file')->get('path.public');
       // A drupal theme can override the templates
-      if (function_exists('drupal_get_path') && file_exists(drupal_get_path('theme',$GLOBALS['theme']) . '/indicia.templates.php'))
-        require drupal_get_path('theme',$GLOBALS['theme']) . '/indicia.templates.php';
+      if (function_exists('drupal_get_path') && file_exists(\Drupal::theme()->getActiveTheme()->getPath() . '/indicia.templates.php'))
+        require \Drupal::theme()->getActiveTheme()->getPath() . '/indicia.templates.php';
       // Or we can override the templates in the iform module, either globally, per form or per node.
       if (file_exists("$helperPath/prebuilt_forms/templates/global.php"))
         require "$helperPath/prebuilt_forms/templates/global.php";
@@ -756,7 +748,7 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
       }
       // Now retrieve the form content
       try {
-        $r .= call_user_func(array('iform_' . $iform, 'get_form'), $args, $node, $response);
+        $r .= call_user_func(array('iform_' . $iform, 'get_form'), $args, $entity->id(), $response);
         drupal_set_message('Got r. Length ' . strlen($r) . '. ' . 'iform_' . $iform);
       } catch (Exception $e) {
         \Drupal::logger('iform')->notice('Error occurred loading form');
@@ -797,14 +789,16 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
         drupal_add_js("$filePath/indicia/js/node.$nid.js", array('preprocess'=>FALSE));*/
       ob_end_clean();
       $build['iform'] = array(
-        '#markup' => SafeMarkup::set($r),
+        '#markup' => SafeMarkup::set('My markup : ' . $r),
         '#weight' => 1
       );
-      drupal_set_message('here');
-
+      // @todo Set page title is not working in Drupal 8 yet
+      global $indicia_page_title;
+      if (isset($indicia_page_title))
+        $build['#title'] = $indicia_page_title;
     }
   }
-  /*drupal_page_is_cacheable(FALSE);
+  /*
   iform_load_helpers(array('data_entry_helper', 'form_helper'));
   if (iform_check_needs_review($node)) {
     global $user;
@@ -861,7 +855,7 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
       try {
         // attach the path to the input form. It'll just get skipped if we are not posting a sample.
         $_POST['sample:input_form'] = drupal_lookup_path('alias',"node/".$node->nid) ? drupal_lookup_path('alias',"node/".$node->nid) : 'node/'.$node->nid;
-        $s = call_user_func(array('iform_' . $node->iform, 'get_submission'), $_POST, $args);
+        $s = call_user_func(array('iform_' . $node->iform, 'get_submission'), $_POST, $args, $node->nid);
       } catch (Exception $e) {
         \Drupal::logger('iform')->notice('Exception occurred during build of form submission: ' . $e->getMessage());
         drupal_set_message(t('An error occurred whilst saving the new site details.'));
@@ -1295,10 +1289,11 @@ function iform_check_helper_config_exists() {
  */
 function iform_load_language_files($iform, $nid) {
   global $language, $custom_terms, $custom_term_overrides;
+  $language = \Drupal::service('language.default')->get();
   $moduleLangFilePath = iform_client_helpers_path() . "prebuilt_forms/lang/";
   $siteSpecificLangFilePath = drupal_get_path('module', 'iform') . '/client_helpers/prebuilt_forms/lang/';
-  $formLangFileName = $iform . '.' . $language->language . '.php';
-  $nodeLangFileName = 'node.' . $nid . '.' . $language->language . '.php';
+  $formLangFileName = $iform . '.' . $language->getId() . '.php';
+  $nodeLangFileName = 'node.' . $nid . '.' . $language->getId() . '.php';
   $formFallbackFileName = $iform . '.en.php';
   $nodeFallbackFileName = 'node.' . $nid . '.en.php';
   // Define a priority ordered list of file names that could contain the custom terms list.
@@ -1463,6 +1458,7 @@ function iform_client_helpers_path() {
     if (!is_dir($path))
       $path = str_replace('/modules/', '/libraries/', $path);
     $_iform_client_helpers_path = $path;
+    drupal_set_message($_iform_client_helpers_path);
     return $path;
   }
 }
@@ -1477,35 +1473,32 @@ function iform_client_helpers_path() {
  * @param mixed $default Default value to return if not set.
  * @param boolean $array Set to true if this field allows multiple values so you need an array
  * @param type $uid User ID of user to load data for. Defaults to current user.
- * @return mixed 
- *
+ * @return mixed
+ * @todo Search client_helpers for references to global $user and uid
+ */
 function hostsite_get_user_field($field, $default=false, $array=false, $uid=false) {
-  global $user;
-  if ($field==='uid') 
-    return $uid===false ? $user->uid : $uid;
-  $account = $uid!==false ? user_load($uid) : $user;
+  $account = \Drupal::currentUser();
+  if ($field==='uid' || $field==='id')
+    return $uid===false ? $account->id() : $uid;
+  // do we need to load a different user account, e.g. if viewing another user's details?
+  $differentUser = ($uid!==false && $uid !== $account->id());
+  $account = $differentUser ? \Drupal\user\Entity\User::load($uid) : $account;
   // Only load the account's language if inspecting another user, else use the UI language. 
-  if ($field==='language' && isset($account->language) && $uid && $user->uid!==$uid)
-    return $account->language;
-  else if ($field==='language') {
-    global $language;
-    return $language->language;
+  if ($field==='language') {
+    // @todo Test loading user's language under i18n environment
+    if (isset($account->language) && $differentUser)
+      return $account->language->getId();
+    else {
+      global $language;
+      return $language->getId();
+    }
   }
-  elseif ($field==='id' && isset($account->uid))
-    return $account->uid;
-  elseif ($field==='name' && isset($account->name))
-    return $account->name;
+  elseif ($field==='name')
+    return $account->getUsername();
   $fieldname = (substr($field, 0, 6)==='field_' ? '' : 'field_') . $field;
-  $fielddef = field_info_field($fieldname);
-  $user_wrapper = entity_metadata_wrapper('user', $account);
-  if (isset($user_wrapper->$fieldname)) {
-    $value = $user_wrapper->$fieldname->value();
-    if ($fielddef['cardinality']==='1' || $fielddef['cardinality']===1)
-      // a single value
-      return $value;
-    else
-      // a list, either as an array or serialized as a string
-      return $array ? $value : serialize($value);
+  if (isset($account->$fieldname)) {
+    // @todo Test what happens if a multi-value field
+    return $account->$fieldname->value;
   } else
     return $default;
 }
@@ -1602,9 +1595,48 @@ function hostsite_set_breadcrumb($breadcrumb) {
 /**
  * Set the page title in the host site.
  * @param string $title The translated page title.
- *
+ */
 function hostsite_set_page_title($title) {
-  drupal_set_title(filter_xss($title), PASS_THROUGH);
+  global $indicia_page_title;
+  $indicia_page_title = $title;
+}
+
+/**
+ * Retrieves the current node page's title
+ * @todo Ensure replicated in D6 & 7
+ * @param $nid Node ID
+ * @return string
+ */
+function hostsite_get_page_title($nid) {
+  global $indicia_page_title;
+  if (isset($indicia_page_title))
+    return $indicia_page_title;
+  $node = \Drupal\node\Entity\Node::load($nid);
+  return $node->getTitle();
+}
+
+/**
+ * Get's a field value for the current node.
+ * @param integer $nid The Node ID
+ * @param string $field The field name
+ * @return mixed The field value
+ */
+function hostsite_get_node_field_value($nid, $field) {
+  $node = \Drupal\node\Entity\Node::load($nid);
+  // @todo Test, document, copy to D6 & 7
+  if ($field==='params') {
+    return $node->params;
+  } else {
+    if ($field !== 'title' && $field !== 'body' && !preg_match('/^field_/', $field))
+      $field = "field_$field";
+    // @todo Do we need this test?
+    if (!isset($node->$field)) {
+      drupal_set_message("Could not find $field");
+      return false;
+    }
+
+    return $node->$field->value;
+  }
 }
 
 /**
