@@ -37,7 +37,7 @@ clearLayer:
 googlemaps:
   version: VERSION
   js:
-    http://maps.google.com/maps/api/js?v=3&amp;sensor=false: {}
+    //maps.google.com/maps/api/js?v=3&amp;sensor=false: {}
 graticule:
   version: VERSION
   js:
