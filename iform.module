@@ -24,57 +24,14 @@ function iform_help($route_name, \Drupal\Core\Routing\RouteMatchInterface $route
       return $output;
   }
   return $output;
-} // function iform_help
-
-/**
-* Implementation of hook_permission.
-* Valid permissions for this module
-* @return array An array of valid permissions for the iform module
-* @todo Migration hook_permission to Drupal 8
-*
-function iform_permission() {
-  $retVal = array();
-  $helpersLoaded = false;
-  // Go through every IForm node.
-  //   Get the particular iform, check if it has a perms method.
-  //   if yes, call it and add to the return list
-  $results = db_query('SELECT n.nid, i.iform, i.params FROM {iform} i, {node} n WHERE i.nid = n.nid');
-  foreach ($results as $result) {
-    if ($result->iform) {
-      $params = json_decode($result->params, TRUE);
-      if (!$helpersLoaded) {
-        iform_load_helpers(array('data_entry_helper'));
-        $helpersLoaded=true;
-      }
-      require_once iform_client_helpers_path() . 'prebuilt_forms/' . $result->iform . '.php';
-      if (method_exists('iform_' . $result->iform, 'get_perms')) {
-        $perms = call_user_func(array('iform_' . $result->iform, 'get_perms'), $result->nid, $params);
-        foreach($perms as $perm)
-          $retVal[$perm] = array('title'=>t($perm));
-      }
-    }
-  }
-  // Also look for then generic IForm module setting to have custom permissions for this form
-  $results = db_query("SELECT n.nid, n.title, i.params FROM {iform} i, {node} n WHERE n.nid=i.nid AND (i.params like '%\"view_access_control\":1%' " .
-          "OR  i.params like '%\"view_access_control\":\"1\"%')");
-  foreach ($results as $result) {
-    $params = json_decode($result->params, TRUE);
-    if (!empty($params['permission_name']))
-      $retVal[$params['permission_name']] = array('title'=>t($params['permission_name']));
-    else
-      $retVal['access iform ' . $result->nid] = array('title'=>t('access iform %id', array('%id' => $result->nid)));
-  }
-  return $retVal;
-
-} // function iform_perm()
-*/
+}
 
 /**
  * Implements hook_menu_link_alter.
  * The Iform module allows custom node access rights. However, hook_node_access prevents the unauthorised user from
  * accessing a node, but not viewing its menu item. So, we need to intervene. This hook marks up all menu items
  * that point to iform nodes as alterable, allowing us to define per-node menu view access rights in hook_translated_menu_link_alter.
- * @todo Migrate hook_menu_link_alter to Drupal 8
+ * @todo Is this required? Migrate hook_menu_link_alter to Drupal 8
  *
 function iform_menu_link_alter(&$item) {
   // look for pattern node/%.
@@ -91,7 +48,7 @@ function iform_menu_link_alter(&$item) {
 /*
  * Implements hook_translated_menu_link_alter.
  * This is called when building the menu. Checks if the user can access the menu.
- * @todo Migrate hook_translated_menu_link_alter to Drupal 8
+ * @todo Is this required? Migrate hook_translated_menu_link_alter to Drupal 8
  *
 function iform_translated_menu_link_alter(&$item) {
   //$item['access'] = FALSE;
@@ -225,7 +182,9 @@ function iform_form_node_form_alter(&$form, \Drupal\Core\Form\FormStateInterface
  * @todo Port back to Drupal 6 and 7 and commit changes to form_helper which call this.
  */
 function iform_site_has_group_functionality() {
-  $query = \Drupal::entityQuery('node')->condition('field_iform', 'group_edit');
+  $query = \Drupal::entityQuery('node')
+    ->condition('type', 'iform')
+    ->condition('field_iform', 'group_edit');
   $nids = $query->execute();
   return count($nids) > 0;
 }
@@ -269,7 +228,7 @@ function iform_node_presave(Drupal\Core\Entity\EntityInterface $entity) {
   if ($entity->bundle()==='iform_page' && isset($_POST['iform'])) {
     $iform = $_POST['iform'];
     $entity->field_iform->setValue($iform);
-    $params=get_custom_param_values($node);
+    $params=get_custom_param_values($entity);
     $entity->field_params->setValue($params);
     // @todo needs_review?
     // @todo available_for_groups
@@ -1073,7 +1032,6 @@ function iform_page_attachments(array &$attachments) {
 }
 
 function iform_inlinejs_alter() {
-  drupal_set_message('In inline JS');
   $js_asset = array();
   if (class_exists('helper_base')) {
     $script = helper_base::get_scripts(helper_base::$javascript, helper_base::$late_javascript,
