@@ -3,6 +3,7 @@
 use Drupal\Core\StreamWrapper\PrivateStream;
 use Drupal\Core\StreamWrapper\PublicStream;
 use Drupal\Component\Utility\SafeMarkup;
+use Drupal\Core\Access\AccessResult;
 
 // @todo Implement features review code?
 
@@ -74,46 +75,46 @@ function iform_translated_menu_link_alter(&$item) {
  * @param $account
  * @return unknown_type
  * @todo Migrate hook_node_access to Drupal 8
- *
-function iform_node_access($node, $op, $account=NULL) {
-  if (!isset($node->type) || $node->type!=='iform')
-    return NODE_ACCESS_IGNORE;
-  global $user;
-  // If no user object is supplied, the access check is for the current user.
-  if (empty($account)) {
-    $account = $user;
+ */
+function iform_node_access(\Drupal\node\NodeInterface $node, $op,
+                           \Drupal\Core\Session\AccountInterface $account, $langcode) {
+  if ($type = $node->bundle() !== 'iform_page') {
+    $allowed = TRUE;
   }
-
-  if ($op == 'create') {
-    // Only users with permission to do so may create this node type.
-    return user_access('create iform', $account) ? NODE_ACCESS_ALLOW : NODE_ACCESS_DENY;
-  }
-
-  if ($op == 'view') {
-    if (isset($node->params['view_access_control']) && $node->params['view_access_control']) {
-      // Use a per node setting to control access. Use default permission name iform access <nid>, or specified one from params if available
-      if (!empty($node->params['permission_name']))
-        return user_access($node->params['permission_name']) ? NODE_ACCESS_ALLOW : NODE_ACCESS_DENY;
-      else
-        return user_access('access iform ' . $node->nid, $account) ? NODE_ACCESS_ALLOW : NODE_ACCESS_DENY;
-    } 
-    else {
-      // Use the generic setting for Indicia forms to control access.
-      return user_access('access iform', $account) ? NODE_ACCESS_ALLOW : NODE_ACCESS_DENY;
+  else {
+    switch ($op) {
+      case 'create':
+        $allowed = $account->hasPermission('create iform content');
+        break;
+      case 'view':
+        if (isset($node->params['view_access_control']) && $node->params['view_access_control']) {
+          // Use a per node setting to control access. Use default permission name iform access <nid>, or specified one from params if available
+          if (!empty($node->params['permission_name']))
+            $allowed = $account->hasPermission($node->params['permission_name']);
+          else
+            $allowed = $account->hasPermission('access iform ' . $node->id());
+        }
+        else {
+          // Use the generic setting for Indicia forms to control access.
+          $allowed = $account->hasPermission('access iform content');
+        }
+        break;
+      case 'update':
+      case 'delete':
+        if ($account->hasPermission('edit any iform content', $account)) {
+          $allowed = TRUE;
+        }
+        else {
+          $allowed = $account->hasPermission('edit own iform content', $account)
+            && ($account->id() == $node->getOwnerId());
+        }
+        break;
+      default:
+        $allowed = TRUE;
     }
   }
-
-  // Users may have access to edit (update/delete) their own forms, or any form.
-  if ($op == 'update' || $op == 'delete') {
-    if (user_access('edit own iform', $account) && ($account->uid == $node->uid)) {
-      return NODE_ACCESS_ALLOW;
-    } 
-    else {
-      return user_access('edit iform', $account) ? NODE_ACCESS_ALLOW : NODE_ACCESS_DENY;
-    }
-  }
+  return $allowed ? AccessResult::allowed() : AccessResult::forbidden();
 }
-*/
 
 /**
  * Implements hook_form_BASE_FORM_ID_alter.
