@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_available_for_groups
+    - node.type.iform_page
+id: node.iform_page.field_available_for_groups
+field_name: field_available_for_groups
+entity_type: node
+bundle: iform_page
+label: Available_for_groups
+description: 'Tick if this Indicia page is available for linking to recording groups.'
+required: false
+translatable: false
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: 'Yes'
+  off_label: 'No'
+field_type: boolean
