@@ -1102,32 +1102,6 @@ $js
 }
 
 /**
- * Menu callback that displays a page allowing the administrator to perform indicia administration tasks, such
- * as clearing the cache.
- *
-function iform_admin_tasks() {
-  if (!iform_check_helper_config_exists()) {
-    drupal_set_message(check_plain(t("Please create the file helper_config.php in the !path folder on the server.",
-      array('!path' => iform_client_helpers_path()))), 'warning');
-    return '';
-  }
-  if (isset($_POST['clear_cache']) && $_POST['clear_cache']=='true') {
-    iform_load_helpers(array('data_entry_helper'));
-    data_entry_helper::clear_cache();
-    drupal_set_message(t('The Indicia cache has been cleared.'), 'status');
-  }
-  $r = '<form method="POST" action="' . url('admin/config/iform/admin') . '">';
-  $r .= '<fieldset><legend>' . t('Caching') . '</legend>';
-  $r .= '<p>When Indicia requests data from the Warehouse, it can cache a local copy of this data to help speed up future requests for the same data. ' .
-      'Although this makes a significant improvement to your website\'s performance, it can mean that changes to data are not visible on your website ' .
-      'for several hours. Clear the cache to ensure that the latest copy of all data is loaded.</p>';
-  $r .= '<input type="hidden" name="clear_cache" value="true"/>';
-  $r .= '<input type="submit" value="' . t('Clear Indicia cache') . '"/>';
-  $r .= '</fieldset></form>';
-  return $r;
-}
-
-/**
  * Menu callback that generates a page which outputs a diagnostics check for the IForm module.
  *
 function iform_diagnostics() {
