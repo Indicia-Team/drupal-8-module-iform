@@ -1037,7 +1037,6 @@ function iform_inlinejs_alter() {
   if (class_exists('helper_base')) {
     $script = helper_base::get_scripts(helper_base::$javascript, helper_base::$late_javascript,
         helper_base::$onload_javascript, false, true);
-    drupal_set_message('script length: '.strlen($script));
     if (!empty($script)) {
       $js_asset['header'][] = array(
         'data' => $script,
@@ -1356,7 +1355,6 @@ function iform_client_helpers_path() {
     if (!is_dir($path))
       $path = str_replace('/modules/', '/libraries/', $path);
     $_iform_client_helpers_path = $path;
-    drupal_set_message($_iform_client_helpers_path);
     return $path;
   }
 }
