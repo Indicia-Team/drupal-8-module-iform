@@ -1,23 +1,39 @@
-uuid: 4f158955-50e8-4325-a903-03e6aec5dcbf
 langcode: en
 status: true
 dependencies:
   config:
     - field.field.node.iform_page.body
+    - field.field.node.iform_page.field_available_for_groups
     - field.field.node.iform_page.field_iform
+    - field.field.node.iform_page.field_params
     - node.type.iform_page
   module:
     - path
+    - text
 id: node.iform_page.default
 targetEntityType: node
 bundle: iform_page
 mode: default
 content:
+  body:
+    type: text_textarea_with_summary
+    weight: 31
+    settings:
+      rows: 9
+      summary_rows: 3
+      placeholder: ''
+    third_party_settings: {  }
   created:
     type: datetime_timestamp
     weight: 10
     settings: {  }
     third_party_settings: {  }
+  field_available_for_groups:
+    weight: 32
+    settings:
+      display_label: false
+    third_party_settings: {  }
+    type: boolean_checkbox
   path:
     type: path
     weight: 30
@@ -42,14 +58,6 @@ content:
       size: 60
       placeholder: ''
     third_party_settings: {  }
-  body:
-      type: text_textarea_with_summary
-      weight: 31
-      settings:
-        rows: 9
-        summary_rows: 3
-        placeholder: ''
-      third_party_settings: {  }
   uid:
     type: entity_reference_autocomplete
     weight: 5
@@ -58,3 +66,6 @@ content:
       size: 60
       placeholder: ''
     third_party_settings: {  }
+hidden:
+  field_iform: true
+  field_params: true
