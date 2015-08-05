@@ -3,20 +3,25 @@
 use Drupal\Core\StreamWrapper\PrivateStream;
 use Drupal\Core\StreamWrapper\PublicStream;
 use Drupal\Component\Utility\SafeMarkup;
-  
+
+// @todo Implement features review code?
+
 /**
-* Display help and module information
-* @param path which path of the site we're displaying help
-* @param arg array that holds the current path as would be returned from arg() function
-* @return help text for the path
-* @todo Migrate hook_help to Drupal 8
-*
-function iform_help($path, $arg) {
+* Implements hook_help.
+* Display help and module information.
+* @param string $route_name The route as defined in the routing .yml file
+* @param \Drupal\Core\Routing\RouteMatchInterface $route_match The current route match
+* @return string Help text for the path
+*/
+function iform_help($route_name, \Drupal\Core\Routing\RouteMatchInterface $route_match) {
   $output = '';  //declare your output variable
-  switch ($path) {
-    case "admin/help#iform":
-      $output = '<p>' . t("Generates Indicia powered data entry forms.") . '</p>';
-      break;
+  switch ($route_name) {
+    case 'help.page.iform':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Generates Indicia powered data entry forms and reports.  <a href="!link">More info</a>.',
+          array('!link' => 'http://indicia-docs.readthedocs.org/en/latest/site-building/iform/index.html')) . '</p>';
+      return $output;
   }
   return $output;
 } // function iform_help
@@ -165,6 +170,15 @@ function iform_node_access($node, $op, $account=NULL) {
 }
 */
 
+/**
+ * Implements hook_form_BASE_FORM_ID_alter.
+ * Modifies the Edit form for an Indicia page to add the controls required to
+ * configure an Indicia page.
+ * @param $form
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ * @param $form_id
+ * @throws \exception
+ */
 function iform_form_node_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
   if ($form_id==='node_iform_page_form' || $form_id==='node_iform_page_edit_form') {
     $node = $form_state->getFormObject()->getEntity();
@@ -213,6 +227,7 @@ function iform_form_node_form_alter(&$form, \Drupal\Core\Form\FormStateInterface
       '#weight' => 36
     );
   }
+  // @todo Do we need to add the default_site.css stylesheet?
 }
 
 /**
@@ -225,88 +240,6 @@ function iform_site_has_group_functionality() {
   $query = \Drupal::entityQuery('node')->condition('field_iform', 'group_edit');
   $nids = $query->execute();
   return count($nids) > 0;
-}
-
-/**
- * Implement hook_form to get the Drupal admin form for an iform node.
- * @param $node
- * @param $form_state
- * @return unknown_type
- *
-function iform_form(&$node, $form_state) {
-  iform_load_helpers(array('form_helper'));
-  if (isset($form_state['post'])) {
-    $node = (object)($form_state['post'] + (array)$node);
-  }
-  node_types_rebuild();
-  $type = node_type_get_types('type', $node);
-  
-  // We need to define form elements for the node's title and body.
-  $form['title'] = array(
-    '#type' => 'textfield',
-    '#title' => check_plain($type['iform']->title_label),
-    '#required' => TRUE,
-    '#default_value' => $node->title,
-    '#weight' => 0
-  );
-  // We want the body and filter elements to be adjacent. We could try doing
-  // this by setting their weights, but another module might add elements to the
-  // form with the same weights and end up between ours. By putting them into a
-  // sub-array together, we're able force them to be rendered together.
-  $defaultValue = isset($node->body[$node->language][0]['value']) ? $node->body[$node->language][0]['value'] : NULL;
-  $format = isset($node->format) ? $node->format : NULL;
-  $iform = isset($node->iform) ? $node->iform : NULL;
-  $form['body'] = array(
-    '#type' => 'text_format',
-    '#format' => $format,
-    '#title' => t('Body'),
-    '#default_value' =>  $defaultValue,
-    '#rows' => 10,
-    '#required' => FALSE
-  );
-  
-
-  // Define the new form fields
-  $form['iform_forms'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Form Selection'),
-    '#tree' => FALSE,
-    '#weight' => 6
-  );
-  $connection = iform_get_connection_details($node);
-  $readAuth = form_helper::get_read_auth($connection['website_id'], $connection['password']);
-  $form['iform_forms']['picker'] = array(
-    '#markup' => form_helper::prebuilt_form_picker($readAuth, array(
-      'form' => $iform,
-      'website_id' => $connection['website_id'],
-      'password' => $connection['password'],
-      'needWebsiteInputs' => !$connection['using_drupal_vars'] || variable_get('indicia_allow_connection_override', FALSE),
-      'available_for_groups' => isset($node->available_for_groups) ? $node->available_for_groups : false,
-      'limit_to_group_id' => isset($node->limit_to_group_id) ? $node->limit_to_group_id : null
-    ))
-  );
-  if ($iform) {
-    $form['iform_forms']['form-params'] = array(
-      '#markup' => form_helper::prebuilt_form_params_form(array(
-        'form' => $node->iform,
-        'currentSettings' => $node->params,
-        'readAuth' => form_helper::get_read_auth($connection['website_id'], $connection['password'])
-      )),
-      '#prefix' => '<div id="form-params">',
-      '#suffix' => '</div>'
-    );
-    form_helper::enable_validation('node-form');
-  } 
-  else {
-    $form['iform_forms']['form-params'] = array(
-      '#markup' => ' ', // must be a space or Drupal drops the div
-      '#prefix' => '<div id="form-params">',
-      '#suffix' => '</div>'
-    );
-  }
-  form_helper::add_resource('defaultStylesheet');
-  handle_resources();
-  return $form;
 }
 
 /**
@@ -551,89 +484,6 @@ function iform_ajax_callback($form=NULL, $method=NULL, $nid=NULL) {
 }
 
 /**
- * Menu callback for a page which lists any site specific parameters from forms which need review.
- * @return string Form content
- *
-function iform_features_review() {
-  $r = "";
-  drupal_set_title(t('Review Indicia Features'));
-  if (isset($_POST['form-works'])) {
-    // acknowledging a form that needs review, but there are no settings to review
-    db_update('iform')
-        ->fields(array(
-          'needs_review' => 1
-        ))
-        ->condition('nid', $_POST['form-works'])
-        ->execute();
-  } 
-  elseif (isset($_POST['form-settings'])) {
-    // saving site specific settings for a form. Merge the new params into the existing ones
-    // and resave the node
-    $node = node_load($_POST['form-settings']);
-    unset($_POST['form-settings']);
-    $node->params = array_merge($node->params, $_POST);
-    // set node to indicate initial review done, just needs final check
-    $node->needs_review=2;
-    node_save($node);
-  }
-  iform_load_helpers(array('form_helper'));
-  $forms = db_query('SELECT DISTINCT n.nid, i.iform, n.title, i.needs_review FROM {iform} i ' .
-      'JOIN {node} n ON n.nid=i.nid ' .
-      'WHERE i.needs_review>1');
-  $gotForms = FALSE;
-  $gotSomething = FALSE;
-  foreach ($forms as $row) {
-    if (!isset($readAuth)) {
-      // we only need the connection details for 1 node, since any readAuth will do here
-      $connection = iform_get_connection_details($row['nid']);
-      $readAuth = form_helper::get_read_auth($connection['website_id'], $connection['password']);
-    }
-    $gotSomething = TRUE;
-    $r .= '<h3>Settings for ' . $row['title'] . ' (' . $row['iform'] . ')</h3>';
-    unset($form);
-    // no need to do the params form if needs review < 3 - it has already been done
-    if ($row['needs_review']==3)
-      $form = form_helper::prebuilt_form_params_form(array(
-          'form' => $row['iform'],
-          'currentSettings' => array(),
-          'readAuth' => $readAuth,
-          'siteSpecific' => TRUE
-      ));
-    if ($form) {
-      $r .= '<p>' . t('This form has site specific settings which you must check before using the form.') . '</p>';
-      $r .= '<form method="post" id="iform-' . $row['nid'] . '">' .
-          '<input type="hidden" name="form-settings" value="' . $row['nid'] . '" />' .
-          $form
-          . '<input type="submit" value="' . t('Save Form Settings') . '" /></form>';
-      form_helper::enable_validation('iform-' . $row['nid']);
-      $gotForms = TRUE;
-    } 
-    else {
-      $r .= '<p>' . t('This form is ready to use and does not require further review. You can <a href="!pathedit" target="_blank">edit the form\'s ' .
-          'configuration</a> if you require advanced configuration options or <a href="!pathview" target="_blank">view the form</a> to ' .
-          'check if behaves as expected. Click the button below when you are happy to confirm that this form is working. ' .
-          'These links open in a new tab.',
-          array('!pathedit' => url('node/' . $row['nid'] . '/edit'), '!pathview' => url('node/' . $row['nid'] . ''))) . '</p>';
-      $r .= '<form method="post">' .
-          '<input type="hidden" name="form-works" value="' . $row['nid'] . '" />' .
-          '<input type="submit" value="' . t('Form OK!') . '" /></form>';
-    }
-  }
-  $r .= "</form>";
-  if ($gotSomething) {
-    hostsite_add_library('collapse');
-    if ($gotForms) {
-      form_helper::add_resource('defaultStylesheet');
-      handle_resources();
-    }
-    return $r;
-  } 
-  else {
-    return '<p>' . t('There are no Indicia Features pages which need to be reviewed.') . '</p>';
-  }
-}
-
-/**
  * Utility method that gets the website_id and password appropriate to connect
  * a given node to the warehouse.
  * @param mixed $node A node object or nid.
@@ -719,8 +569,7 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
       if (method_exists("iform_$iform", 'indicia_define_remembered_fields')) {
         call_user_func(array("iform_$iform", 'indicia_define_remembered_fields'), $args);
       }
-
-      // @todo Handle $_POST
+      $r .= iform_handle_posted_form($entity, $args);
 
       // Make buttons have a hover effect
       data_entry_helper::$javascript .=  "indiciaFns.enableHoverEffect();\n";
@@ -1015,6 +864,91 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
   return $node;*/
 }
 
+function iform_handle_posted_form($node, $args) {
+  $iform = $node->field_iform->value;
+  $r = '';
+  if ($_POST && (array_key_exists('website_id', $_POST)) && method_exists("iform_$iform", 'get_submission')) {
+    $helperPath=realpath(iform_client_helpers_path());
+    $nid = $node->id();
+    if (!empty($_POST['delete-button'])) {
+      $_POST['deleted']='t';
+      $msg = lang::get('The record has been deleted.');
+    } else
+      $msg = lang::get('Thank you. Your records have been saved to the database.');
+    // Ask the form to submit itself.
+    try {
+      // attach the path to the input form. It'll just get skipped if we are not posting a sample.
+      $_POST['sample:input_form'] = trim(\Drupal::service('path.alias_manager')->getAliasByPath("/node/$nid"), '/');
+      $s = call_user_func(array("iform_$iform", 'get_submission'), $_POST, $args, $nid);
+    } catch (Exception $e) {
+      \Drupal::logger('iform')->notice('Exception occurred during build of form submission: ' . $e->getMessage());
+      drupal_set_message(t('An error occurred whilst saving the new site details.'));
+      unset($s);
+    }
+    // And allow the form to dynamically set the destination after post
+    if (!empty($_POST['redirect_on_success']))
+      $args['redirect_on_success'] = $_POST['redirect_on_success'];
+    if (method_exists("iform_$iform", 'get_redirect_on_success')) {
+      $redirect = call_user_func(array("iform_$iform", 'get_redirect_on_success'), $_POST, $args);
+      if (!empty($redirect))
+        $args['redirect_on_success'] = $redirect;
+    }
+    // if for some reason the iform gives back an empty submission, ignore it
+    if (isset($s) && $s) {
+      $errors = array();
+      // does this Drupal node have any in-built validation code?
+      if (method_exists("iform_$iform", 'get_validation_errors')) {
+        $errors = call_user_func(array("iform_$iform", 'get_validation_errors'), $_POST, $args);
+      }
+      // does this Drupal node have any custom validation code?
+      if (file_exists("$helperPath/prebuilt_forms/validation/validate.$nid.php")) {
+        require_once "$helperPath/prebuilt_forms/validation/validate.$nid.php";
+        $errors = array_merge($errors, iform_custom_validation($_POST));
+      }
+      if (!empty($errors)) {
+        $r .= data_entry_helper::dump_errors(array('errors' => $errors));
+      }
+      else {
+        $response = data_entry_helper::forward_post_to('save', $s);
+        // Does the form redirect after success?
+        if (is_array($response) && array_key_exists('success', $response) &&
+          array_key_exists('redirect_on_success', $args) && $args['redirect_on_success']) {
+          if (!isset($args['message_after_save']) || $args['message_after_save']) {
+            drupal_set_message($msg);
+          }
+          $parts = explode('?', $args['redirect_on_success'], 2);
+          $url = array_shift($parts); // first item removed from array
+          if (count($parts)) {
+            $parts = explode('#', $parts[0], 2);
+            $queryStr = array_shift($parts); // info between the ? and # is the query string
+            // Get an array of the redirect_on_success specified query string params
+            parse_str($queryStr, $params);
+          } else {
+            $parts = explode('#', $url, 2); // split bookmark fragment off
+            $url = array_shift($parts);
+            $params=array();
+          }
+          // Merge the information about the saved record in
+          $params = array_merge(array(
+            'table'=>$response['outer_table'],
+            'id'=>$response['outer_id']
+          ), $params);
+          $options=array('query'=>$params);
+          // anything left in $parts is the bookmark
+          if (count($parts))
+            $options['fragment']=$parts[0];
+          // @todo drupal_goto removed from Drupa 8
+          drupal_goto($url, $options);
+        }
+        elseif (!isset($args['message_after_save']) || $args['message_after_save'] || !array_key_exists('success', $response)) {
+          // This dumps errors, and/or a success message if no redirection.
+          $r .= data_entry_helper::dump_errors($response, true);
+        }
+      }
+    }
+  }
+  return $r;
+}
 /**
  * @todo Document
  * @param $args
