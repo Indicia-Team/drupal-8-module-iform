@@ -3,6 +3,7 @@ status: true
 dependencies:
   config:
     - field.field.node.iform_page.body
+    - field.field.node.iform_page.field_available_for_groups
     - field.field.node.iform_page.field_iform
     - field.field.node.iform_page.field_params
     - node.type.iform_page
@@ -25,5 +26,6 @@ content:
     settings: {  }
     third_party_settings: {  }
 hidden:
+  field_available_for_groups: true
   field_iform: true
   field_params: true
