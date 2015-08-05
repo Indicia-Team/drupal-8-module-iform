@@ -1,12 +1,18 @@
+iform.admin_config_iform:
+  path: '/admin/config/system/iform'
+  defaults:
+    _title: 'Indicia settings'
+  requirements:
+    _permission: 'admin iform'
 iform.settings:
-  path: '/admin/config/system/iform_settings'
+  path: '/admin/config/system/iform/settings'
   defaults:
     _form: '\Drupal\iform\Form\SettingsForm'
     _title: 'Indicia settings'
   requirements:
     _permission: 'admin iform'
 iform.cache:
-  path: '/admin/config/system/iform_cache'
+  path: '/admin/config/system/iform/cache'
   defaults:
     _form: '\Drupal\iform\Form\CacheForm'
     _title: 'Indicia cache management'
