@@ -33,19 +33,7 @@ function iform_help($route_name, \Drupal\Core\Routing\RouteMatchInterface $route
 * @todo Migration hook_permission to Drupal 8
 *
 function iform_permission() {
-  $retVal = array(
-    'access iform' => array(
-      'title' => t('Access Indicia Iform web pages'), 
-    ), 'create iform' => array(
-      'title' => t('Create IForm web pages')
-    ), 'edit iform' => array(
-      'title' => t('Edit any IForm web pages')
-    ), 'edit own iform' => array(
-      'title' => t('Edit own IForm web pages')
-    ), 'admin iform' => array(
-      'title' => t('Administer global Indicia settings')
-    )
-  );
+  $retVal = array();
   $helpersLoaded = false;
   // Go through every IForm node.
   //   Get the particular iform, check if it has a perms method.
