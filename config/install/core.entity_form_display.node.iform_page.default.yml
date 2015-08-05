@@ -5,6 +5,7 @@ dependencies:
     - field.field.node.iform_page.body
     - field.field.node.iform_page.field_available_for_groups
     - field.field.node.iform_page.field_iform
+    - field.field.node.iform_page.field_limit_to_group_id
     - field.field.node.iform_page.field_params
     - node.type.iform_page
   module:
@@ -34,6 +35,11 @@ content:
       display_label: false
     third_party_settings: {  }
     type: boolean_checkbox
+  field_limit_to_group_id:
+    weight: 33
+    settings: {  }
+    third_party_settings: {  }
+    type: options_select
   path:
     type: path
     weight: 30

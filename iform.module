@@ -146,8 +146,8 @@ function iform_form_node_form_alter(&$form, \Drupal\Core\Form\FormStateInterface
         'website_id' => $connection['website_id'],
         'password' => $connection['password'],
         'needWebsiteInputs' => !$connection['using_drupal_vars'] || $config->get('allow_connection_override'),
-        'available_for_groups' => false, // @todo isset($node->available_for_groups) ? $node->available_for_groups : false,
-        'limit_to_group_id' => false, // @todo isset($node->limit_to_group_id) ? $node->limit_to_group_id : null
+        'available_for_groups' => $node->field_available_for_groups->value==='1',
+        'limit_to_group_id' => isset($node->field_limit_to_group_id->value) ? $node->field_limit_to_group_id->value : null
       )))
     );
   }
@@ -232,43 +232,8 @@ function iform_node_presave(Drupal\Core\Entity\EntityInterface $entity) {
     $params=get_custom_param_values($entity);
     $entity->field_params->setValue($params);
     // @todo needs_review?
-    // @todo available_for_groups
     // @todo limit_to_group_id
   }
-}
-
-/**
-* Implementation of hook_update, which saves iform-specific information
-* into an existing record in the iform table
-* @param node object
-*
-function iform_update($node) {
-  $iform = isset($_POST['iform']) ? $_POST['iform'] : $node->iform;
-  $needs_review = isset($node->needs_review) ? $node->needs_review : 0;
-  $available_for_groups = isset($_POST['available_for_groups']) ? $_POST['available_for_groups'] : 
-      (isset($node->available_for_groups) ? $node->available_for_groups : 0);
-  $limit_to_group_id = !empty($_POST['limit_to_group_id']) ? $_POST['limit_to_group_id'] : 
-      (isset($node->limit_to_group_id) ? $node->limit_to_group_id : null);
-  // updating an iform, when needs_review=3, means that the features module has detected that a form in default state
-  // has had its code changed so needs to be reflected in the database. In this case we actually need to merge the
-  // params together so that user params are not lost.
-  if ($needs_review===3) {
-    $old = node_load($node->nid);
-    $params = json_encode(array_merge($old->params, $node->params));
-    $needs_review=$old->needs_review;
-  }
-  else
-    $params=get_custom_param_values($node);
-  db_update('iform')
-      ->fields(array(
-        'iform'=>$iform,
-        'params'=>$params,
-        'needs_review'=>$needs_review,
-        'available_for_groups'=>$available_for_groups,
-        'limit_to_group_id'=>$limit_to_group_id
-      ))
-      ->condition('nid', $node->nid)
-      ->execute();
 }
 
 /**
@@ -293,7 +258,6 @@ function iform_node_load($entities) {
       }
     }
     // @todo needs_review
-    // @todo available_for_groups
     // @todo limit_to_group_id
   }
 }
