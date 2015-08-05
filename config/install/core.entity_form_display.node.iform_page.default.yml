@@ -29,17 +29,6 @@ content:
     weight: 10
     settings: {  }
     third_party_settings: {  }
-  field_available_for_groups:
-    weight: 32
-    settings:
-      display_label: false
-    third_party_settings: {  }
-    type: boolean_checkbox
-  field_limit_to_group_id:
-    weight: 33
-    settings: {  }
-    third_party_settings: {  }
-    type: options_select
   path:
     type: path
     weight: 30
@@ -75,3 +64,5 @@ content:
 hidden:
   field_iform: true
   field_params: true
+  field_available_form_groups: true
+  field_limit_to_group_id: true

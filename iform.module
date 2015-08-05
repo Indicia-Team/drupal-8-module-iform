@@ -146,32 +146,32 @@ function iform_form_node_form_alter(&$form, \Drupal\Core\Form\FormStateInterface
         'website_id' => $connection['website_id'],
         'password' => $connection['password'],
         'needWebsiteInputs' => !$connection['using_drupal_vars'] || $config->get('allow_connection_override'),
-        'available_for_groups' => $node->field_available_for_groups->value==='1',
-        'limit_to_group_id' => isset($node->field_limit_to_group_id->value) ? $node->field_limit_to_group_id->value : null
+        'available_for_groups' => $node->field_available_for_groups->value === '1',
+        'limit_to_group_id' => isset($node->field_limit_to_group_id->value) ? $node->field_limit_to_group_id->value : NULL
       )))
     );
-  }
-  if ($iform) {
-    $form['form-params'] = array(
-      '#markup' => SafeMarkup::set(form_helper::prebuilt_form_params_form(array(
-        'form' => $iform,
-        // @todo Load params properly from node
-        'currentSettings' => $node->params,
-        'readAuth' => form_helper::get_read_auth($connection['website_id'], $connection['password'])
-      ))),
-      '#prefix' => '<div id="form-params">',
-      '#suffix' => '</div>',
-      '#weight' => 36
-    );
-    form_helper::enable_validation('node-form');
-  }
-  else {
-    $form['form-params'] = array(
-      '#markup' => ' ', // must be a space or Drupal drops the div
-      '#prefix' => '<div id="form-params">',
-      '#suffix' => '</div>',
-      '#weight' => 36
-    );
+    if ($iform) {
+      $form['form-params'] = array(
+        '#markup' => SafeMarkup::set(form_helper::prebuilt_form_params_form(array(
+          'form' => $iform,
+          // @todo Load params properly from node
+          'currentSettings' => $node->params,
+          'readAuth' => form_helper::get_read_auth($connection['website_id'], $connection['password'])
+        ))),
+        '#prefix' => '<div id="form-params">',
+        '#suffix' => '</div>',
+        '#weight' => 36
+      );
+      form_helper::enable_validation('node-form');
+    }
+    else {
+      $form['form-params'] = array(
+        '#markup' => ' ', // must be a space or Drupal drops the div
+        '#prefix' => '<div id="form-params">',
+        '#suffix' => '</div>',
+        '#weight' => 36
+      );
+    }
   }
   // @todo Do we need to add the default_site.css stylesheet?
 }
@@ -231,6 +231,12 @@ function iform_node_presave(Drupal\Core\Entity\EntityInterface $entity) {
     $entity->field_iform->setValue($iform);
     $params=get_custom_param_values($entity);
     $entity->field_params->setValue($params);
+    $entity->field_available_for_groups->setValue(
+      empty($_POST['available_for_groups']) ? '0' : '1'
+    );
+    $entity->field_limit_to_group_id->setValue(
+      empty($_POST['limit_to_group_id']) ? null : $_POST['limit_to_group_id']
+    );
     // @todo needs_review?
     // @todo limit_to_group_id
   }
