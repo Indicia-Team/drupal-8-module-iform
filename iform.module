@@ -30,11 +30,10 @@ function iform_help($route_name, \Drupal\Core\Routing\RouteMatchInterface $route
 /**
  * Implements hook_node_access.
  * Authentication for access to create, view and delete indicia form pages.
- * @param $op
- * @param $node
- * @param $account
- * @return unknown_type
- * @todo Migrate hook_node_access to Drupal 8
+ * @param $op The operation to be performed
+ * @param $node The node object
+ * @param $account The user entity to check access for
+ * @return \Drupal\Core\Access\AccessResultInterface The access result
  */
 function iform_node_access(\Drupal\node\NodeInterface $node, $op,
                            \Drupal\Core\Session\AccountInterface $account, $langcode) {
