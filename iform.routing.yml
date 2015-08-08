@@ -1,25 +1,25 @@
 iform.admin_config_iform:
-  path: '/admin/config/system/iform'
+  path: '/admin/config/iform'
   defaults:
     _title: 'Indicia settings'
   requirements:
     _permission: 'admin iform'
 iform.settings:
-  path: '/admin/config/system/iform/settings'
+  path: '/admin/config/iform/settings'
   defaults:
     _form: '\Drupal\iform\Form\SettingsForm'
     _title: 'Indicia settings'
   requirements:
     _permission: 'admin iform'
 iform.cache:
-  path: '/admin/config/system/iform/cache'
+  path: '/admin/config/iform/cache'
   defaults:
     _form: '\Drupal\iform\Form\CacheForm'
     _title: 'Indicia cache management'
   requirements:
     _permission: 'admin iform'
 iform.diagnostics:
-  path: '/admin/config/system/iform/diagnostics'
+  path: '/admin/config/iform/diagnostics'
   defaults:
     _form: '\Drupal\iform\Form\DiagnosticsForm'
     _title: 'Indicia diagnostics'
