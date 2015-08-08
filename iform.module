@@ -144,7 +144,7 @@ function iform_form_node_form_alter(&$form, \Drupal\Core\Form\FormStateInterface
  */
 function iform_site_has_group_functionality() {
   $query = \Drupal::entityQuery('node')
-    ->condition('type', 'iform')
+    ->condition('type', 'iform_page')
     ->condition('field_iform', 'group_edit');
   $nids = $query->execute();
   return count($nids) > 0;
@@ -233,46 +233,6 @@ function iform_node_load($entities) {
 *
 function iform_menu() {
   $items = array();
-  $items['admin/config/iform'] = array(
-    'title' => 'IForm',
-    'description' => 'Configuration for the IForm module.',
-    'page callback' => 'system_admin_menu_block_page',
-    'access arguments' => array('access administration pages'),
-    'file' => 'system.admin.inc',
-    'file path' => drupal_get_path('module', 'system'),
-    'position' => 'right'
-  );
-  $items['admin/config/iform/settings'] = array(
-    'title' => 'Settings',
-    'description' => 'Settings page for the IForm module.',
-    'page callback' => 'iform_settings',
-    'access arguments' => array('create iform'),
-    'weight' => 0
-  );
-  // Create a tab to display the admin panel.
-  $items['admin/config/iform/admin'] = array(
-    'title' => 'IForm Admin Tasks',
-    'description' => 'Administration tasks for the IForm module.',
-    'page callback' => 'iform_admin_tasks',
-    'access arguments' => array('create iform'),
-    'weight' => 1
-  );
-  // Create a tab to display the diagnostics panel.
-  $items['admin/config/iform/diagnostics'] = array(
-    'title' => 'IForm Diagnostics',
-    'description' => 'Run a configuration check for the IForm module.',
-    'page callback' => 'iform_diagnostics',
-    'access arguments' => array('create iform'),
-    'weight' => 2
-  );
-  $items['admin/structure/features/indicia'] = array(
-    'title' => 'Review IForm Features',
-    'description' => 'After installing a feature containing Indicia forms, use this page to configure any ' .
-        'site specific settings for the forms.',
-    'page callback' => 'iform_features_review',
-    'access arguments' => array('create iform'),
-    'weight' => 1
-  );
   // declare a callback for ajax requests, that any prebuilt form can hook into to provide
   // it's own AJAX handlers.
   $items['iform/ajax'] = array(
@@ -1075,14 +1035,13 @@ function iform_diagnostics() {
 
 /**
  * Returns true if the helper_config file exists.
- *
+ */
 function iform_check_helper_config_exists() {
   // initial safety check for the presence of the helper_config file
   $path = iform_client_helpers_path();
   // we always need the helper_config file
   return file_exists("$path/helper_config.php");
 }
-*/
 
 /**
  * Loads language files defined for the form. This includes language files defined in the module folder or in the site specific

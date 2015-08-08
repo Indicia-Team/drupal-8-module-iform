@@ -18,3 +18,10 @@ iform.cache:
     _title: 'Indicia cache management'
   requirements:
     _permission: 'admin iform'
+iform.diagnostics:
+  path: '/admin/config/system/iform/diagnostics'
+  defaults:
+    _form: '\Drupal\iform\Form\DiagnosticsForm'
+    _title: 'Indicia diagnostics'
+  requirements:
+    _permission: 'admin iform'
