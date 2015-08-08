@@ -1,6 +1,7 @@
 iform.admin_config_iform:
   path: '/admin/config/iform'
   defaults:
+    _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
     _title: 'Indicia settings'
   requirements:
     _permission: 'admin iform'
