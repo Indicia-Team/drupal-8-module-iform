@@ -26,3 +26,9 @@ iform.diagnostics:
     _title: 'Indicia diagnostics'
   requirements:
     _permission: 'admin iform'
+iform.ajax:
+  path: '/iform/ajax/{form}/{method}/{nid}'
+  defaults:
+    _controller: '\Drupal\iform\Controller\IformController::ajaxCallback'
+  requirements:
+    _permission: 'access iform'

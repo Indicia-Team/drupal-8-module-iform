@@ -233,13 +233,6 @@ function iform_node_load($entities) {
 *
 function iform_menu() {
   $items = array();
-  // declare a callback for ajax requests, that any prebuilt form can hook into to provide
-  // it's own AJAX handlers.
-  $items['iform/ajax'] = array(
-    'page callback' => 'iform_ajax_callback',
-    'access arguments' => array('access iform'),
-    'type' => MENU_CALLBACK
-  );
   // declare a registration path for public groups/activities
   $items['join'] = array(
     'file' => 'iform.groups.inc',
@@ -292,36 +285,6 @@ function iform_form_user_login_alter(&$form, &$form_state) {
 }
 
 /**
- * Menu callback that lets prebuilt forms expose a method called ajax_* which is then
- * available on a path iform/ajax/* for AJAX requests from the page.
- * @param type $form The filename of the form, excluding .php.
- * @param type $method The method name, excluding the ajax_ prefix.
- * @param integer $nid Node ID, used to get correct website and password. If not passed, then looks to use
- * the globally set website Id and password.
- * @return type
- *
-function iform_ajax_callback($form=NULL, $method=NULL, $nid=NULL) {
-  if ($form===NULL || $method===NULL) {
-    return t('Incorrect AJAX call');
-  }
-  $class = "iform_$form";
-  $method = "ajax_$method";
-  require_once iform_client_helpers_path() . 'prebuilt_forms/' . $form . '.php';
-  if ($nid) {
-    $node = node_load($nid);
-    $website_id=$node->params['website_id'];
-    $password=$node->params['password'];
-  }
-  // if node not supplied, or does not have its own website Id and password, use the
-  // global drupal vars from the settings form.
-  if (!$website_id || !$password) {
-    $website_id=variable_get('indicia_website_id', '');
-    $password=variable_get('indicia_password', '');
-  }
-  call_user_func(array($class, $method), $website_id, $password, $nid);
-}
-
-/**
  * Utility method that gets the website_id and password appropriate to connect
  * a given node to the warehouse.
  * @param mixed $node A node object or nid.
@@ -345,22 +308,6 @@ function iform_get_connection_details($node) {
   if (empty($r['password']) || $config->get('indicia_allow_connection_override'))
     $r['password'] = isset($node->params['password']) ? $node->params['password'] : $r['password'];
   return $r;
-}
-
-/**
- * Menu callback that generates a page which allows iform settings to be specified.
- *
-function iform_settings() {
-  if (!iform_check_helper_config_exists()) {
-    drupal_set_message(check_plain(t("Please create the file helper_config.php in the !path folder on the server.",
-      array('!path' => iform_client_helpers_path()))), 'warning');
-    return t('');
-  }
-  module_load_include('inc', 'iform', 'iform.admin');
-  $form = drupal_get_form('iform_configuration_form');
-  require_once iform_client_helpers_path() . 'data_entry_helper.php';
-  handle_resources();
-  return $form;
 }
 
 /**
@@ -811,97 +758,6 @@ function _iform_apply_variable_to_args($variable, &$args, $config) {
 }
 
 /**
- * Tests if a given iform node needs review after import. If it does, checks that
- * there is something to review - if not sets the flag so it does not need review
- * in future.
- * @param node $node The node to check
- * @return boolean True if the node cannot be displayed because it needs review
- *
-function iform_check_needs_review($node) {
-  if (isset($node->needs_review) && $node->needs_review>2) {
-    $form = false;
-    iform_load_helpers(array('form_helper', 'data_entry_helper'));
-    // node needs review. Check if there are any settings to review.
-    if ($node->iform && $node->iform!=-1) {
-      $connection = iform_get_connection_details($node);
-      $readAuth = form_helper::get_read_auth($connection['website_id'], $connection['password']);
-      $form = form_helper::prebuilt_form_params_form(array(
-        'form' => $node->iform,
-        'currentSettings' => array(),
-        'readAuth' => $readAuth,
-        'siteSpecific' => TRUE
-      ));
-    }
-    if ($form) {
-      return TRUE;
-    } 
-    else {
-     // mark node as imported but no need for review
-      $node->needs_review=1;
-      node_save($node);
-    }
-  }
-  return FALSE;
-}
-
-/**
- * Adds any JavaScript and CSS identified by the Indicia code to the Drupal page.
- *
-function handle_resources() {
-  require_once iform_client_helpers_path() . 'data_entry_helper.php';
-  // always add the standard functions library
-  $j = data_entry_helper::$js_path . 'indicia.functions.js';
-  $j = preg_replace('/^' . str_replace('/', '\/', base_path()) . '/', '', $j);
-  drupal_add_js($j);
-  // add any further resources
-  if (isset(data_entry_helper::$required_resources)) {
-    $resourceList = data_entry_helper::get_resources();
-    foreach (data_entry_helper::$required_resources as $resource) {
-      if (isset($resourceList[$resource]['stylesheets'])) {
-        foreach ($resourceList[$resource]['stylesheets'] as $s) {
-          $s = preg_replace('/^' . str_replace('/', '\/', base_path()) . '/', '', $s);
-          drupal_add_css($s);
-        }
-      }
-      if (isset($resourceList[$resource]['javascript'])) {
-        foreach ($resourceList[$resource]['javascript'] as $j) {
-          // if enabling fancybox, link it up
-          if (strpos($j, 'fancybox.')!==FALSE)
-            data_entry_helper::$javascript .= "jQuery('a.fancybox').fancybox();\n";
-          // We must not add jQuery twice. So for this file, add Drupal's own version if not already done.
-          if (strcasecmp(substr($j, -9), 'jQuery.js')==0) {
-            // No need to load jquery.js in Drupal 7 as it loads automatically if there is any other JavaScript
-          }
-          elseif (strcasecmp(substr($j, -23), 'jquery-ui.custom.min.js')==0) {
-            hostsite_add_library('jquery-ui');
-          }
-          elseif (substr($j, 0, 4)=='[IE]') {
-            drupal_add_html_head("<!--[if IE]><script type=\"text/javascript\" src=\"" . substr($j, 4) . "\"></script><![endif]-->\n");
-          }
-          elseif (substr($j, 0, 4)=='http') {
-            // JS file external to Drupal. add_js will not work, so insert it into the head manually.
-            drupal_add_js($j, 'external');
-          } 
-          elseif (strcasecmp(substr($j, -20), 'jquery-ui.effects.js')!=0) {
-            // JS file within Drupal structure. Drupal will add base_path() to the beginning as it expects a relative path not absolute
-            $j = preg_replace('/^' . str_replace('/', '\/', base_path()) . '/', '', $j);
-            drupal_add_js($j, array('type' => 'file', 'weight' => JS_DEFAULT));
-          }
-        }
-      }
-    }
-  }
-  data_entry_helper::setup_jquery_validation_js();
-  $script = data_entry_helper::get_scripts(data_entry_helper::$javascript, data_entry_helper::$late_javascript, data_entry_helper::$onload_javascript);
-  if (!empty($script))
-    drupal_add_js(iform_js_closure($script), 'inline');
-  // in case there are 2 iforms on one page
-  data_entry_helper::$javascript = '';
-  data_entry_helper::$late_javascript = '';
-  data_entry_helper::$onload_javascript = '';
-}*/
-
-/**
  * Implements hook_page_attachments().
  * For any page that has Indicia functionality, add all the scripts and CSS that
  * we require.
@@ -945,72 +801,6 @@ function iform_inlinejs_alter() {
 }
 
 /**
- * Returns the list of resources to include in the #attached render array for a Drupal
- * form that includes Indicia content.
- * @return array Content of the '#attached' render array element.
- *
-function iform_get_form_resource_attachments() {
-
-
-  SEE https://www.drupal.org/node/2274843
--- loading JS files Attaching a library to all (or a subset of) pages
-
-
-  require_once iform_client_helpers_path() . 'data_entry_helper.php';
-  $r = array('js' => [], 'css' => [], 'library' => []);
-  $jsWeight = 0;
-  if (isset(data_entry_helper::$required_resources)) {
-    $resourceList = data_entry_helper::get_resources();
-    foreach (data_entry_helper::$required_resources as $resource) {
-      if (isset($resourceList[$resource]['stylesheets'])) {
-        foreach ($resourceList[$resource]['stylesheets'] as $s) {
-          $s = preg_replace('/^' . str_replace('/', '\/', base_path()) . '/', '', $s);
-          $r['css'][] = $s;
-        }
-      }
-      if (isset($resourceList[$resource]['javascript'])) {
-        foreach ($resourceList[$resource]['javascript'] as $j) {
-          // if enabling fancybox, link it up
-          if (strpos($j, 'fancybox.')!==FALSE)
-            data_entry_helper::$javascript .= "jQuery('a.fancybox').fancybox();\n";
-          // We must not add jQuery twice. So for this file, add Drupal's own version if not already done.
-          if (strcasecmp(substr($j, -9), 'jQuery.js')==0) {
-            // No need to load jquery.js in Drupal 7 as it loads automatically if there is any other JavaScript
-          }
-          elseif (strcasecmp(substr($j, -23), 'jquery-ui.custom.min.js')==0) {
-            $r['library'][] = 'system';
-            $r['library'][] = 'jquery-ui';
-          }
-          elseif (substr($j, 0, 4)=='[IE]') {
-            drupal_add_html_head("<!--[if IE]><script type=\"text/javascript\" src=\"" . substr($j, 4) . "\"></script><![endif]-->\n");
-          }
-          elseif (substr($j, 0, 4)=='http') {
-            // JS file external to Drupal. add_js will not work, so insert it into the head manually.
-            // THIS WORKS NOW?
-            drupal_add_html_head("<script type='text/javascript' src='$j'></script>");
-          } 
-          elseif (strcasecmp(substr($j, -20), 'jquery-ui.effects.js')!=0) {
-            // JS file within Drupal structure. Drupal will add base_path() to the beginning as it expects a relative path not absolute
-            $j = preg_replace('/^' . str_replace('/', '\/', base_path()) . '/', '', $j);
-            $r['js'][] = array('data' => $j, 'weight' => $jsWeight);
-            $jsWeight++;
-          }
-        }
-      }
-    }
-  }
-  data_entry_helper::setup_jquery_validation_js();
-  $script = data_entry_helper::get_scripts(data_entry_helper::$javascript, data_entry_helper::$late_javascript, data_entry_helper::$onload_javascript);
-  if (!empty($script))
-    $r['js'][] = array('data' => iform_js_closure($script), 'type' => 'inline', 'weight' => $jsWeight);
-  // in case there are 2 iforms on one page
-  data_entry_helper::$javascript = '';
-  data_entry_helper::$late_javascript = '';
-  data_entry_helper::$onload_javascript = '';
-  return $r;
-}
-
-/**
  * Adds a jQuery closure around a piece of JavaScript for D7/8 compatibility.
  * @param type $js 
  */
@@ -1018,19 +808,6 @@ function iform_js_closure($js) {
   return "(function ($) {
 $js
 })(jQuery);";
-}
-
-/**
- * Menu callback that generates a page which outputs a diagnostics check for the IForm module.
- *
-function iform_diagnostics() {
-  if (!iform_check_helper_config_exists()) {
-    drupal_set_message(check_plain(t("Please create the file helper_config.php in the !path folder on the server.",
-    array('!path' => iform_client_helpers_path()))), 'warning');
-    return t('No check performed');
-  }
-  iform_load_helpers(array('data_entry_helper'));
-  return data_entry_helper::system_check();
 }
 
 /**
@@ -1149,43 +926,6 @@ function iform_load_helpers(array $files) {
     helper_base::$warehouse_proxy = $base_url . substr($relative_proxy_path, 1);
   }
 }
-
-/**
- * Hook for rendering an exported node into a feature. By setting needs_review we flag
- * the node up so the user knows to check the node configuration.
- *
-function iform_uuid_node_features_export_render_alter(&$export, $node, $module) {
-  if ($node->type=='iform') {
-    $export->needs_review = 3;
-  }
-  // remove some stuff from the export so that the Overridden status of the feature is not sensitive to the change metadata.
-  unset($export->created);
-  unset($export->date);
-  unset($export->changed);
-  unset($export->revision_timestamp);
-  unset($export->revision_uid);
-  unset($export->revision_uuid);
-  unset($export->last_comment_timestamp);
-  unset($export->last_comment_name);
-  unset($export->comment_count);
-  // also remove any params that are specific to the site, so that changing them does not mark it as overridden.
-  if (isset($node->iform)) {
-    $form = $node->iform;
-    require_once iform_client_helpers_path() . "prebuilt_forms/$form.php";
-    $params = call_user_func(array('iform_' . $form, 'get_parameters'));
-    foreach ($params as $param) {
-      if (isset($param['siteSpecific']) && $param['siteSpecific']) {
-        if (isset($param['name']))
-          unset($export->params[$param['name']]);
-        elseif (isset($param['fieldname']))
-          unset($export->params[$param['fieldname']]);
-      }
-    }
-    // also remove the warehouse login settings
-    unset($export->params['website_id']);
-    unset($export->params['password']);
-  }
-}*/
 
 /**
  * Method to find the media folder - either in the module or library path.
@@ -1331,7 +1071,7 @@ function hostsite_add_library($library) {
  * Display a message in a way that can be unhooked from Drupal.
  * @param string $msg Message to display
  * @param string $type Message type, one of 'status', 'warning' and 'error'.
- *
+ */
 function hostsite_show_message($msg, $type='status') {
   drupal_set_message($msg, $type);
 }
