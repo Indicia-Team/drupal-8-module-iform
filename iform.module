@@ -564,7 +564,7 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
             // anything left in $parts is the bookmark
             if (count($parts))
               $options['fragment']=$parts[0];
-            drupal_goto($url, $options);
+            hostsite_goto_page($url, $options);
           }
           elseif (!isset($args['message_after_save']) || $args['message_after_save'] || !array_key_exists('success', $response)) {
             // This dumps errors, and/or a success message if no redirection.
@@ -724,9 +724,7 @@ function iform_handle_posted_form($node, $args) {
           // anything left in $parts is the bookmark
           if (count($parts))
             $options['fragment']=$parts[0];
-          $response = new RedirectResponse(\Drupal\Core\Url::fromUri("base:$url", array('query'=>$options))->toString());
-          $response->send();
-          return;
+          return hostsite_goto_page($url, $options);
         }
         elseif (!isset($args['message_after_save']) || $args['message_after_save'] || !array_key_exists('success', $response)) {
           // This dumps errors, and/or a success message if no redirection.
@@ -1153,6 +1151,7 @@ function hostsite_goto_page($path, $params=false) {
   if ($path===$iform_redirected_to) {
     drupal_set_message("Attempt to redirect to $path caused a redirect loop");
   } else {
+    // @todo Does <front> need special handling?
     $opts=array();
     if ($params)
       $opts['query']=$params;

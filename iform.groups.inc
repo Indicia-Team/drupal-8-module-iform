@@ -16,7 +16,7 @@
 function iform_join_group($title='') {
   if (empty($title)) {
     drupal_set_message(t('The path you visited requires the name of the group to join in the path.'));
-    drupal_goto('<front>');
+    hostsite_goto_page('<front>');
   }
   // Perform same sanitisation of the group name as will be performed on db. Should be already done,
   // but this ensures it is safe.
@@ -37,7 +37,7 @@ function iform_join_group($title='') {
   global $user;
   if (!count($groups) > 1) {
     drupal_set_message(t('The group you are trying to join has a duplicate name with another group so cannot be joined in this way.'));
-    drupal_goto('<front>');
+    hostsite_goto_page('<front>');
   }
   $group = $groups[0];
   if ($user->uid) {
@@ -45,7 +45,7 @@ function iform_join_group($title='') {
     $indiciaUserId = hostsite_get_user_field('indicia_user_id');
     if (!$indiciaUserId) {
       drupal_set_message(t("Before joining $group[title], please set your surname on your user account profile."));
-      drupal_goto('<front>');
+      hostsite_goto_page('<front>');
     }
     $showJoinMessage=true;
     $groupsUsers = data_entry_helper::get_population_data(array(
@@ -59,7 +59,7 @@ function iform_join_group($title='') {
     if (!count($groupsUsers)) {
       // User is not already a member. So, we can join them up
       if (!iform_join_public_group($group, $auth['write_tokens'], $indiciaUserId)) {
-        drupal_goto('<front>');
+        hostsite_goto_page('<front>');
         return;
       }
     }
@@ -69,7 +69,7 @@ function iform_join_group($title='') {
         // Membership exists but is pending. As this is now a public group we can overwrite to
         // remove the pending flag.
         if (!iform_join_public_group($group, $auth['write_tokens'], $indiciaUserId, $groupsUsers[0]['id'])) {
-          drupal_goto('<front>');
+          hostsite_goto_page('<front>');
           return;
         }
       }
@@ -82,7 +82,7 @@ function iform_join_group($title='') {
   }
   else {
     // User is not logged in, so redirect to login page with parameters so we know which group
-    drupal_goto('user', array('query' => array('group_id'=>$group['id'], 'destination' => $_GET['q'])));
+    hostsite_goto_page('user', array('query' => array('group_id'=>$group['id'], 'destination' => $_GET['q'])));
   }
 }
 
@@ -109,7 +109,7 @@ function iform_show_group_join_success($group, $auth, $showJoinMessage=true, $gr
     // Only one page so go straight to it
     if ($showJoinMessage)
       hostsite_show_message($welcome);
-    drupal_goto($pageData[0]['path']);
+    hostsite_goto_page($pageData[0]['path']);
   } else {
     // Multiple pages, let the user choose
     $intro = '';
