@@ -1175,7 +1175,7 @@ function hostsite_get_url($path, $params=false) {
  * @param string $purpose One of reporting, peer_review, verification, data_flow, moderation. Default is 'reporting'. If the 
  * agreement defines that the other website provides data to this website for this purpose, then the other website is included.
  * @return array List of website IDs that accesss is allowed for.
- *
+ */
 function iform_get_allowed_website_ids($readAuth, $purpose='reporting') {
   $websites = data_entry_helper::get_population_data(array(
     'table' => 'website',
