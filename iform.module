@@ -1,9 +1,11 @@
 <?php
 
+use Drupal\Core;
 use Drupal\Core\StreamWrapper\PrivateStream;
 use Drupal\Core\StreamWrapper\PublicStream;
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Core\Access\AccessResult;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 // @todo Implement features review code?
 
@@ -722,8 +724,9 @@ function iform_handle_posted_form($node, $args) {
           // anything left in $parts is the bookmark
           if (count($parts))
             $options['fragment']=$parts[0];
-          // @todo drupal_goto removed from Drupa 8
-          drupal_goto($url, $options);
+          $response = new RedirectResponse(\Drupal\Core\Url::fromUri("base:$url", array('query'=>$options))->toString());
+          $response->send();
+          return;
         }
         elseif (!isset($args['message_after_save']) || $args['message_after_save'] || !array_key_exists('success', $response)) {
           // This dumps errors, and/or a success message if no redirection.
@@ -1144,7 +1147,7 @@ function hostsite_get_node_field_value($nid, $field) {
  * Goto a page on the host site.
  * @param string $path The page path.
  * @param array $params The params to add to the URL.
- *
+ */
 function hostsite_goto_page($path, $params=false) {
   static $iform_redirected_to;
   if ($path===$iform_redirected_to) {
@@ -1153,7 +1156,9 @@ function hostsite_goto_page($path, $params=false) {
     $opts=array();
     if ($params)
       $opts['query']=$params;
-    drupal_goto($path, $opts);
+    $response = new RedirectResponse(\Drupal\Core\Url::fromUri("base:$path", array('query'=>$opts))->toString());
+    $response->send();
+    return;
   }
 }
 
