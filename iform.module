@@ -8,6 +8,8 @@ use Drupal\Core\Access\AccessResult;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 // @todo Implement features review code?
+// @todo Convert all variable_get and variable_set to non-version specific code, with a
+//   fix for indicia_ or iform_ prefix inconsistencies.
 
 /**
 * Implements hook_help.
@@ -1241,7 +1243,7 @@ function iform_needs_update() {
  *     image for example.
  *
  * @return array
- *
+ */
 function iform_token_info() {
   $info = array();
   $info['types']['current-iform-page'] = array(
@@ -1286,7 +1288,7 @@ function iform_token_info() {
  * @param array $data
  * @param array $options
  * @return array
- *
+ */
 function iform_tokens($type, $tokens, array $data = array(), array $options = array()) {
   $replacements = array();
   if ($type == 'current-iform-page') {
@@ -1295,7 +1297,7 @@ function iform_tokens($type, $tokens, array $data = array(), array $options = ar
       switch ($name) {
         case 'full-url':
           $uriParts = explode('?', $_SERVER['REQUEST_URI']);
-          if (count($uriParts)) {
+          if (count($uriParts)>1) {
             parse_str($uriParts[1], $query);
             // we need to remove sort and paging parameters as they cause search engines to excessively spider
             foreach ($query as $key=>$value) {
