@@ -205,6 +205,12 @@ class SettingsForm extends FormBase {
       '#description' => t('For any system not in this list, you can enter a comma separated list of EPSG codes or other system names as long as they are ' .
         'recognised by the Indicia Warehouse you are using.')
     );
+    $form['master_checklist_id'] =  array(
+      '#type' => 'textfield',
+      '#title' => t('Master Checklist ID'),
+      '#description' => t('Select the species checklist used as an all species hierarchy.'),
+      '#default_value' => $config->get('master_checklist_id'),
+    );
     $form['submit'] = array(
       '#type' => 'submit',
       '#value' => t('Submit'),
@@ -269,6 +275,7 @@ class SettingsForm extends FormBase {
     $config->set('map_centroid_lat', $values['map_centroid_lat']);
     $config->set('map_centroid_long', $values['map_centroid_long']);
     $config->set('map_zoom', $values['map_zoom']);
+    $config->set('master_checklist_id', $values['master_checklist_id']);
     // Save any indicia variables declared by hook_variable_info
     global $language;
     /**
