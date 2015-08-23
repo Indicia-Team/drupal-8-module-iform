@@ -207,9 +207,16 @@ class SettingsForm extends FormBase {
     );
     $form['master_checklist_id'] =  array(
       '#type' => 'textfield',
-      '#title' => t('Master Checklist ID'),
-      '#description' => t('Select the species checklist used as an all species hierarchy.'),
+      '#title' => t('Master checklist ID'),
+      '#description' => t('The species checklist ID used as an all species hierarchy.'),
       '#default_value' => $config->get('master_checklist_id'),
+    );
+    $form['profile_location_type_id'] =  array(
+      '#type' => 'textfield',
+      '#title' => t('Profile location type ID'),
+      '#description' => t('The ID of the location type for the main location layer that can be ' .
+          'associated with user profiles to indicate a user\'s preferences.'),
+      '#default_value' => $config->get('profile_location_type_id'),
     );
     $form['submit'] = array(
       '#type' => 'submit',
@@ -276,6 +283,7 @@ class SettingsForm extends FormBase {
     $config->set('map_centroid_long', $values['map_centroid_long']);
     $config->set('map_zoom', $values['map_zoom']);
     $config->set('master_checklist_id', $values['master_checklist_id']);
+    $config->set('profile_location_type_id', $values['profile_location_type_id']);
     // Save any indicia variables declared by hook_variable_info
     global $language;
     /**
