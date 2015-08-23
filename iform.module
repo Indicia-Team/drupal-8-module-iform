@@ -1182,6 +1182,14 @@ function hostsite_get_config_value($context, $name, $default=false) {
 }
 
 /**
+ * Retrieves a path suitable for storing public files (the Drupal public file path).
+ * @return string The path to the location for public file storage
+ */
+function hostsite_get_public_file_path() {
+  return \Drupal::config('system.file')->get('path.public');
+}
+
+/**
  * Returns a list of website IDs that this website is allowed use data for. This is defined by the agreement between the 
  * 2 websites and depends on the exact task being performed.
  * @param array $readAuth Read authorisation tokens
