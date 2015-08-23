@@ -1168,7 +1168,18 @@ function hostsite_get_url($path, $params=false) {
   return new RedirectResponse(\Drupal\Core\Url::fromUri("base:$path", array('query'=>$opts))->toString());
 }
 
-
+/**
+ * Retrieve a configuration value, e.g. site name or site mail, or an indicia setting.
+ * @param string $context Context of the variable, either site or iform.
+ * @param string $name Name of the config value to retrieve, e.g. name or mail.
+ * @param mixed $default The default value to return if the config key does not exist.
+ * @return mixed The config value.
+ */
+function hostsite_get_config_value($context, $name, $default=false) {
+  $configName = $context === 'site' ? 'system.site' : 'iform';
+  $r = \Drupal::config($configName)->get($name);
+  return $r===NULL ? $default : $r;
+}
 
 /**
  * Returns a list of website IDs that this website is allowed use data for. This is defined by the agreement between the 
