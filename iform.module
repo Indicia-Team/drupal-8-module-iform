@@ -322,7 +322,7 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
 
     // @todo Handling of iform review mode
 
-    $helperPath=realpath(iform_client_helpers_path());
+    $helperPath = realpath(iform_client_helpers_path());
     $iform = $entity->field_iform->value;
     if (!empty($iform)) {
       $nid = $entity->id();
@@ -335,48 +335,59 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
       global $indicia_theme_path;
       $indicia_theme_path = iform_media_folder_path() . 'themes/';
       $connection = iform_get_connection_details($entity);
-      $args['website_id']=$connection['website_id'];
-      $args['password']=$connection['password'];
+      $args['website_id'] = $connection['website_id'];
+      $args['password'] = $connection['password'];
       // we need to grab each requested parameter from the node to pass to the form
       $params = form_helper::get_form_parameters($iform);
 
       foreach ($params as $param) {
-        if (isset($entity->params[$param['fieldname']]))
+        if (isset($entity->params[$param['fieldname']])) {
           $args[$param['fieldname']] = $entity->params[$param['fieldname']];
-        elseif (isset($param['default']))
-          // apply the default, this was an old saved form configuration which doesn't have a new parameter.
+        }
+        elseif (isset($param['default'])) // apply the default, this was an old saved form configuration which doesn't have a new parameter.
+        {
           $args[$param['fieldname']] = $param['default'];
+        }
       }
       $r = '';
       $response = NULL;
       // if the form defines some remembered fields, call it from within this module rather than inside
       // indicia so it can have access to the arguments
       if (method_exists("iform_$iform", 'indicia_define_remembered_fields')) {
-        call_user_func(array("iform_$iform", 'indicia_define_remembered_fields'), $args);
+        call_user_func(array(
+          "iform_$iform",
+          'indicia_define_remembered_fields'
+        ), $args);
       }
       $r .= iform_handle_posted_form($entity, $args);
 
       // Make buttons have a hover effect
-      data_entry_helper::$javascript .=  "indiciaFns.enableHoverEffect();\n";
+      data_entry_helper::$javascript .= "indiciaFns.enableHoverEffect();\n";
       $config = \Drupal::config('indicia.settings');
       _iform_apply_variables_to_args($args, $config);
       // preferred location for custom node configuration files now under Drupal files folder
-      $filePath = \Drupal::config('system.file')->get('path.public');
+      $filePath = hostsite_get_public_file_path();
       // A drupal theme can override the templates
-      if (function_exists('drupal_get_path') && file_exists(\Drupal::theme()->getActiveTheme()->getPath() . '/indicia.templates.php'))
-        require \Drupal::theme()->getActiveTheme()->getPath() . '/indicia.templates.php';
+      if (file_exists(\Drupal::theme()
+          ->getActiveTheme()
+          ->getPath() . '/indicia.templates.php')) {
+        require \Drupal::theme()
+            ->getActiveTheme()
+            ->getPath() . '/indicia.templates.php';
+      }
       // Or we can override the templates in the iform module, either globally, per form or per node.
-      if (file_exists("$helperPath/prebuilt_forms/templates/global.php"))
+      if (file_exists("$helperPath/prebuilt_forms/templates/global.php")) {
         require "$helperPath/prebuilt_forms/templates/global.php";
-      if (file_exists("$helperPath/prebuilt_forms/templates/$iform.php"))
+      }
+      if (file_exists("$helperPath/prebuilt_forms/templates/$iform.php")) {
         require "$helperPath/prebuilt_forms/templates/$iform.php";
-      if (file_exists("$helperPath/prebuilt_forms/templates/node.$nid.php"))
-        require "$helperPath/prebuilt_forms/templates/node.$nid.php";
-      if (file_exists("$filePath/indicia/templates/node.$nid.php"))
+      }
+      if (file_exists("$filePath/indicia/templates/node.$nid.php")) {
         require "$filePath/indicia/templates/node.$nid.php";
+      }
       // link in custom additional template files
       if (!empty($args['additional_templates'])) {
-        $templateFiles=data_entry_helper::explode_lines($args['additional_templates']);
+        $templateFiles = data_entry_helper::explode_lines($args['additional_templates']);
         foreach ($templateFiles as $file) {
           $file = str_replace('{prebuiltformtemplates}', "$helperPath/prebuilt_forms/templates", $file);
           require $file;
@@ -384,45 +395,15 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
       }
       // Now retrieve the form content
       try {
-        $r .= call_user_func(array('iform_' . $iform, 'get_form'), $args, $entity->id(), $response);
-        drupal_set_message('Got r. Length ' . strlen($r) . '. ' . 'iform_' . $iform);
+        $r .= call_user_func(array(
+          'iform_' . $iform,
+          'get_form'
+        ), $args, $entity->id(), $response);
       } catch (Exception $e) {
         \Drupal::logger('iform')->notice('Error occurred loading form');
         \Drupal::logger('iform')->notice($e->getMessage());
         \Drupal::logger('iform')->notice(print_r($e->getTrace(), TRUE));
-        $r =  $e->getMessage();
       }
-
-      // Link in the custom css file if present.
-      /**
-       * @todo Link in custom CSS
-       *
-      if (file_exists(iform_client_helpers_path() . "prebuilt_forms/css/$iform.css"))
-        drupal_add_css(iform_client_helpers_path() . "prebuilt_forms/css/$iform.css", array('preprocess'=>FALSE));
-      if (file_exists(iform_client_helpers_path() . "prebuilt_forms/css/node.$nid.css"))
-        drupal_add_css(iform_client_helpers_path() . "prebuilt_forms/css/node.$nid.css", array('preprocess'=>FALSE));
-      if (file_exists("$filePath/indicia/css/node.$nid.css"))
-        drupal_add_css("$filePath/indicia/css/node.$nid.css", array('preprocess'=>FALSE));
-      if (!empty($args['additional_css'])) {
-        $cssFiles=data_entry_helper::explode_lines($args['additional_css']);
-        foreach ($cssFiles as $file) {
-          $file = str_replace(array('{mediacss}', '{theme}', '{prebuiltformcss}'),
-            array(iform_media_folder_path() . 'css', path_to_theme(), iform_client_helpers_path() . 'prebuilt_forms/css'),
-            $file);
-          drupal_add_css($file, array('preprocess'=>FALSE));
-        }
-      }
-       */
-      /*
-       * @todo Link in page custom JS files
-      // Link in the form's custom js file if present.
-      if (file_exists("$helperPath/prebuilt_forms/js/$iform.js"))
-        drupal_add_js(iform_client_helpers_path() . "prebuilt_forms/js/$iform.js", array('preprocess'=>FALSE));
-      // Link in the specific node's custom js file if present.
-      if (file_exists("$helperPath/prebuilt_forms/js/node.$nid.js"))
-        drupal_add_js(iform_client_helpers_path() . "prebuilt_forms/js/node.$nid.js", array('preprocess'=>FALSE));
-      if (file_exists("$filePath/indicia/js/node.$nid.js"))
-        drupal_add_js("$filePath/indicia/js/node.$nid.js", array('preprocess'=>FALSE));*/
       ob_end_clean();
       $build['iform'] = array(
         '#markup' => SafeMarkup::set($r),
@@ -443,47 +424,134 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
 
       // @todo Set page title is not working in Drupal 8 yet
       global $indicia_page_title;
-      if (isset($indicia_page_title))
+      if (isset($indicia_page_title)) {
         $build['#title'] = $indicia_page_title;
+      }
     }
   }
+}
+
+/**
+ * Dynamically build a Drupal asset library for each iform page that has custom CSS or
+ * JS.
+ * @return array Libraries to create
+ */
+function iform_library_info_build() {
+  $libraries = [];
+  $nids = \Drupal::entityQuery('node')
+    ->condition('type', 'iform_page')
+    ->execute();
+  $node_storage = \Drupal::entityManager()->getStorage('node');
+  $nodes = $node_storage->loadMultiple($nids);
+  $helperPath = realpath(iform_client_helpers_path());
+  $filePath = hostsite_get_public_file_path();
+  foreach ($nodes as $node) {
+    $nid = $node->id();
+    $lib = "node_$nid";
+    $form = $node->field_iform->value;
+    $libraries[$lib] = [
+      'version' => 'VERSION',
+      'js' => [],
+      'css' => [
+        'module' => []
+      ]
+    ];
+    // Prebuilt form specific CSS
+    if (file_exists("$helperPath/prebuilt_forms/css/$form.css")) {
+      $libraries[$lib]['css']['module']["client_helpers/prebuilt_forms/css/$form.css"] = [];
+    }
+    // Node specific CSS
+    if (file_exists("$filePath/indicia/css/node.$nid.css")) {
+      $libraries[$lib]['css']['module']["/$filePath/indicia/css/node.$nid.css"] = [];
+    }
+    if (!empty($node->params['additional_css'])) {
+      $cssFiles = data_entry_helper::explode_lines($node->params['additional_css']);
+      // @todo Theme path replacement
+      // @todo Also need to implement way to get to public::indicia/css folder.
+      foreach ($cssFiles as $file) {
+        $file = str_replace(array(
+          '{mediacss}',
+          //'{theme}',
+          '{prebuiltformcss}'
+        ),
+          array(
+            iform_media_folder_path() . 'css',
+            //path_to_theme(),
+            iform_client_helpers_path() . 'prebuilt_forms/css'
+          ),
+          $file
+        );
+        $libraries[$lib]['css']['module'][$file] = [];
+      }
+    }
+    // Prebuilt form specific JS
+    if (file_exists("$helperPath/prebuilt_forms/js/$form.js")) {
+      $libraries[$lib]['js']["client_helpers/prebuilt_forms/js/$form.js"] = [];
+    }
+    // Node specific JS
+    if (file_exists("$filePath/indicia/js/node.$nid.js")) {
+      $libraries[$lib]['js']["/$filePath/indicia/js/node.$nid.js"] = [];
+    }
+
+    // Skip any unnecessary empty libraries
+    if (empty($libraries[$lib]['css']['module']) && empty($libraries[$lib]['js'])) {
+      unset($libraries[$lib]);
+    }
+  }
+  \Drupal::logger('iform')->notice(var_export($libraries, TRUE));
+  return $libraries;
 }
 
 function iform_handle_posted_form($node, $args) {
   $iform = $node->field_iform->value;
   $r = '';
   if ($_POST && (array_key_exists('website_id', $_POST)) && method_exists("iform_$iform", 'get_submission')) {
-    $helperPath=realpath(iform_client_helpers_path());
+    $helperPath = realpath(iform_client_helpers_path());
     $nid = $node->id();
     if (!empty($_POST['delete-button'])) {
-      $_POST['deleted']='t';
+      $_POST['deleted'] = 't';
       $msg = lang::get('The record has been deleted.');
-    } else
+    }
+    else {
       $msg = lang::get('Thank you. Your records have been saved to the database.');
+    }
     // Ask the form to submit itself.
     try {
       // attach the path to the input form. It'll just get skipped if we are not posting a sample.
-      $_POST['sample:input_form'] = trim(\Drupal::service('path.alias_manager')->getAliasByPath("/node/$nid"), '/');
-      $s = call_user_func(array("iform_$iform", 'get_submission'), $_POST, $args, $nid);
+      $_POST['sample:input_form'] = trim(\Drupal::service('path.alias_manager')
+        ->getAliasByPath("/node/$nid"), '/');
+      $s = call_user_func(array(
+        "iform_$iform",
+        'get_submission'
+      ), $_POST, $args, $nid);
     } catch (Exception $e) {
-      \Drupal::logger('iform')->notice('Exception occurred during build of form submission: ' . $e->getMessage());
+      \Drupal::logger('iform')
+        ->notice('Exception occurred during build of form submission: ' . $e->getMessage());
       drupal_set_message(t('An error occurred whilst saving the new site details.'));
       unset($s);
     }
     // And allow the form to dynamically set the destination after post
-    if (!empty($_POST['redirect_on_success']))
+    if (!empty($_POST['redirect_on_success'])) {
       $args['redirect_on_success'] = $_POST['redirect_on_success'];
+    }
     if (method_exists("iform_$iform", 'get_redirect_on_success')) {
-      $redirect = call_user_func(array("iform_$iform", 'get_redirect_on_success'), $_POST, $args);
-      if (!empty($redirect))
+      $redirect = call_user_func(array(
+        "iform_$iform",
+        'get_redirect_on_success'
+      ), $_POST, $args);
+      if (!empty($redirect)) {
         $args['redirect_on_success'] = $redirect;
+      }
     }
     // if for some reason the iform gives back an empty submission, ignore it
     if (isset($s) && $s) {
       $errors = array();
       // does this Drupal node have any in-built validation code?
       if (method_exists("iform_$iform", 'get_validation_errors')) {
-        $errors = call_user_func(array("iform_$iform", 'get_validation_errors'), $_POST, $args);
+        $errors = call_user_func(array(
+          "iform_$iform",
+          'get_validation_errors'
+        ), $_POST, $args);
       }
       // does this Drupal node have any custom validation code?
       if (file_exists("$helperPath/prebuilt_forms/validation/validate.$nid.php")) {
@@ -497,7 +565,8 @@ function iform_handle_posted_form($node, $args) {
         $response = data_entry_helper::forward_post_to('save', $s);
         // Does the form redirect after success?
         if (is_array($response) && array_key_exists('success', $response) &&
-          array_key_exists('redirect_on_success', $args) && $args['redirect_on_success']) {
+          array_key_exists('redirect_on_success', $args) && $args['redirect_on_success']
+        ) {
           if (!isset($args['message_after_save']) || $args['message_after_save']) {
             drupal_set_message($msg);
           }
@@ -508,31 +577,34 @@ function iform_handle_posted_form($node, $args) {
             $queryStr = array_shift($parts); // info between the ? and # is the query string
             // Get an array of the redirect_on_success specified query string params
             parse_str($queryStr, $params);
-          } else {
+          }
+          else {
             $parts = explode('#', $url, 2); // split bookmark fragment off
             $url = array_shift($parts);
-            $params=array();
+            $params = array();
           }
           // Merge the information about the saved record in
           $params = array_merge(array(
-            'table'=>$response['outer_table'],
-            'id'=>$response['outer_id']
+            'table' => $response['outer_table'],
+            'id' => $response['outer_id']
           ), $params);
-          $options=array('query'=>$params);
+          $options = array('query' => $params);
           // anything left in $parts is the bookmark
-          if (count($parts))
-            $options['fragment']=$parts[0];
+          if (count($parts)) {
+            $options['fragment'] = $parts[0];
+          }
           return hostsite_goto_page($url, $options);
         }
         elseif (!isset($args['message_after_save']) || $args['message_after_save'] || !array_key_exists('success', $response)) {
           // This dumps errors, and/or a success message if no redirection.
-          $r .= data_entry_helper::dump_errors($response, true);
+          $r .= data_entry_helper::dump_errors($response, TRUE);
         }
       }
     }
   }
   return $r;
 }
+
 /**
  * @todo Document
  * @param $args
@@ -551,9 +623,10 @@ function _iform_apply_variables_to_args(&$args, $config) {
  * @param $config
  */
 function _iform_apply_variable_to_args($variable, &$args, $config) {
-  $default=$config->get($variable);
-  if (isset($args[$variable]) && ($args[$variable]==t('default') || $args[$variable]=='default' || $args[$variable]=='')  && !empty($default))
-    $args[$variable]=$default;
+  $default = $config->get($variable);
+  if (isset($args[$variable]) && ($args[$variable] == t('default') || $args[$variable] == 'default' || $args[$variable] == '') && !empty($default)) {
+    $args[$variable] = $default;
+  }
 }
 
 /**
@@ -567,13 +640,18 @@ function iform_page_attachments(array &$attachments) {
     $resourcesIncludedInBase = [
       'jquery',
       'jquery_ui',
-      'indiciaFns'
+      'indiciaFns',
+      'dynamic_page'
     ];
     foreach (helper_base::$required_resources as $resource) {
       // exclude resources covered by iform/base
-      if (!in_array($resource, $resourcesIncludedInBase))
+      if (!in_array($resource, $resourcesIncludedInBase)) {
         $attachments['#attached']['library'][] = "iform/$resource";
+      }
     }
+    $nid = \Drupal::request()->attributes->get('node')->id();
+    drupal_set_message('adding iform/node_' . $nid);
+    $attachments['#attached']['library'][] = "iform/node_$nid";
   }
 }
 
@@ -581,7 +659,7 @@ function iform_inlinejs_alter() {
   $js_asset = array();
   if (class_exists('helper_base')) {
     $script = helper_base::get_scripts(helper_base::$javascript, helper_base::$late_javascript,
-        helper_base::$onload_javascript, false, true);
+      helper_base::$onload_javascript, FALSE, TRUE);
     if (!empty($script)) {
       $js_asset['header'][] = array(
         'data' => $script,
@@ -601,7 +679,7 @@ function iform_inlinejs_alter() {
 
 /**
  * Adds a jQuery closure around a piece of JavaScript for D7/8 compatibility.
- * @param type $js 
+ * @param type $js
  */
 function iform_js_closure($js) {
   return "(function ($) {
@@ -633,35 +711,40 @@ function iform_load_language_files($iform, $nid) {
   $formFallbackFileName = $iform . '.en.php';
   $nodeFallbackFileName = 'node.' . $nid . '.en.php';
   // Define a priority ordered list of file names that could contain the custom terms list.
-  if ($siteSpecificLangFilePath)
+  if ($siteSpecificLangFilePath) {
     $langFiles = array(
       $siteSpecificLangFilePath . $nodeLangFileName,
       $siteSpecificLangFilePath . $formLangFileName,
       $siteSpecificLangFilePath . $nodeFallbackFileName,
       $siteSpecificLangFilePath . $formFallbackFileName
     );
-  else
-    $langFiles=array();
+  }
+  else {
+    $langFiles = array();
+  }
   $langFiles = array_merge($langFiles, array(
     $moduleLangFilePath . $nodeLangFileName,
     $moduleLangFilePath . $formLangFileName,
     $moduleLangFilePath . $nodeFallbackFileName,
     $moduleLangFilePath . $formFallbackFileName
   ));
-  $custom_terms=array(); // this is an array of key value pairs
-  $custom_term_overrides=array(); // this is an array with each item a subarray of key value pairs.
+  $custom_terms = array(); // this is an array of key value pairs
+  $custom_term_overrides = array(); // this is an array with each item a subarray of key value pairs.
   // start at the highest priority possible language file name and loop through until we find one that defines the set of custom terms.
   foreach ($langFiles as $langFile) {
-    if (file_exists($langFile))
-      // Found a file to include. It might define custom_terms, or might define an entry in the custom_term_overrides array
+    if (file_exists($langFile)) // Found a file to include. It might define custom_terms, or might define an entry in the custom_term_overrides array
+    {
       require $langFile;
+    }
     // finish when we have loaded an array of custom terms.
-    if (count($custom_terms)>0) break;
+    if (count($custom_terms) > 0) {
+      break;
+    }
   }
   // if there are any custom term overrides, they need to be merged into custom terms in reverse priority order.
   $custom_term_overrides = array_reverse($custom_term_overrides);
   foreach ($custom_term_overrides as $override_list) {
-    $custom_terms=array_merge($custom_terms, $override_list);
+    $custom_terms = array_merge($custom_terms, $override_list);
   }
 }
 
@@ -673,20 +756,23 @@ function iform_load_language_files($iform, $nid) {
 function iform_load_helpers(array $files) {
   $configLoaded = class_exists('helper_config');
   $config = \Drupal::config('indicia.settings');
-  if (!is_array($files))
+  if (!is_array($files)) {
     throw new exception('Call to iform_load_helpers must pass an array of helper file names');
+  }
   $path = iform_client_helpers_path();
   require_once $path . 'helper_base.php';
-  foreach ($files as $file)
+  foreach ($files as $file) {
     require_once "$path$file.php";
+  }
   // we always need the helper_config file
   if (!$configLoaded) {
     require_once $path . 'helper_config.php';
     // now we have an opportunity to load warehouse settings into helper_config from the drupal variables. So a module
     // could load a different warehouse per page.
-    if (function_exists('iform_load_warehouse_details'))
+    if (function_exists('iform_load_warehouse_details')) {
       iform_load_warehouse_details();
-    else { 
+    }
+    else {
       helper_config::$base_url = $config->get('base_url');
       helper_config::$geoserver_url = $config->get('geoserver_url');
     }
@@ -695,13 +781,15 @@ function iform_load_helpers(array $files) {
       $folder = preg_replace("/[^a-zA-Z0-9]+/", "", helper_base::$base_url);
       // cache folder into private file path if specified as its more secure, otherwise public.
       $filepath = PrivateStream::basePath();
-      if (!$filepath)
+      if (!$filepath) {
         $filepath = PublicStream::basePath();
-      if (!$filepath)
+      }
+      if (!$filepath) {
         $fiepath = conf_path() . '/files';
+      }
       helper_base::$cache_folder = "$filepath/indicia/cache/$folder/";
       if (!is_dir(helper_base::$cache_folder)) {
-        mkdir(helper_base::$cache_folder, 0777, true);
+        mkdir(helper_base::$cache_folder, 0777, TRUE);
       }
     }
     // interim_image_folder
@@ -711,8 +799,9 @@ function iform_load_helpers(array $files) {
     helper_config::$geoplanet_api_key = $config->get('geoplanet_api_key');
     helper_base::$google_api_key = $config->get('google_api_key');
     // bing api key may be ommitted for backwards compatibility reasons
-    if (isset(helper_config::$bing_api_key))
+    if (isset(helper_config::$bing_api_key)) {
       helper_config::$bing_api_key = helper_base::$bing_api_key = $config->get('bing_api_key');
+    }
   }
   // ensure css and js is loaded locally
   helper_base::$js_path = base_path() . iform_media_folder_path() . 'js/';
@@ -732,12 +821,14 @@ function iform_load_helpers(array $files) {
 function iform_media_folder_path() {
   // avoid multiple is_dir calls
   static $_iform_media_folder_path;
-  if (isset($_iform_media_folder_path))
+  if (isset($_iform_media_folder_path)) {
     return $_iform_media_folder_path;
+  }
   else {
     $r = drupal_get_path('module', 'iform') . '/media/';
-    if (!is_dir($r))
+    if (!is_dir($r)) {
       $r = str_replace('modules', 'libraries', $r);
+    }
     $_iform_media_folder_path = $r;
     return $r;
   }
@@ -749,13 +840,15 @@ function iform_media_folder_path() {
 function iform_client_helpers_path() {
   // avoid multiple is_dir calls
   static $_iform_client_helpers_path;
-  if (isset($_iform_client_helpers_path))
+  if (isset($_iform_client_helpers_path)) {
     return $_iform_client_helpers_path;
+  }
   else {
-    $path = './' . drupal_get_path('module', 'iform') . '/client_helpers/';
+    $path = drupal_get_path('module', 'iform') . '/client_helpers/';
     // if not in subfolder of the module, then it has been moved to libraries
-    if (!is_dir($path))
+    if (!is_dir($path)) {
       $path = str_replace('/modules/', '/libraries/', $path);
+    }
     $_iform_client_helpers_path = $path;
     return $path;
   }
@@ -765,7 +858,7 @@ function iform_client_helpers_path() {
  * Function that allows Indicia code to hook into the Drupal user fields to find out a field value, without
  * introducing a Drupal code dependency.
  * @global type $user
- * @param string $field Name of a user field to return. This can be 'language' which returns a user's 2 character language code, 
+ * @param string $field Name of a user field to return. This can be 'language' which returns a user's 2 character language code,
  * 'id' to return the user's ID, 'name' to return the username, or a profile field, e.g. indicia_user_id as introduced by the Easy Login feature. This will be converted
  * to the profile field name if not prefixed with 'profile_'.
  * @param mixed $default Default value to return if not set.
@@ -774,33 +867,39 @@ function iform_client_helpers_path() {
  * @return mixed
  * @todo Search client_helpers for references to global $user and uid
  */
-function hostsite_get_user_field($field, $default=false, $array=false, $uid=false) {
+function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid = FALSE) {
   $account = \Drupal::currentUser();
-  if ($field==='uid' || $field==='id')
-    return $uid===false ? $account->id() : $uid;
+  if ($field === 'uid' || $field === 'id') {
+    return $uid === FALSE ? $account->id() : $uid;
+  }
   // do we need to load a different user account, e.g. if viewing another user's details?
-  $differentUser = ($uid!==false && $uid !== $account->id());
+  $differentUser = ($uid !== FALSE && $uid !== $account->id());
   $account = $differentUser ? \Drupal\user\Entity\User::load($uid) : $account;
-  // Only load the account's language if inspecting another user, else use the UI language. 
-  if ($field==='language') {
+  // Only load the account's language if inspecting another user, else use the UI language.
+  if ($field === 'language') {
     // @todo Test loading user's language under i18n environment
-    if (isset($account->language) && $differentUser)
+    if (isset($account->language) && $differentUser) {
       return $account->language->getId();
+    }
     else {
       global $language;
       return $language->getId();
     }
   }
-  elseif ($field==='name')
+  elseif ($field === 'name') {
     return $account->getUsername();
-  elseif ($field==='mail')
+  }
+  elseif ($field === 'mail') {
     return $account->getEmail();
-  $fieldname = (substr($field, 0, 6)==='field_' ? '' : 'field_') . $field;
+  }
+  $fieldname = (substr($field, 0, 6) === 'field_' ? '' : 'field_') . $field;
   if (isset($account->$fieldname)) {
     // @todo Test what happens if a multi-value field
     return $account->$fieldname->value;
-  } else
+  }
+  else {
     return $default;
+  }
 }
 
 /**
@@ -811,88 +910,88 @@ function hostsite_get_user_field($field, $default=false, $array=false, $uid=fals
  * @param type $data The data to be saved into the field.
  * @return boolean Returns false if the uid or field is not available so data cannot be written
  *
-function hostsite_set_user_field($field, $data) {
-  global $user;
-  if ($user->uid) {
-    $fieldname = (substr($field, 0, 6)==='field_' ? '' : 'field_') . $field;
-    $account = user_load($user->uid);
-    if (!isset($account->$fieldname))
-      return FALSE;
-    $field = $account->$fieldname;
-    $language = $account->language ? $account->language : 'und';
-    if (isset($field[$language]))
-      $field[$language][0]['value'] = $data;
-    else
-      $field[$language]=array(array('value' => $data));
-    $account->$fieldname = $field;
-    $info = field_info_field($fieldname);
-    $fields = array($info['id']);
-     
-    // Execute the storage function
-    field_sql_storage_field_storage_write('user', $account, 'update', $fields);
-     
-    // Clear field cache
-    cache_clear_all("field:user:$account->uid", 'cache_field');
-    return TRUE;
-  } 
-  return FALSE;
-}
-
-/**
+ * function hostsite_set_user_field($field, $data) {
+ * global $user;
+ * if ($user->uid) {
+ * $fieldname = (substr($field, 0, 6)==='field_' ? '' : 'field_') . $field;
+ * $account = user_load($user->uid);
+ * if (!isset($account->$fieldname))
+ * return FALSE;
+ * $field = $account->$fieldname;
+ * $language = $account->language ? $account->language : 'und';
+ * if (isset($field[$language]))
+ * $field[$language][0]['value'] = $data;
+ * else
+ * $field[$language]=array(array('value' => $data));
+ * $account->$fieldname = $field;
+ * $info = field_info_field($fieldname);
+ * $fields = array($info['id']);
+ *
+ * // Execute the storage function
+ * field_sql_storage_field_storage_write('user', $account, 'update', $fields);
+ *
+ * // Clear field cache
+ * cache_clear_all("field:user:$account->uid", 'cache_field');
+ * return TRUE;
+ * }
+ * return FALSE;
+ * }
+ *
+ * /**
  * Enable a library in rhw host website.
  * @param string $library Name of the library. The following are supported:
- * 
+ *
  * collapse - To enable collapsible fieldsets. Requires the class collapsible to be added to a fieldset.
  * jquery-ui - Adds the jQuery ui library with tab and datepicker support.
  *
-function hostsite_add_library($library) {
-  switch ($library) {
-    case 'collapse':
-      drupal_add_library('system', 'drupal.form');
-      drupal_add_library('system', 'drupal.collapse');
-      break;
-    case 'jquery-ui':
-      drupal_add_library('system', 'jquery-ui');
-      drupal_add_library('system', 'ui.datepicker');
-      drupal_add_library('system', 'ui.tabs');
-      drupal_add_library('system', 'ui.progressbar');
-      drupal_add_library('system', 'ui.sortable');
-      drupal_add_library('system', 'ui.dialog');
-      drupal_add_library('system', 'effects.fade');
-      drupal_add_library('system', 'effects.slide');
-      break;
-    default:
-      \Drupal::logger('iform')->notice("Unknown library requested: $library");
-  }
-}
-
-/**
+ * function hostsite_add_library($library) {
+ * switch ($library) {
+ * case 'collapse':
+ * drupal_add_library('system', 'drupal.form');
+ * drupal_add_library('system', 'drupal.collapse');
+ * break;
+ * case 'jquery-ui':
+ * drupal_add_library('system', 'jquery-ui');
+ * drupal_add_library('system', 'ui.datepicker');
+ * drupal_add_library('system', 'ui.tabs');
+ * drupal_add_library('system', 'ui.progressbar');
+ * drupal_add_library('system', 'ui.sortable');
+ * drupal_add_library('system', 'ui.dialog');
+ * drupal_add_library('system', 'effects.fade');
+ * drupal_add_library('system', 'effects.slide');
+ * break;
+ * default:
+ * \Drupal::logger('iform')->notice("Unknown library requested: $library");
+ * }
+ * }
+ *
+ * /**
  * Display a message in a way that can be unhooked from Drupal.
  * @param string $msg Message to display
  * @param string $type Message type, one of 'status', 'warning' and 'error'.
  */
-function hostsite_show_message($msg, $type='status') {
+function hostsite_show_message($msg, $type = 'status') {
   drupal_set_message($msg, $type);
 }
 
-/** 
+/**
  * Set a breadcrumb trail in the host site.
- * @param array $breadcrumb An associative array where keys are untranslated breadcrumb 
- * terms and values are the page to go to. The home page is automatically inserted at the 
+ * @param array $breadcrumb An associative array where keys are untranslated breadcrumb
+ * terms and values are the page to go to. The home page is automatically inserted at the
  * start and the current page at the end.
  *
-function hostsite_set_breadcrumb($breadcrumb) {
-  // convert to Drupal style breadcrumb array
-  $drupal_breadcrumb = array(l(lang::get('Home'),'<front>'));
-  foreach ($breadcrumb as $label => $path) {
-    $drupal_breadcrumb[] = l(lang::get($label), $path);
-  }
-  // add current page
-  $drupal_breadcrumb[] = drupal_get_title();
-  drupal_set_breadcrumb($drupal_breadcrumb);
-}
-
-/**
+ * function hostsite_set_breadcrumb($breadcrumb) {
+ * // convert to Drupal style breadcrumb array
+ * $drupal_breadcrumb = array(l(lang::get('Home'),'<front>'));
+ * foreach ($breadcrumb as $label => $path) {
+ * $drupal_breadcrumb[] = l(lang::get($label), $path);
+ * }
+ * // add current page
+ * $drupal_breadcrumb[] = drupal_get_title();
+ * drupal_set_breadcrumb($drupal_breadcrumb);
+ * }
+ *
+ * /**
  * Set the page title in the host site.
  * @param string $title The translated page title.
  */
@@ -909,8 +1008,9 @@ function hostsite_set_page_title($title) {
  */
 function hostsite_get_page_title($nid) {
   global $indicia_page_title;
-  if (isset($indicia_page_title))
+  if (isset($indicia_page_title)) {
     return $indicia_page_title;
+  }
   $node = \Drupal\node\Entity\Node::load($nid);
   return $node->getTitle();
 }
@@ -924,15 +1024,17 @@ function hostsite_get_page_title($nid) {
 function hostsite_get_node_field_value($nid, $field) {
   $node = \Drupal\node\Entity\Node::load($nid);
   // @todo Test, document, copy to D6 & 7
-  if ($field==='params') {
+  if ($field === 'params') {
     return $node->params;
-  } else {
-    if ($field !== 'title' && $field !== 'body' && !preg_match('/^field_/', $field))
+  }
+  else {
+    if ($field !== 'title' && $field !== 'body' && !preg_match('/^field_/', $field)) {
       $field = "field_$field";
+    }
     // @todo Do we need this test?
     if (!isset($node->$field)) {
       drupal_set_message("Could not find $field");
-      return false;
+      return FALSE;
     }
 
     return $node->$field->value;
@@ -944,11 +1046,12 @@ function hostsite_get_node_field_value($nid, $field) {
  * @param string $path The page path.
  * @param array $params The params to add to the URL.
  */
-function hostsite_goto_page($path, $params=false) {
+function hostsite_goto_page($path, $params = FALSE) {
   static $iform_redirected_to;
-  if ($path===$iform_redirected_to) {
+  if ($path === $iform_redirected_to) {
     drupal_set_message("Attempt to redirect to $path caused a redirect loop");
-  } else {
+  }
+  else {
     $response = hostsite_get_url($path, $params);
     $response->send();
     return;
@@ -960,12 +1063,14 @@ function hostsite_goto_page($path, $params=false) {
  * @param string $path The page path.
  * @param array $params The params to add to the URL.
  */
-function hostsite_get_url($path, $params=false) {
+function hostsite_get_url($path, $params = FALSE) {
   // @todo Does <front> need special handling?
-  $opts=array();
-  if ($params)
-    $opts['query']=$params;
-  return new RedirectResponse(\Drupal\Core\Url::fromUri("base:$path", array('query'=>$opts))->toString());
+  $opts = array();
+  if ($params) {
+    $opts['query'] = $params;
+  }
+  return new RedirectResponse(\Drupal\Core\Url::fromUri("base:$path", array('query' => $opts))
+    ->toString());
 }
 
 /**
@@ -975,10 +1080,10 @@ function hostsite_get_url($path, $params=false) {
  * @param mixed $default The default value to return if the config key does not exist.
  * @return mixed The config value.
  */
-function hostsite_get_config_value($context, $name, $default=false) {
+function hostsite_get_config_value($context, $name, $default = FALSE) {
   $configName = $context === 'site' ? 'system.site' : 'iform';
   $r = \Drupal::config($configName)->get($name);
-  return $r===NULL ? $default : $r;
+  return $r === NULL ? $default : $r;
 }
 
 /**
@@ -986,25 +1091,26 @@ function hostsite_get_config_value($context, $name, $default=false) {
  * @return string The path to the location for public file storage
  */
 function hostsite_get_public_file_path() {
-  return \Drupal::config('system.file')->get('path.public');
+  return PublicStream::basePath();
 }
 
 /**
- * Returns a list of website IDs that this website is allowed use data for. This is defined by the agreement between the 
+ * Returns a list of website IDs that this website is allowed use data for. This is defined by the agreement between the
  * 2 websites and depends on the exact task being performed.
  * @param array $readAuth Read authorisation tokens
- * @param string $purpose One of reporting, peer_review, verification, data_flow, moderation. Default is 'reporting'. If the 
+ * @param string $purpose One of reporting, peer_review, verification, data_flow, moderation. Default is 'reporting'. If the
  * agreement defines that the other website provides data to this website for this purpose, then the other website is included.
  * @return array List of website IDs that accesss is allowed for.
  */
-function iform_get_allowed_website_ids($readAuth, $purpose='reporting') {
+function iform_get_allowed_website_ids($readAuth, $purpose = 'reporting') {
   $websites = data_entry_helper::get_population_data(array(
     'table' => 'website',
-    'extraParams' => $readAuth+array('sharing' => $purpose),
+    'extraParams' => $readAuth + array('sharing' => $purpose),
   ));
   $websiteIds = array();
-  foreach ($websites as $website) 
+  foreach ($websites as $website) {
     $websiteIds[] = $website['id'];
+  }
   return $websiteIds;
 }
 
@@ -1014,43 +1120,43 @@ function iform_get_allowed_website_ids($readAuth, $purpose='reporting') {
  * to be created. We use a couple of custom extensions to allow these to be added to the Indicia
  * settings page.
  *
-function iform_variable_info($options) {
-  $variable['iform_master_checklist_id']=array(
-    'title'=>t('Master species checklist'),
-    'description'=>t('Select the species checklist used as an all species hierarchy.'),
-    'type'=>'number',
-    'subtype'=>'taxon_list.title',
-    'default'=>'',
-    'addToIndiciaSettingsPage'=>true
-  );
-  return $variable;
-}
-
-/**
+ * function iform_variable_info($options) {
+ * $variable['iform_master_checklist_id']=array(
+ * 'title'=>t('Master species checklist'),
+ * 'description'=>t('Select the species checklist used as an all species hierarchy.'),
+ * 'type'=>'number',
+ * 'subtype'=>'taxon_list.title',
+ * 'default'=>'',
+ * 'addToIndiciaSettingsPage'=>true
+ * );
+ * return $variable;
+ * }
+ *
+ * /**
  * Test whether update needs to run.
  * @return boolean TRUE if update needed else FALSE.
  *
-function iform_needs_update() {
-  $needs_update = &drupal_static(__FUNCTION__);
-  if (!isset($needs_update)) {
-    include_once DRUPAL_ROOT . "/includes/install.inc";
-    $version = drupal_get_installed_schema_version('iform');
-    if($version > 0 && $version < 7100) {
-      // Have to run update before iform_load() query can execute.
-      $message = t('The IForm module needs you to run '
-        . '<a href="@url">updates</a> now.', array('@url' => url('update.php')));
-      drupal_set_message($message, 'warning', FALSE);
-      $needs_update = TRUE;
-    }
-    else {
-      $needs_update = FALSE;
-    }
-  }
-  return $needs_update;
-
-}
-
-/**
+ * function iform_needs_update() {
+ * $needs_update = &drupal_static(__FUNCTION__);
+ * if (!isset($needs_update)) {
+ * include_once DRUPAL_ROOT . "/includes/install.inc";
+ * $version = drupal_get_installed_schema_version('iform');
+ * if($version > 0 && $version < 7100) {
+ * // Have to run update before iform_load() query can execute.
+ * $message = t('The IForm module needs you to run '
+ * . '<a href="@url">updates</a> now.', array('@url' => url('update.php')));
+ * drupal_set_message($message, 'warning', FALSE);
+ * $needs_update = TRUE;
+ * }
+ * else {
+ * $needs_update = FALSE;
+ * }
+ * }
+ * return $needs_update;
+ *
+ * }
+ *
+ * /**
  * Implements hook_token_info.
  * Extends the tokens available to support some tokens useful in the Indicia context,
  * for example a full page URL including the query parameters or a page image that is
@@ -1070,7 +1176,7 @@ function iform_token_info() {
     'description' => t('Tokens related to the current Indicia page.'),
   );
 
- $info['tokens']['current-iform-page'] = array(
+  $info['tokens']['current-iform-page'] = array(
     'full-url' => array(
       'name' => t('Full URL'),
       'description' => t('Full URL including the page query string parameters, excluding pagination and sort info.')
@@ -1116,12 +1222,13 @@ function iform_tokens($type, $tokens, array $data = array(), array $options = ar
       switch ($name) {
         case 'full-url':
           $uriParts = explode('?', $_SERVER['REQUEST_URI']);
-          if (count($uriParts)>1) {
+          if (count($uriParts) > 1) {
             parse_str($uriParts[1], $query);
             // we need to remove sort and paging parameters as they cause search engines to excessively spider
-            foreach ($query as $key=>$value) {
-              if (strpos($key, 'orderby')===0 || strpos($key, 'sortdir')===0 || strpos($key, 'page')===0)
+            foreach ($query as $key => $value) {
+              if (strpos($key, 'orderby') === 0 || strpos($key, 'sortdir') === 0 || strpos($key, 'page') === 0) {
                 unset($query[$key]);
+              }
             }
             $uriParts[1] = data_entry_helper::array_to_query_string($query);
           }
@@ -1133,14 +1240,17 @@ function iform_tokens($type, $tokens, array $data = array(), array $options = ar
           break;
         case 'image':
           global $iform_page_metadata;
-          if (isset($iform_page_metadata) && isset($iform_page_metadata['image']))
+          if (isset($iform_page_metadata) && isset($iform_page_metadata['image'])) {
             $replacements[$original] = $iform_page_metadata['image'];
-          else
+          }
+          else {
             $replacements[$original] = theme_get_setting('logo');
+          }
           break;
         case 'description':
-          if (isset($iform_page_metadata) && isset($iform_page_metadata['description']))
+          if (isset($iform_page_metadata) && isset($iform_page_metadata['description'])) {
             $replacements[$original] = $iform_page_metadata['description'];
+          }
           else {
             // Copy of the code for the node:summary token as a fallback
             if (!empty($data['node'])) {
@@ -1174,12 +1284,14 @@ function iform_tokens($type, $tokens, array $data = array(), array $options = ar
           }
           break;
         case 'latitude':
-          if (!empty($iform_page_metadata['latitude']))
+          if (!empty($iform_page_metadata['latitude'])) {
             $replacements[$original] = $iform_page_metadata['latitude'];
+          }
           break;
         case 'longitude':
-          if (!empty($iform_page_metadata['longitude']))
+          if (!empty($iform_page_metadata['longitude'])) {
             $replacements[$original] = $iform_page_metadata['longitude'];
+          }
           break;
       }
     }
