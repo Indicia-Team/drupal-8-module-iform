@@ -650,7 +650,6 @@ function iform_page_attachments(array &$attachments) {
       }
     }
     $nid = \Drupal::request()->attributes->get('node')->id();
-    drupal_set_message('adding iform/node_' . $nid);
     $attachments['#attached']['library'][] = "iform/node_$nid";
   }
 }
