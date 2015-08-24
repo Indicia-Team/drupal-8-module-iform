@@ -238,12 +238,12 @@ class SettingsForm extends FormBase {
     elseif (!empty($values['password'])) {
       // test the connection to the warehouse
       $urls = self::get_warehouse_urls($values);
-      data_entry_helper::$base_url = $urls['base_url'];
+      \data_entry_helper::$base_url = $urls['base_url'];
       // clear the cache if the linked warehouse changes
       if ($config->get('base_url') !== $urls['base_url'])
-        data_entry_helper::clear_cache();
-      $read_auth = data_entry_helper::get_read_auth($values['website_id'], $values['password']);
-      $test = data_entry_helper::get_population_data(array(
+        \data_entry_helper::clear_cache();
+      $read_auth = \data_entry_helper::get_read_auth($values['website_id'], $values['password']);
+      $test = \data_entry_helper::get_population_data(array(
         'table' => 'survey',
         'extraParams' => $read_auth + array('limit' => 0),
         'nocache' => true

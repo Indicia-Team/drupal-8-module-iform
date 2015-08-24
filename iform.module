@@ -211,18 +211,22 @@ function iform_node_presave(Drupal\Core\Entity\EntityInterface $entity) {
 */
 function iform_node_load($entities) {
   foreach ($entities as &$node) {
-    unset($node->params);
-    $node->params = array();
-    $params=json_decode($node->field_params->value, TRUE);
-    if (function_exists('iform_user_ui_options_preprocess_iform'))
-      iform_user_ui_options_preprocess_iform($params);
-    if (!is_array($params))
-      drupal_set_message(t('This page\'s configuration has not been stored correctly.') . ' ' .
+    if ($node->bundle()==='iform_page') {
+      unset($node->params);
+      $node->params = array();
+      $params = json_decode($node->field_params->value, TRUE);
+      if (function_exists('iform_user_ui_options_preprocess_iform')) {
+        iform_user_ui_options_preprocess_iform($params);
+      }
+      if (!is_array($params)) {
+        drupal_set_message(t('This page\'s configuration has not been stored correctly.') . ' ' .
           SafeMarkup::checkPlain(var_export($node->params, TRUE)), 'warning');
-    if (is_array($params)) {
-      // Merge the params into the loaded object
-      foreach ($params as $k => $v) {
-        $node->params[$k] = $v;
+      }
+      if (is_array($params)) {
+        // Merge the params into the loaded object
+        foreach ($params as $k => $v) {
+          $node->params[$k] = $v;
+        }
       }
     }
   }
@@ -649,8 +653,11 @@ function iform_page_attachments(array &$attachments) {
         $attachments['#attached']['library'][] = "iform/$resource";
       }
     }
-    $nid = \Drupal::request()->attributes->get('node')->id();
-    $attachments['#attached']['library'][] = "iform/node_$nid";
+    $node = \Drupal::request()->attributes->get('node');
+    if ($node) {
+      $nid = $node->id();
+      $attachments['#attached']['library'][] = "iform/node_$nid";
+    }
   }
 }
 
