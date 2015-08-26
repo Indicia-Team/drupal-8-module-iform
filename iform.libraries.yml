@@ -11,6 +11,7 @@ base:
     - core/jquery.ui.sortable
     - core/jquery.ui.datepicker
     - core/jquery.ui.progressbar
+    - core/jquery.ui.tabs
 admin:
   version: VERSION
   js:
