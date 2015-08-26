@@ -7,6 +7,12 @@ use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Core\Access\AccessResult;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
+const IFORM_BASE_RESOURCES = [
+  'jquery',
+  'jquery_ui',
+  'indiciaFns'
+];
+
 // @todo Implement features review code?
 // @todo Convert all variable_get and variable_set to non-version specific code, with a
 //   fix for indicia_ or iform_ prefix inconsistencies.
@@ -322,6 +328,7 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
   if ($entity->bundle() === 'iform_page') {
     global $language;
     iform_load_helpers(array('data_entry_helper', 'form_helper'));
+    // @todo Drupal 8 might allow us to be more intelligent rather than killing the entire page cache
     \Drupal::service('page_cache_kill_switch')->trigger();
 
     // @todo Handling of iform review mode
@@ -442,6 +449,52 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
  */
 function iform_library_info_build() {
   $libraries = [];
+  iform_build_client_helper_libraries($libraries);
+  iform_build_node_specific_libraries($libraries);
+  \Drupal::logger('iform')
+    ->notice(var_export(array_keys($libraries), true));
+  return $libraries;
+}
+
+function iform_build_client_helper_libraries(&$libraries) {
+  iform_load_helpers(array('data_entry_helper'));
+  $resources = data_entry_helper::get_resources();
+  $fullPaths = array(data_entry_helper::$css_path, data_entry_helper::$js_path, 'http://');
+  $shortPaths = array('media/css/', 'media/js/', '//');
+  foreach ($resources as $name => $def) {
+    // some resources are always included, forcing the Drupal version of jQuery.
+    if (in_array($name, IFORM_BASE_RESOURCES))
+      continue;
+    // skip the fancybox resource as we swap to v2
+    if ($name==='fancybox')
+      continue;
+    $libraries[$name] = [
+      'version' => 'VERSION'
+    ];
+    if (!empty($def['javascript'])) {
+      $libraries[$name]['js'] = [];
+      foreach ($def['javascript'] as $js) {
+        $libraries[$name]['js'][str_replace($fullPaths, $shortPaths, $js)] = [];
+      }
+    }
+    if (!empty($def['stylesheets'])) {
+      $libraries[$name]['css'] = ['component' => []];
+      foreach ($def['stylesheets'] as $css) {
+        $libraries[$name]['css']['component'][str_replace($fullPaths, $shortPaths, $css)] = [];
+      }
+    }
+    if (!empty($def['deps'])) {
+      $libraries[$name]['dependencies'] = [];
+      foreach ($def['deps'] as $dependency) {
+        if (in_array($dependency, IFORM_BASE_RESOURCES))
+          continue;
+        $libraries[$name]['dependencies'][] = "iform/$dependency";
+      }
+    }
+  }
+}
+
+function iform_build_node_specific_libraries(&$libraries) {
   $nids = \Drupal::entityQuery('node')
     ->condition('type', 'iform_page')
     ->execute();
@@ -457,16 +510,16 @@ function iform_library_info_build() {
       'version' => 'VERSION',
       'js' => [],
       'css' => [
-        'module' => []
+        'component' => []
       ]
     ];
     // Prebuilt form specific CSS
     if (file_exists("$helperPath/prebuilt_forms/css/$form.css")) {
-      $libraries[$lib]['css']['module']["client_helpers/prebuilt_forms/css/$form.css"] = [];
+      $libraries[$lib]['css']['component']["client_helpers/prebuilt_forms/css/$form.css"] = [];
     }
     // Node specific CSS
     if (file_exists("$filePath/indicia/css/node.$nid.css")) {
-      $libraries[$lib]['css']['module']["/$filePath/indicia/css/node.$nid.css"] = [];
+      $libraries[$lib]['css']['component']["/$filePath/indicia/css/node.$nid.css"] = [];
     }
     if (!empty($node->params['additional_css'])) {
       $cssFiles = data_entry_helper::explode_lines($node->params['additional_css']);
@@ -502,8 +555,6 @@ function iform_library_info_build() {
       unset($libraries[$lib]);
     }
   }
-  \Drupal::logger('iform')->notice(var_export($libraries, TRUE));
-  return $libraries;
 }
 
 function iform_handle_posted_form($node, $args) {
@@ -641,15 +692,12 @@ function _iform_apply_variable_to_args($variable, &$args, $config) {
 function iform_page_attachments(array &$attachments) {
   if (class_exists('helper_base')) {
     $attachments['#attached']['library'][] = 'iform/base';
-    $resourcesIncludedInBase = [
-      'jquery',
-      'jquery_ui',
-      'indiciaFns',
-      'dynamic_page'
-    ];
     foreach (helper_base::$required_resources as $resource) {
+      // switch to Fancybox v2 since D8 always uses a more recent jQuery version than v1 supports
+      if ($resource==='fancybox')
+        $resource .= '2';
       // exclude resources covered by iform/base
-      if (!in_array($resource, $resourcesIncludedInBase)) {
+      if (!in_array($resource, IFORM_BASE_RESOURCES)) {
         $attachments['#attached']['library'][] = "iform/$resource";
       }
     }
