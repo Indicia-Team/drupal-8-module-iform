@@ -1,0 +1,4 @@
+iform ajax proxy passthrough:
+  title: 'IForm AJAX Proxy passthrough'
+  description: 'IForm AJAX Proxy passthrough.'
+  restrict access: TRUE
