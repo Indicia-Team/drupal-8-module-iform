@@ -928,7 +928,8 @@ function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid 
   }
   // do we need to load a different user account, e.g. if viewing another user's details?
   $differentUser = ($uid !== FALSE && $uid !== $account->id());
-  $account = $differentUser ? \Drupal\user\Entity\User::load($uid) : $account;
+  $uid = ($uid === FALSE) ? $account->id() : $uid;
+  $account = \Drupal\user\Entity\User::load($uid);
   // Only load the account's language if inspecting another user, else use the UI language.
   if ($field === 'language') {
     // @todo Test loading user's language under i18n environment
