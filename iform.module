@@ -830,6 +830,10 @@ function iform_load_helpers(array $files) {
       helper_config::$base_url = $config->get('base_url');
       helper_config::$geoserver_url = $config->get('geoserver_url');
     }
+    if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS']!=='off') {
+      helper_config::$base_url = preg_replace('/^http:/', 'https:', helper_config::$base_url);
+      helper_config::$geoserver_url = preg_replace('/^http:/', 'https:', helper_config::$geoserver_url);
+    }
     if (!helper_base::$cache_folder) {
       // path unique to the warehouse, so no problems if we switch warehouse
       $folder = preg_replace("/[^a-zA-Z0-9]+/", "", helper_base::$base_url);
