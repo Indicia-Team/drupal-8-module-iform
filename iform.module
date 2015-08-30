@@ -443,19 +443,33 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
 }
 
 /**
- * Dynamically build a Drupal asset library for each iform page that has custom CSS or
- * JS.
+ * Implements hook_library_info_build.
+ *
+ * Dynamically build a set of Drupal 8 asset libraries. In Drupal 8, drupal_add_js and
+ * drupal_add_css are removed with the definition of libraries to define the assets required
+ * now the preferred way forward. This method creates a list of libraries that might be
+ * required by the Indicia forms module, including libraries for the general client helper
+ * code, libraries containing JS and CSS specific to each node, and libraries for the
+ * custom user interface extension classes where these have JS or CSS files of their
+ * own.
  * @return array Libraries to create
  */
 function iform_library_info_build() {
   $libraries = [];
   iform_build_client_helper_libraries($libraries);
   iform_build_node_specific_libraries($libraries);
+  iform_build_extension_libraries($libraries);
   \Drupal::logger('iform')
     ->notice(var_export(array_keys($libraries), true));
   return $libraries;
 }
 
+/**
+ * Creates the asset libraries for Drupal which provide the JS and CSS files for
+ * client helper resource.
+ * @param $libraries Array of library definitions to which the required libraries will
+ * be appended.
+ */
 function iform_build_client_helper_libraries(&$libraries) {
   iform_load_helpers(array('data_entry_helper'));
   $resources = data_entry_helper::get_resources();
@@ -494,6 +508,12 @@ function iform_build_client_helper_libraries(&$libraries) {
   }
 }
 
+/**
+ * Creates the asset libraries for Drupal which provide the JS and CSS files specific
+ * to each node.
+ * @param $libraries Array of library definitions to which the required libraries will
+ * be appended.
+ */
 function iform_build_node_specific_libraries(&$libraries) {
   $nids = \Drupal::entityQuery('node')
     ->condition('type', 'iform_page')
@@ -555,6 +575,16 @@ function iform_build_node_specific_libraries(&$libraries) {
       unset($libraries[$lib]);
     }
   }
+}
+
+/**
+ * Creates the asset libraries for Drupal which provide the JS and CSS files for each
+ * user interface extension class.
+ * @param $libraries Array of library definitions to which the required libraries will
+ * be appended.
+ */
+function iform_build_extension_libraries($libraries) {
+
 }
 
 function iform_handle_posted_form($node, $args) {
