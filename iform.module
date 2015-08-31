@@ -1148,7 +1148,7 @@ function hostsite_goto_page($path, $params = FALSE) {
     drupal_set_message("Attempt to redirect to $path caused a redirect loop");
   }
   else {
-    $response = hostsite_get_url($path, $params);
+    $response = new RedirectResponse(hostsite_get_url($path, $params));
     $response->send();
     return;
   }
@@ -1165,8 +1165,7 @@ function hostsite_get_url($path, $params = FALSE) {
   if ($params) {
     $opts['query'] = $params;
   }
-  return new RedirectResponse(\Drupal\Core\Url::fromUri("base:$path", $opts)
-    ->toString());
+  return \Drupal\Core\Url::fromUri("base:$path", $opts)->toString();
 }
 
 /**
