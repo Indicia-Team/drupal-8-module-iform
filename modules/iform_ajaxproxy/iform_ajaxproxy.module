@@ -21,7 +21,7 @@ use Drupal\Core\Url;
 function iform_ajaxproxy_url($nid, $index) {
   return Url::fromRoute('iform_ajaxproxy.callback', array(),
     array('absolute' => TRUE, 'query' => array(
-      'node' => $nid ? '' : $nid, 'index' => $index
+      'node' => empty($nid) ? '' : $nid, 'index' => $index
     )))->toString();
 }
 
