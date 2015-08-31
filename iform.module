@@ -443,22 +443,129 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
 }
 
 /**
+ * When an Indicia form sends POST data back, this method handles the submission of the
+ * data to the warehouse.
+ * @param $node
+ * @param $args
+ * @return string|void
+ */
+function iform_handle_posted_form($node, $args) {
+  $iform = $node->field_iform->value;
+  $r = '';
+  if ($_POST && (array_key_exists('website_id', $_POST)) && method_exists("iform_$iform", 'get_submission')) {
+    $helperPath = realpath(iform_client_helpers_path());
+    $nid = $node->id();
+    if (!empty($_POST['delete-button'])) {
+      $_POST['deleted'] = 't';
+      $msg = lang::get('The record has been deleted.');
+    }
+    else {
+      $msg = lang::get('Thank you. Your records have been saved to the database.');
+    }
+    // Ask the form to submit itself.
+    try {
+      // attach the path to the input form. It'll just get skipped if we are not posting a sample.
+      $_POST['sample:input_form'] = trim(\Drupal::service('path.alias_manager')
+        ->getAliasByPath("/node/$nid"), '/');
+      $s = call_user_func(array(
+        "iform_$iform",
+        'get_submission'
+      ), $_POST, $args, $nid);
+    } catch (Exception $e) {
+      \Drupal::logger('iform')
+        ->notice('Exception occurred during build of form submission: ' . $e->getMessage());
+      drupal_set_message(t('An error occurred whilst saving the new site details.'));
+      unset($s);
+    }
+    // And allow the form to dynamically set the destination after post
+    if (!empty($_POST['redirect_on_success'])) {
+      $args['redirect_on_success'] = $_POST['redirect_on_success'];
+    }
+    if (method_exists("iform_$iform", 'get_redirect_on_success')) {
+      $redirect = call_user_func(array(
+        "iform_$iform",
+        'get_redirect_on_success'
+      ), $_POST, $args);
+      if (!empty($redirect)) {
+        $args['redirect_on_success'] = $redirect;
+      }
+    }
+    // if for some reason the iform gives back an empty submission, ignore it
+    if (isset($s) && $s) {
+      $errors = array();
+      // does this Drupal node have any in-built validation code?
+      if (method_exists("iform_$iform", 'get_validation_errors')) {
+        $errors = call_user_func(array(
+          "iform_$iform",
+          'get_validation_errors'
+        ), $_POST, $args);
+      }
+      // does this Drupal node have any custom validation code?
+      if (file_exists("$helperPath/prebuilt_forms/validation/validate.$nid.php")) {
+        require_once "$helperPath/prebuilt_forms/validation/validate.$nid.php";
+        $errors = array_merge($errors, iform_custom_validation($_POST));
+      }
+      if (!empty($errors)) {
+        $r .= data_entry_helper::dump_errors(array('errors' => $errors));
+      }
+      else {
+        $response = data_entry_helper::forward_post_to('save', $s);
+        // Does the form redirect after success?
+        if (is_array($response) && array_key_exists('success', $response) &&
+          array_key_exists('redirect_on_success', $args) && $args['redirect_on_success']
+        ) {
+          if (!isset($args['message_after_save']) || $args['message_after_save']) {
+            drupal_set_message($msg);
+          }
+          $parts = explode('?', $args['redirect_on_success'], 2);
+          $url = array_shift($parts); // first item removed from array
+          if (count($parts)) {
+            $parts = explode('#', $parts[0], 2);
+            $queryStr = array_shift($parts); // info between the ? and # is the query string
+            // Get an array of the redirect_on_success specified query string params
+            parse_str($queryStr, $params);
+          }
+          else {
+            $parts = explode('#', $url, 2); // split bookmark fragment off
+            $url = array_shift($parts);
+            $params = array();
+          }
+          // Merge the information about the saved record in
+          $params = array_merge(array(
+            'table' => $response['outer_table'],
+            'id' => $response['outer_id']
+          ), $params);
+          $options = array('query' => $params);
+          // anything left in $parts is the bookmark
+          if (count($parts)) {
+            $options['fragment'] = $parts[0];
+          }
+          return hostsite_goto_page($url, $options);
+        }
+        elseif (!isset($args['message_after_save']) || $args['message_after_save'] || !array_key_exists('success', $response)) {
+          // This dumps errors, and/or a success message if no redirection.
+          $r .= data_entry_helper::dump_errors($response, TRUE);
+        }
+      }
+    }
+  }
+  return $r;
+}
+
+/**
  * Implements hook_library_info_build.
  *
  * Dynamically build a set of Drupal 8 asset libraries. In Drupal 8, drupal_add_js and
  * drupal_add_css are removed with the definition of libraries to define the assets required
  * now the preferred way forward. This method creates a list of libraries that might be
  * required by the Indicia forms module, including libraries for the general client helper
- * code, libraries containing JS and CSS specific to each node, and libraries for the
- * custom user interface extension classes where these have JS or CSS files of their
- * own.
+ * code and libraries containing JS and CSS specific to each node.
  * @return array Libraries to create
  */
 function iform_library_info_build() {
   $libraries = [];
   iform_build_client_helper_libraries($libraries);
   iform_build_node_specific_libraries($libraries);
-  iform_build_extension_libraries($libraries);
   \Drupal::logger('iform')
     ->notice(var_export(array_keys($libraries), true));
   return $libraries;
@@ -569,125 +676,25 @@ function iform_build_node_specific_libraries(&$libraries) {
     if (file_exists("$filePath/indicia/js/node.$nid.js")) {
       $libraries[$lib]['js']["/$filePath/indicia/js/node.$nid.js"] = [];
     }
-
+    // Extension classes can be referred to in the form structure parameter of any page
+    // and can contain JS or CSS code in addition to the PHP class.
+    if (!empty($node->params['structure'])) {
+      if (preg_match('/\[[a-z_]+\.[a-z_]+\]/', $node->params['structure'], $extensions)) {
+        foreach ($extensions as $extension) {
+          preg_match('/\[(?P<class>[a-z_]+)/', $extension, $matches);
+          if (file_exists("$helperPath/prebuilt_forms/extensions/$matches[class].js"))
+            $libraries[$lib]['js']["client_helpers/prebuilt_forms/extensions/$matches[class].js"] = [];
+          if (file_exists("$helperPath/prebuilt_forms/extensions/$matches[class].css")) {
+            $libraries[$lib]['css']['component']["client_helpers/prebuilt_forms/extensions/$matches[class].css"] = [];
+          }
+        }
+      }
+    }
     // Skip any unnecessary empty libraries
     if (empty($libraries[$lib]['css']['module']) && empty($libraries[$lib]['js'])) {
       unset($libraries[$lib]);
     }
   }
-}
-
-/**
- * Creates the asset libraries for Drupal which provide the JS and CSS files for each
- * user interface extension class.
- * @param $libraries Array of library definitions to which the required libraries will
- * be appended.
- */
-function iform_build_extension_libraries($libraries) {
-
-}
-
-function iform_handle_posted_form($node, $args) {
-  $iform = $node->field_iform->value;
-  $r = '';
-  if ($_POST && (array_key_exists('website_id', $_POST)) && method_exists("iform_$iform", 'get_submission')) {
-    $helperPath = realpath(iform_client_helpers_path());
-    $nid = $node->id();
-    if (!empty($_POST['delete-button'])) {
-      $_POST['deleted'] = 't';
-      $msg = lang::get('The record has been deleted.');
-    }
-    else {
-      $msg = lang::get('Thank you. Your records have been saved to the database.');
-    }
-    // Ask the form to submit itself.
-    try {
-      // attach the path to the input form. It'll just get skipped if we are not posting a sample.
-      $_POST['sample:input_form'] = trim(\Drupal::service('path.alias_manager')
-        ->getAliasByPath("/node/$nid"), '/');
-      $s = call_user_func(array(
-        "iform_$iform",
-        'get_submission'
-      ), $_POST, $args, $nid);
-    } catch (Exception $e) {
-      \Drupal::logger('iform')
-        ->notice('Exception occurred during build of form submission: ' . $e->getMessage());
-      drupal_set_message(t('An error occurred whilst saving the new site details.'));
-      unset($s);
-    }
-    // And allow the form to dynamically set the destination after post
-    if (!empty($_POST['redirect_on_success'])) {
-      $args['redirect_on_success'] = $_POST['redirect_on_success'];
-    }
-    if (method_exists("iform_$iform", 'get_redirect_on_success')) {
-      $redirect = call_user_func(array(
-        "iform_$iform",
-        'get_redirect_on_success'
-      ), $_POST, $args);
-      if (!empty($redirect)) {
-        $args['redirect_on_success'] = $redirect;
-      }
-    }
-    // if for some reason the iform gives back an empty submission, ignore it
-    if (isset($s) && $s) {
-      $errors = array();
-      // does this Drupal node have any in-built validation code?
-      if (method_exists("iform_$iform", 'get_validation_errors')) {
-        $errors = call_user_func(array(
-          "iform_$iform",
-          'get_validation_errors'
-        ), $_POST, $args);
-      }
-      // does this Drupal node have any custom validation code?
-      if (file_exists("$helperPath/prebuilt_forms/validation/validate.$nid.php")) {
-        require_once "$helperPath/prebuilt_forms/validation/validate.$nid.php";
-        $errors = array_merge($errors, iform_custom_validation($_POST));
-      }
-      if (!empty($errors)) {
-        $r .= data_entry_helper::dump_errors(array('errors' => $errors));
-      }
-      else {
-        $response = data_entry_helper::forward_post_to('save', $s);
-        // Does the form redirect after success?
-        if (is_array($response) && array_key_exists('success', $response) &&
-          array_key_exists('redirect_on_success', $args) && $args['redirect_on_success']
-        ) {
-          if (!isset($args['message_after_save']) || $args['message_after_save']) {
-            drupal_set_message($msg);
-          }
-          $parts = explode('?', $args['redirect_on_success'], 2);
-          $url = array_shift($parts); // first item removed from array
-          if (count($parts)) {
-            $parts = explode('#', $parts[0], 2);
-            $queryStr = array_shift($parts); // info between the ? and # is the query string
-            // Get an array of the redirect_on_success specified query string params
-            parse_str($queryStr, $params);
-          }
-          else {
-            $parts = explode('#', $url, 2); // split bookmark fragment off
-            $url = array_shift($parts);
-            $params = array();
-          }
-          // Merge the information about the saved record in
-          $params = array_merge(array(
-            'table' => $response['outer_table'],
-            'id' => $response['outer_id']
-          ), $params);
-          $options = array('query' => $params);
-          // anything left in $parts is the bookmark
-          if (count($parts)) {
-            $options['fragment'] = $parts[0];
-          }
-          return hostsite_goto_page($url, $options);
-        }
-        elseif (!isset($args['message_after_save']) || $args['message_after_save'] || !array_key_exists('success', $response)) {
-          // This dumps errors, and/or a success message if no redirection.
-          $r .= data_entry_helper::dump_errors($response, TRUE);
-        }
-      }
-    }
-  }
-  return $r;
 }
 
 /**
