@@ -1177,7 +1177,7 @@ function hostsite_get_url($path, $params = FALSE) {
  * @return mixed The config value.
  */
 function hostsite_get_config_value($context, $name, $default = FALSE) {
-  $configName = $context === 'site' ? 'system.site' : 'iform';
+  $configName = $context === 'site' ? 'system.site' : 'indicia.settings';
   $r = \Drupal::config($configName)->get($name);
   return $r === NULL ? $default : $r;
 }
