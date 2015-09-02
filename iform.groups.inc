@@ -15,7 +15,7 @@
  */
 function iform_join_group($title='') {
   if (empty($title)) {
-    drupal_set_message(t('The path you visited requires the name of the group to join in the path.'));
+    drupal_set_message(t('The path you visited requires the name of the group to join in the path.'), 'msg', true);
     hostsite_goto_page('<front>');
   }
   // Perform same sanitisation of the group name as will be performed on db. Should be already done,
@@ -36,7 +36,8 @@ function iform_join_group($title='') {
   }
   global $user;
   if (!count($groups) > 1) {
-    drupal_set_message(t('The group you are trying to join has a duplicate name with another group so cannot be joined in this way.'));
+    drupal_set_message(t('The group you are trying to join has a duplicate name with another ' .
+        'group so cannot be joined in this way.'), 'msg', true);
     hostsite_goto_page('<front>');
   }
   $group = $groups[0];
@@ -44,7 +45,8 @@ function iform_join_group($title='') {
     // User is logged in
     $indiciaUserId = hostsite_get_user_field('indicia_user_id');
     if (!$indiciaUserId) {
-      drupal_set_message(t("Before joining $group[title], please set your surname on your user account profile."));
+      drupal_set_message(t("Before joining $group[title], please set your surname on your ' .
+         'user account profile."), 'msg', true);
       hostsite_goto_page('<front>');
     }
     $showJoinMessage=true;
@@ -108,7 +110,7 @@ function iform_show_group_join_success($group, $auth, $showJoinMessage=true, $gr
   if (count($pageData)===1) {
     // Only one page so go straight to it
     if ($showJoinMessage)
-      hostsite_show_message($welcome);
+      hostsite_show_message($welcome, 'msg', true);
     hostsite_goto_page($pageData[0]['path']);
   } else {
     // Multiple pages, let the user choose
@@ -180,8 +182,8 @@ function iform_join_public_group($group, $writeAuth, $indiciaUserId, $groupsUser
   else {
     drupal_set_message(t("An error occurred whilst trying to join the @group.",
       array('@group'=>iform_readable_group_title($group))), 'warning');
-    watchdog('groups', "An error occurred whilst trying to join $group[title] for {$user->name}.");
-    watchdog('groups', var_export($r, true));
+    \Drupal::logger('iform')->notice("An error occurred whilst trying to join $group[title] for {$user->name}.");
+    \Drupal::logger('iform')->notice(var_export($r, true));
     return false;
   }
 }

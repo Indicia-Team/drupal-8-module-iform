@@ -158,7 +158,6 @@ function get_custom_param_values($node) {
     ob_start();
     $params = form_helper::get_form_parameters($_POST['iform']);
     ob_end_clean();
-    $idx=0;
     $values = array();
     // always want the website id and password
     $values['website_id']=$_POST['website_id'];
@@ -706,6 +705,24 @@ function _iform_apply_variable_to_args($variable, &$args, $config) {
   $default = $config->get($variable);
   if (isset($args[$variable]) && ($args[$variable] == t('default') || $args[$variable] == 'default' || $args[$variable] == '') && !empty($default)) {
     $args[$variable] = $default;
+  }
+}
+
+/**
+ * Implements hook_preprocess_page.
+ * We use this to detect messages set before a redirection and show them on the redirected page.
+ * A bit of custom handling required here because under Drupal 8 drupal_set_message messages
+ * are cleared when you redirect, so we have to store them in a custom session var to ensure
+ * they aren't lost.
+ * @param $variables
+ */
+function iform_preprocess_page(&$variables){
+  if (isset($_SESSION['iform-messages']) && $_SESSION['iform-redirect-from'] !== hostsite_get_current_page_path()) {
+    foreach ($_SESSION['iform-messages'] as $message) {
+      drupal_set_message($message[0]);
+    }
+    \Drupal::logger('iform')->notice('cleared');
+    unset ($_SESSION['iform-messages']);
   }
 }
 

@@ -125,9 +125,21 @@ function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid 
  * Display a message in a way that can be unhooked from Drupal.
  * @param string $msg Message to display
  * @param string $type Message type, one of 'status', 'warning' and 'error'.
+ * @param boolean $redirect Set to true if the page is about to be redirected and the
+ * message needs to be shown after redirecting, since Drupal 8's method of redirection
+ * clears the messages so we need to save the message to be picked up after the redirection.
+ *
  */
-function hostsite_show_message($msg, $type = 'status') {
-  drupal_set_message($msg, $type);
+function hostsite_show_message($msg, $type = 'status', $redirect=false) {
+  if ($redirect) {
+    // If about to redirect, then save the message for later.
+    if (!isset($_SESSION['iform-messages']))
+      $_SESSION['iform-messages'] = [];
+    $_SESSION['iform-messages'][] = array($msg, $type);
+    $_SESSION['iform-redirect-from'] = hostsite_get_current_page_path();
+  } else {
+    drupal_set_message($msg, $type);
+  }
 }
 
 /**
@@ -209,7 +221,6 @@ function hostsite_goto_page($path, $params = FALSE) {
   else {
     $response = new RedirectResponse(hostsite_get_url($path, $params));
     $response->send();
-    return;
   }
 }
 
