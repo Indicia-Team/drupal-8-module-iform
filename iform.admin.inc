@@ -62,7 +62,7 @@ function iform_configuration_form($form, &$form_state, $url='', $submit_handler=
           ob_end_clean();
         } catch (Exception $e) {
           ob_end_clean();
-          watchdog('iform', 'Error loading iform settings for '.$config['title'].': '.$e->getMessage());
+          \Drupal::logger('iform')->notice('Error loading iform settings for '.$config['title'].': '.$e->getMessage());
           drupal_set_message("Unable to load the control $config[title], probably because the warehouse connection is not correctly configured. ");
           unset($ctrls[$var]);
         }
