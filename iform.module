@@ -399,6 +399,7 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
       } catch (Exception $e) {
         \Drupal::logger('iform')->notice('Error occurred loading form');
         \Drupal::logger('iform')->notice($e->getMessage());
+        $r .= $e->getMessage();
       }
       ob_end_clean();
       $build['iform'] = array(
