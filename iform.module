@@ -159,6 +159,27 @@ function iform_site_has_group_functionality() {
 }
 
 /**
+ * Retrieve the available pages which can be linked to a recording group and will
+ * therefore be filtered to the content of that group.
+ * @param integer $group_id ID of the group to load available pages for
+ * @return array Array of pages titles keyed by node ID.
+ */
+function hostsite_get_group_compatible_pages($group_id) {
+  $query = \Drupal::entityQuery('node')
+    ->condition('type', 'iform_page')
+    ->condition('field_available_for_groups', '1');
+  $node_storage = \Drupal::entityManager()->getStorage('node');
+  $nodes = $node_storage->loadMultiple($query->execute());
+  $r = array();
+  foreach ($nodes as $node) {
+    // some group pages are limited to a single group
+    if ($node->field_limit_to_group_id->value === null || $node->field_limit_to_group_id->value === $group_id)
+      $r[$node->id()] = $node->title->value;
+  }
+  return $r;
+}
+
+/**
  * Retrieves the parameters required by an iform and creates a JSON string to store
  * them in the database. The iform data must be in the $_POST array or in the node if
  * not in the $_POST.
@@ -413,7 +434,6 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
       } catch (Exception $e) {
         \Drupal::logger('iform')->notice('Error occurred loading form');
         \Drupal::logger('iform')->notice($e->getMessage());
-        \Drupal::logger('iform')->notice(print_r($e->getTrace(), TRUE));
       }
       ob_end_clean();
       $build['iform'] = array(
@@ -1100,12 +1120,11 @@ function hostsite_set_page_title($title) {
 
 /**
  * Retrieves the current node page's title
- * @todo Ensure replicated in D6 & 7
  * @param $nid Node ID
  * @return string
  */
 function hostsite_get_page_title($nid) {
-  global $indicia_page_title;
+  static $indicia_page_title;
   if (isset($indicia_page_title)) {
     return $indicia_page_title;
   }
@@ -1157,17 +1176,28 @@ function hostsite_goto_page($path, $params = FALSE) {
 }
 
 /**
- * Goto a page on the host site.
+ * Retrieve the URL for a page identified by a path (e.g. node/1 or an alias).
  * @param string $path The page path.
  * @param array $params The params to add to the URL.
  */
 function hostsite_get_url($path, $params = FALSE) {
-  // @todo Does <front> need special handling?
+  if ($path==='<front>')
+    $path = '';
   $opts = array();
   if ($params) {
     $opts['query'] = $params;
   }
   return \Drupal\Core\Url::fromUri("base:$path", $opts)->toString();
+}
+
+/**
+ * Retrieves the path for the current page.
+ * @return string The current page path.
+ */
+function hostsite_get_current_page_path() {
+  $path = \Drupal::service('path.current')->getPath();
+  $alias = \Drupal::service('path.alias_manager')->getAliasByPath($path);
+  return trim($alias, '/');
 }
 
 /**
