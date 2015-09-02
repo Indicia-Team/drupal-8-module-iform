@@ -278,7 +278,7 @@ function hostsite_has_group_functionality() {
  * Retrieve the available pages which can be linked to a recording group and will
  * therefore be filtered to the content of that group.
  * @param integer $group_id ID of the group to load available pages for
- * @return array Array of pages titles keyed by node ID.
+ * @return array Array of pages titles keyed by node path.
  */
 function hostsite_get_group_compatible_pages($group_id) {
   $query = \Drupal::entityQuery('node')
@@ -289,8 +289,10 @@ function hostsite_get_group_compatible_pages($group_id) {
   $r = array();
   foreach ($nodes as $node) {
     // some group pages are limited to a single group
-    if ($node->field_limit_to_group_id->value === null || $node->field_limit_to_group_id->value === $group_id)
-      $r[$node->id()] = $node->title->value;
+    if ($node->field_limit_to_group_id->value === null || $node->field_limit_to_group_id->value === $group_id) {
+      $alias = \Drupal::service('path.alias_manager')->getAliasByPath('/node/'.$node->id());
+      $r[trim($alias, '/')] = $node->title->value;
+    }
   }
   return $r;
 }
