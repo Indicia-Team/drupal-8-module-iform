@@ -8,7 +8,7 @@
 namespace Drupal\iform\Form;
 
 use Drupal\Core\Form\FormBase;
-use Drupal\Component\Utility;
+use Drupal\Component\Utility\Xss;
 
 class SettingsForm extends FormBase {
 
@@ -102,7 +102,7 @@ class SettingsForm extends FormBase {
         'Otherwise leave the password blank to keep your previous settings.');
     $form['password'] = array(
       '#type' => 'password_confirm',
-      '#description' => Utility\SafeMarkup::checkPlain($pwd_description),
+      '#description' => $pwd_description,
       '#required' => $pwd_required,
     );
     $form['api_keys'] = array(
@@ -147,8 +147,11 @@ class SettingsForm extends FormBase {
     $form['map']['instruct'] = array(
       '#markup' => '<p>' . t('Pan and zoom this map to set the default map position for your survey input and mapping pages.') . '</p>'
     );
+    // kill the JavaScript wrap as Drupal 8 doesn't like outputting the JS under #markup
+    global $indicia_templates;
+    $indicia_templates['jsWrap'] = '{content}';
     $form['map']['panel'] = array(
-      '#markup' => Utility\SafeMarkup::set(\map_helper::map_panel(array(
+      '#markup' => Xss::filterAdmin(\map_helper::map_panel(array(
         'width' => '100%',
         'height' => 500,
         'presetLayers' => array('osm'),

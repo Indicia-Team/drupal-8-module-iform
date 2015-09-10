@@ -8,7 +8,6 @@
 namespace Drupal\iform\Form;
 
 use Drupal\Core\Form\FormBase;
-use Drupal\Component\Utility\SafeMarkup;
 
 class DiagnosticsForm extends FormBase {
 
@@ -25,8 +24,8 @@ class DiagnosticsForm extends FormBase {
   public function buildForm(array $form, \Drupal\Core\Form\FormStateInterface $form_state) {
     $form = array();
     if (!\iform_check_helper_config_exists()) {
-      drupal_set_message(check_plain(t("Please create the file helper_config.php in the !path folder on the server.",
-        array('!path' => iform_client_helpers_path()))), 'warning');
+      drupal_set_message(t("Please create the file helper_config.php in the !path folder on the server.",
+        array('!path' => iform_client_helpers_path())), 'warning');
       $output = t('No check performed');
     }
     else {
@@ -35,7 +34,7 @@ class DiagnosticsForm extends FormBase {
     }
 
     $form['instruction'] = array(
-      '#markup' => SafeMarkup::set($output)
+      '#markup' => $output
     );
 
     return $form;
