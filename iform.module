@@ -112,23 +112,23 @@ function iform_form_node_form_alter(&$form, \Drupal\Core\Form\FormStateInterface
     $connection = iform_get_connection_details($node);
     $readAuth = form_helper::get_read_auth($connection['website_id'], $connection['password']);
     $form['iform_forms']['picker'] = array(
-      '#markup' => SafeMarkup::set(form_helper::prebuilt_form_picker($readAuth, array(
+      '#markup' => SafeMarkup::format(form_helper::prebuilt_form_picker($readAuth, array(
         'form' => $iform,
         'website_id' => $connection['website_id'],
         'password' => $connection['password'],
         'needWebsiteInputs' => !$connection['using_drupal_vars'] || $config->get('allow_connection_override'),
         'available_for_groups' => $node->field_available_for_groups->value === '1',
         'limit_to_group_id' => isset($node->field_limit_to_group_id->value) ? $node->field_limit_to_group_id->value : NULL
-      )))
-    );
+      )), array()
+    ));
     if ($iform) {
       $form['form-params'] = array(
-        '#markup' => SafeMarkup::set(form_helper::prebuilt_form_params_form(array(
+        '#markup' => SafeMarkup::format(form_helper::prebuilt_form_params_form(array(
           'form' => $iform,
           // @todo Load params properly from node
           'currentSettings' => $node->params,
           'readAuth' => form_helper::get_read_auth($connection['website_id'], $connection['password'])
-        ))),
+        )), array()),
         '#prefix' => '<div id="form-params">',
         '#suffix' => '</div>',
         '#weight' => 36
@@ -404,7 +404,7 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
       }
       ob_end_clean();
       $build['iform'] = array(
-        '#markup' => SafeMarkup::set($r),
+        '#markup' => SafeMarkup::format($r, array()),
         '#weight' => 1,
         '#cache' => [
           'contexts' => [
