@@ -8,7 +8,8 @@ use Drupal\Core\Access\AccessResult;
 
 require_once 'iform.hostsite_api.inc';
 
-const IFORM_BASE_RESOURCES = [
+global $_iform_base_resources;
+$_iform_base_resources = [
   'jquery',
   'jquery_ui',
   'indiciaFns'
@@ -212,7 +213,7 @@ function iform_node_load($entities) {
       }
       if (!is_array($params)) {
         drupal_set_message(t('This page\'s configuration has not been stored correctly.') . ' ' .
-          SafeMarkup::checkPlain(var_export($node->params, TRUE)), 'warning');
+          $node->field_params->value, 'warning');
       }
       if (is_array($params)) {
         // Merge the params into the loaded object
@@ -565,12 +566,13 @@ function iform_library_info_build() {
  */
 function iform_build_client_helper_libraries(&$libraries) {
   iform_load_helpers(array('data_entry_helper'));
+  global $_iform_base_resources;
   $resources = data_entry_helper::get_resources();
   $fullPaths = array(data_entry_helper::$css_path, data_entry_helper::$js_path, 'http://');
   $shortPaths = array('media/css/', 'media/js/', '//');
   foreach ($resources as $name => $def) {
     // some resources are always included, forcing the Drupal version of jQuery.
-    if (in_array($name, IFORM_BASE_RESOURCES))
+    if (in_array($name, $_iform_base_resources))
       continue;
     // skip the fancybox resource as we swap to v2
     if ($name==='fancybox')
@@ -595,7 +597,7 @@ function iform_build_client_helper_libraries(&$libraries) {
     if (!empty($def['deps'])) {
       $libraries[$name]['dependencies'] = [];
       foreach ($def['deps'] as $dependency) {
-        if (in_array($dependency, IFORM_BASE_RESOURCES))
+        if (in_array($dependency, $_iform_base_resources))
           continue;
         $libraries[$name]['dependencies'][] = "iform/$dependency";
       }
@@ -734,13 +736,14 @@ function iform_preprocess_page(&$variables){
  */
 function iform_page_attachments(array &$attachments) {
   if (class_exists('helper_base')) {
+    global $_iform_base_resources;
     $attachments['#attached']['library'][] = 'iform/base';
     foreach (helper_base::$required_resources as $resource) {
       // switch to Fancybox v2 since D8 always uses a more recent jQuery version than v1 supports
       if ($resource==='fancybox')
         $resource .= '2';
       // exclude resources covered by iform/base
-      if (!in_array($resource, IFORM_BASE_RESOURCES)) {
+      if (!in_array($resource, $_iform_base_resources)) {
         $attachments['#attached']['library'][] = "iform/$resource";
       }
     }
@@ -931,6 +934,7 @@ function iform_media_folder_path() {
       $r = str_replace('modules', 'libraries', $r);
     }
     $_iform_media_folder_path = $r;
+    drupal_set_message($_iform_media_folder_path);
     return $r;
   }
 }
