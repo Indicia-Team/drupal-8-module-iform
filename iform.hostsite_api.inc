@@ -59,6 +59,16 @@ function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid 
 }
 
 /**
+ * Returns true if the current user is permitted to perform a named task.
+ * @param string $task
+ * @return boolean True if allowed
+ */
+function hostsite_user_has_permission($task, $uid = FALSE) {
+  $account = $uid ? \Drupal\user\Entity\User::load($uid) : \Drupal::currentUser();
+  return $account->hasPermission($task);
+}
+
+/**
  * Function that allows Indicia code to hook into the Drupal user profile to set a field value, without
  * introducing a Drupal code dependency.
  * @global type $user
@@ -269,7 +279,6 @@ function hostsite_get_config_value($context, $name, $default = FALSE) {
 function hostsite_get_public_file_path() {
   return PublicStream::basePath();
 }
-
 
 /**
  * Returns true if there is a form on this site for editing groups. This allows group
