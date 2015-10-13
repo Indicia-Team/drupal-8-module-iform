@@ -517,6 +517,8 @@ function iform_handle_posted_form($node, $args) {
             $url = array_shift($parts);
             $params = array();
           }
+          // pass through $_GET parameters
+          $params = array_merge($_GET, $params);
           // Merge the information about the saved record in
           $params = array_merge(array(
             'table' => $response['outer_table'],
