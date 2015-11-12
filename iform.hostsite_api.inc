@@ -316,3 +316,12 @@ function hostsite_get_group_compatible_pages($group_id) {
   }
   return $r;
 }
+
+/**
+ * Returns true if a Drupal module is enabled.
+ * @param string $module
+ * @return boolean True if enabled
+ */
+function hostsite_module_exists($module) {
+  return \Drupal::moduleHandler()->moduleExists($module);
+}
