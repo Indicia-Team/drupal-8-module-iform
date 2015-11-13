@@ -114,9 +114,10 @@ function iform_form_node_form_alter(&$form, \Drupal\Core\Form\FormStateInterface
     $form['iform_forms']['picker'] = array(
       '#markup' => SafeMarkup::format(form_helper::prebuilt_form_picker($readAuth, array(
         'form' => $iform,
+        'base_url' => $connection['base_url'],
         'website_id' => $connection['website_id'],
         'password' => $connection['password'],
-        'needWebsiteInputs' => !$connection['using_drupal_vars'] || $config->get('allow_connection_override'),
+        'allowConnectionOverride' => $config->get('allow_connection_override'),
         'available_for_groups' => $node->field_available_for_groups->value === '1',
         'limit_to_group_id' => isset($node->field_limit_to_group_id->value) ? $node->field_limit_to_group_id->value : NULL
       )), array()
@@ -163,6 +164,8 @@ function get_custom_param_values($node) {
     // always want the website id and password
     $values['website_id']=$_POST['website_id'];
     $values['password']=$_POST['password'];
+    if (!empty($_POST['base_url']))
+      $values['base_url']=$_POST['base_url'];
     // now get the rest of the parameters
     foreach ($params as $param) {
       if (isset($_POST[$param['fieldname']]))
@@ -282,7 +285,7 @@ function iform_form_user_login_alter(&$form, &$form_state) {
 }
 
 /**
- * Utility method that gets the website_id and password appropriate to connect
+ * Utility method that gets the base_url, website_id and password appropriate to connect
  * a given node to the warehouse.
  * @param mixed $node A node object or nid.
  * @return array Connection details, including website_id and password. Also 
@@ -296,10 +299,12 @@ function iform_get_connection_details($node) {
     $node = \Drupal\node\Entity\Node::load($node);
   }
   $config = \Drupal::config('indicia.settings');
+  $r['base_url']=$config->get('base_url');
   $r['website_id']=$config->get('website_id');
   $r['password']=$config->get('password');
-  $r['using_drupal_vars'] = !empty($r['website_id']) && !empty($r['password']);
   // @todo Check that $node->params[] is the correct way to do this.
+  if (empty($r['base_url']) || $config->get('allow_connection_override'))
+    $r['base_url'] = isset($node->params['base_url']) ? $node->params['base_url'] : $r['base_url'];
   if (empty($r['website_id']) || $config->get('allow_connection_override'))
     $r['website_id'] = isset($node->params['website_id']) ? $node->params['website_id'] : $r['website_id'];
   if (empty($r['password']) || $config->get('indicia_allow_connection_override'))
@@ -314,7 +319,7 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
     \Drupal\Core\Entity\Display\EntityViewDisplayInterface $display, $view_mode, $langcode) {
   if ($entity->bundle() === 'iform_page') {
     global $language;
-    iform_load_helpers(array('data_entry_helper', 'form_helper'));
+    iform_load_helpers(array('data_entry_helper', 'form_helper'), empty($entity->params['base_url']) ? '' : $entity->params['base_url']);
     // @todo Drupal 8 might allow us to be more intelligent rather than killing the entire page cache
     \Drupal::service('page_cache_kill_switch')->trigger();
 
@@ -333,6 +338,7 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
       global $indicia_theme_path;
       $indicia_theme_path = iform_media_folder_path() . 'themes/';
       $connection = iform_get_connection_details($entity);
+      $args['base_url'] = $connection['base_url'];
       $args['website_id'] = $connection['website_id'];
       $args['password'] = $connection['password'];
       $args['available_for_groups']=$entity->field_available_for_groups->value;
@@ -856,8 +862,9 @@ function iform_load_language_files($iform, $nid) {
  * Method to load an array of helper classes. Also overrides any helper config settings
  * for those classes from drupal variable settings.
  * @param array $files List of helper class names to load.
+ * @param string $base_url Warehouse base URL. Only required if overriding the default.
  */
-function iform_load_helpers(array $files) {
+function iform_load_helpers(array $files, $base_url='') {
   $configLoaded = class_exists('helper_config');
   $config = \Drupal::config('indicia.settings');
   if (!is_array($files)) {
@@ -877,7 +884,7 @@ function iform_load_helpers(array $files) {
       iform_load_warehouse_details();
     }
     else {
-      helper_config::$base_url = $config->get('base_url');
+      helper_config::$base_url = empty($base_url) ? $config->get('base_url') : $base_url;
       helper_config::$geoserver_url = $config->get('geoserver_url');
     }
     if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS']!=='off') {
@@ -891,9 +898,6 @@ function iform_load_helpers(array $files) {
       $filepath = PrivateStream::basePath();
       if (!$filepath) {
         $filepath = PublicStream::basePath();
-      }
-      if (!$filepath) {
-        $fiepath = conf_path() . '/files';
       }
       helper_base::$cache_folder = "$filepath/indicia/cache/$folder/";
       if (!is_dir(helper_base::$cache_folder)) {
@@ -917,7 +921,7 @@ function iform_load_helpers(array $files) {
   helper_base::$images_path = base_path() . iform_media_folder_path() . 'images/';
   if ($config->get('private_warehouse')) {
     $relative_proxy_path = iform_client_helpers_path() . 'proxy.php?url=' . helper_base::$base_url;
-    // convert to absolute by removeing the leading '.' and prepending the base URL
+    // convert to absolute by removing the leading '.' and prepending the base URL
     global $base_url;
     helper_base::$warehouse_proxy = $base_url . substr($relative_proxy_path, 1);
   }
