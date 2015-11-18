@@ -307,7 +307,7 @@ function iform_get_connection_details($node) {
     $r['base_url'] = isset($node->params['base_url']) ? $node->params['base_url'] : $r['base_url'];
   if (empty($r['website_id']) || $config->get('allow_connection_override'))
     $r['website_id'] = isset($node->params['website_id']) ? $node->params['website_id'] : $r['website_id'];
-  if (empty($r['password']) || $config->get('indicia_allow_connection_override'))
+  if (empty($r['password']) || $config->get('allow_connection_override'))
     $r['password'] = isset($node->params['password']) ? $node->params['password'] : $r['password'];
   return $r;
 }
