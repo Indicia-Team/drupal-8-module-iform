@@ -110,6 +110,7 @@ function iform_form_node_form_alter(&$form, \Drupal\Core\Form\FormStateInterface
     $config = \Drupal::config('indicia.settings');
     // @todo This needs to use $node to get the correct node specific connection
     $connection = iform_get_connection_details($node);
+    form_helper::$base_url = $connection['base_url'];
     $readAuth = form_helper::get_read_auth($connection['website_id'], $connection['password']);
     $form['iform_forms']['picker'] = array(
       '#markup' => SafeMarkup::format(form_helper::prebuilt_form_picker($readAuth, array(
@@ -313,10 +314,10 @@ function iform_get_connection_details($node) {
 }
 
 /**
- * Implementation for hook_view. Prepares the displayed Indicia page content.
+ * Implementation for hook_node_view. Prepares the displayed Indicia page content.
  */
 function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $entity,
-    \Drupal\Core\Entity\Display\EntityViewDisplayInterface $display, $view_mode, $langcode) {
+    \Drupal\Core\Entity\Display\EntityViewDisplayInterface $display, $view_mode) {
   if ($entity->bundle() === 'iform_page') {
     global $language;
     iform_load_helpers(array('data_entry_helper', 'form_helper'), empty($entity->params['base_url']) ? '' : $entity->params['base_url']);
@@ -342,7 +343,8 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
       $args['website_id'] = $connection['website_id'];
       $args['password'] = $connection['password'];
       $args['available_for_groups']=$entity->field_available_for_groups->value;
-      $args['limit_to_group_id']=$entity->limit_to_group_id->value;
+      if (isset($entity->limit_to_group_id->value))
+        $args['limit_to_group_id']=$entity->limit_to_group_id->value;
       // we need to grab each requested parameter from the node to pass to the form
       $params = form_helper::get_form_parameters($iform);
 
