@@ -20,7 +20,7 @@ content:
   body:
     type: text_default
     weight: 0
-    label: above
+    label: hidden
     settings: {  }
     third_party_settings: {  }
   links:
