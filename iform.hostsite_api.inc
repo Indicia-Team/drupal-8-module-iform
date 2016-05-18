@@ -14,8 +14,8 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
  * introducing a Drupal code dependency.
  * @global type $user
  * @param string $field Name of a user field to return. This can be 'language' which returns a user's 2 character language code,
- * 'id' to return the user's ID, 'name' to return the username, or a profile field, e.g. indicia_user_id as introduced by the Easy Login feature. This will be converted
- * to the profile field name if not prefixed with 'profile_'.
+ * 'id' to return the user's ID, 'name' to return the username, or a profile field, e.g. indicia_user_id as introduced
+ * by the Easy Login feature. This will be converted to the profile field name if not prefixed with 'profile_'.
  * @param mixed $default Default value to return if not set.
  * @param boolean $array Set to true if this field allows multiple values so you need an array
  * @param type $uid User ID of user to load data for. Defaults to current user.
@@ -23,6 +23,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
  * @todo Search client_helpers for references to global $user and uid
  */
 function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid = FALSE) {
+  global $_iform_warehouse_override;
   $account = \Drupal::currentUser();
   if ($field === 'uid' || $field === 'id') {
     return $uid === FALSE ? $account->id() : $uid;
@@ -31,6 +32,9 @@ function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid 
   $differentUser = ($uid !== FALSE && $uid !== $account->id());
   $uid = ($uid === FALSE) ? $account->id() : $uid;
   $account = \Drupal\user\Entity\User::load($uid);
+  if ($_iform_warehouse_override && $field === 'indicia_user_id')
+    // If switched to a different warehouse, the default stored indicia User ID will be wrong.
+    return _iform_get_alternative_user_id($account, $default);
   // Only load the account's language if inspecting another user, else use the UI language.
   if ($field === 'language') {
     // @todo Test loading user's language under i18n environment
@@ -231,6 +235,7 @@ function hostsite_goto_page($path, $params = FALSE) {
   else {
     $response = new RedirectResponse(hostsite_get_url($path, $params));
     $response->send();
+    exit();
   }
 }
 
@@ -267,7 +272,7 @@ function hostsite_get_current_page_path() {
  * @return mixed The config value.
  */
 function hostsite_get_config_value($context, $name, $default = FALSE) {
-  $configName = $context === 'site' ? 'system.site' : 'indicia.settings';
+  $configName = $context === 'site' ? 'system.site' : 'iform.settings';
   $r = \Drupal::config($configName)->get($name);
   return $r === NULL ? $default : $r;
 }
@@ -324,4 +329,30 @@ function hostsite_get_group_compatible_pages($group_id) {
  */
 function hostsite_module_exists($module) {
   return \Drupal::moduleHandler()->moduleExists($module);
+}
+
+/**
+ *
+ */
+function _iform_get_alternative_user_id($account, $default) {
+  global $_iform_warehouse_override;
+  $alternatives = isset($account->field_alt_indicia_user_ids->value) ?
+      $account->field_alt_indicia_user_ids->value : '{}';
+  iform_load_helpers(array('data_entry_helper'));
+  $alternatives = json_decode($alternatives, true);
+  if (array_key_exists($_iform_warehouse_override['base_url'], $alternatives))
+    return $alternatives[$_iform_warehouse_override['base_url']];
+  else {
+    // This user hasn't connected to this warehouse before. So get their user ID.
+    $response = easy_login_call_get_user_id($account);
+    $response = json_decode($response);
+    if (isset($response->userId)) {
+      $alternatives[$_iform_warehouse_override['base_url']] = $response->userId;
+      $account->field_alt_indicia_user_ids->setValue(json_encode($alternatives));
+      $account->save();
+      return $response->userId;
+    } else {
+      return $default;
+    }
+  }
 }

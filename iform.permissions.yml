@@ -2,18 +2,6 @@ access iform content:
   title: 'Access Indicia Iform web pages'
   description: 'Access Indicia Iform entry form and report web pages.'
   restrict access: TRUE
-create iform content:
-  title: 'Create Indicia Iform web pages'
-  description: 'Create Indicia Iform entry form and report web pages.'
-  restrict access: TRUE
-edit any iform content:
-  title: 'Edit Indicia Iform web pages'
-  description: 'Edit any Indicia Iform entry form and report web pages.'
-  restrict access: TRUE
-edit own iform content:
-  title: 'Edit own Indicia Iform web pages'
-  description: 'Edit your own Indicia Iform entry form and report web pages.'
-  restrict access: TRUE
 admin iform:
   title: 'Administer Indicia Iform web pages'
   description: 'Manage settings for Indicia Iform entry form and report web pages.'

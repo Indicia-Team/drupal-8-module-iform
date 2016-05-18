@@ -29,7 +29,7 @@ class SettingsForm extends FormBase {
       return;
     }
     \iform_load_helpers(array('map_helper', 'data_entry_helper'));
-    $config = \Drupal::config('indicia.settings');
+    $config = \Drupal::config('iform.settings');
     global $_iform_warehouses;
     $this->load_warehouse_array();
     foreach ($_iform_warehouses as $warehouse => $def)
@@ -234,7 +234,7 @@ class SettingsForm extends FormBase {
    */
   public function validateForm(array &$form, \Drupal\Core\Form\FormStateInterface $form_state) {
     $values = $form_state->getValues();
-    $config = \Drupal::configFactory()->getEditable('indicia.settings');
+    $config = \Drupal::configFactory()->getEditable('iform.settings');
     if ($values['warehouse']==='' || ($values['warehouse']==='other' && empty($values['base_url'])))
       $form_state ->setErrorByName('warehouse',
           t('Please supply a warehouse URL for connection to Indicia, or select a pre-configured connection.'));
@@ -268,7 +268,7 @@ class SettingsForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, \Drupal\Core\Form\FormStateInterface $form_state) {
-    $config = \Drupal::configFactory()->getEditable('indicia.settings');
+    $config = \Drupal::configFactory()->getEditable('iform.settings');
     $values = $form_state->getValues();
     $config->set('warehouse', $values['warehouse']);
     $urls = self::get_warehouse_urls($values);

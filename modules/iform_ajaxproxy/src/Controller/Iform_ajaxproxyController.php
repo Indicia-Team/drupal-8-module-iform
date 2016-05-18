@@ -11,17 +11,15 @@ use Symfony\Component\HttpFoundation\Response;
 
 class Iform_ajaxproxyController extends ControllerBase {
 
-  public function ajaxCallback($form, $method, $nid) {
+  public function ajaxCallback() {
     iform_load_helpers(array('data_entry_helper'));
-
-    global $user;
     $error=false;
     if (!$_POST) {
       $error = t("no POST data.");
     } else {
       $nid = isset($_GET['node']) ? $_GET['node'] : NULL;
       $index = isset($_GET['index']) ? $_GET['index'] : NULL;
-      $config = \Drupal::config('indicia.settings');
+      $config = \Drupal::config('iform.settings');
       // Sanity check
       if (empty($index)){
         $error = t("invocation format problem - no data format indicator.");
@@ -31,8 +29,8 @@ class Iform_ajaxproxyController extends ControllerBase {
         else {
           $node = \Drupal\node\Entity\Node::load($nid);
           $conn = iform_get_connection_details($node);
-          if($node->type != 'iform') {
-            $error = t("Drupal node is not an iform node.");
+          if($node->getType() != 'iform_page') {
+            $error = t('Drupal node is not an iform node.');
           }
         }
         // form type is held in $node->iform, but not relevant at this point.
@@ -48,8 +46,7 @@ class Iform_ajaxproxyController extends ControllerBase {
       }
     }
     if($error){
-      echo "{error:\"iform_ajaxproxy Error: ".$error."\"}";
-      return;
+      return new Response("{error:\"iform_ajaxproxy Error: ".$error."\"}", 400);
     }
     $writeTokens = array('nonce'=>$nonce, 'auth_token' => sha1($nonce.":".$conn['password']));
     if ($index==='single_verify') {
@@ -179,8 +176,7 @@ class Iform_ajaxproxyController extends ControllerBase {
           }
           //If no errors in the response array, all went well.
           $return['success'] = !(array_key_exists('error', $return) || array_key_exists('errors', $return));
-          echo json_encode($return);
-          return;
+          return new Response(json_encode($return));
         case "occurrence":
           $structure = array('model' => 'occurrence');
           // Only include determination or comment record if determination in post
@@ -228,11 +224,10 @@ class Iform_ajaxproxyController extends ControllerBase {
           $Model = \data_entry_helper::wrap($_POST, 'groups_user');
           break;
         default:
-          echo "{error:\"iform_ajaxproxy Error: Current defined methods are: sample, location, loc-sample, loc-smp-occ, smp-occ, '.
-              'media, occurrence, occ-comment, smp-comment, determination, notification, user-trust, person_attribute_value\"}";
+          return new Response("{error:\"iform_ajaxproxy Error: Current defined methods are: sample, location, loc-sample, loc-smp-occ, smp-occ, '.
+              'media, occurrence, occ-comment, smp-comment, determination, notification, user-trust, person_attribute_value\"}");
           // TODO invoke optional method in relevant iform prebuilt form to handle non standard indexes
           // TODO? echo a failure response: invalid index type
-          return;
       }
       // pass through the user ID as this can then be used to set created_by and updated_by_ids
       if (isset($_REQUEST['user_id'])) $writeTokens['user_id'] = $_REQUEST['user_id'];
@@ -242,7 +237,7 @@ class Iform_ajaxproxyController extends ControllerBase {
       //if (!json_decode($output, true))
       //    $response = "{error:\"".$output."\"}";
       // possible:
-      echo json_encode($response);
+      return new Response(json_encode($response));
     }
   }
 

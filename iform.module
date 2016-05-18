@@ -4,7 +4,6 @@ use Drupal\Core;
 use Drupal\Core\StreamWrapper\PrivateStream;
 use Drupal\Core\StreamWrapper\PublicStream;
 use Drupal\Component\Utility\SafeMarkup;
-use Drupal\Core\Access\AccessResult;
 
 require_once 'iform.hostsite_api.inc';
 
@@ -14,6 +13,14 @@ $_iform_base_resources = [
   'jquery_ui',
   'indiciaFns'
 ];
+
+/*
+ * If the loaded node connects to a non-standard warehouse, then stores the URL, id and password
+ * in an array.
+ * @var array|Boolean
+ */
+global $_iform_warehouse_override;
+$_iform_warehouse_override = false;
 
 // @todo Implement features review code?
 // @todo Convert all variable_get and variable_set to non-version specific code, with a
@@ -46,9 +53,9 @@ function iform_help($route_name, \Drupal\Core\Routing\RouteMatchInterface $route
  * @param $node The node object
  * @param $account The user entity to check access for
  * @return \Drupal\Core\Access\AccessResultInterface The access result
- */
+ *
 function iform_node_access(\Drupal\node\NodeInterface $node, $op,
-                           \Drupal\Core\Session\AccountInterface $account, $langcode) {
+                           \Drupal\Core\Session\AccountInterface $account) {
   if ($type = $node->bundle() !== 'iform_page') {
     $allowed = TRUE;
   }
@@ -86,6 +93,69 @@ function iform_node_access(\Drupal\node\NodeInterface $node, $op,
   }
   return $allowed ? AccessResult::allowed() : AccessResult::forbidden();
 }
+*/
+
+function iform_all_permissions() {
+  // Get list of iform nodes
+  $query = db_select('node', 'n');
+  $query->fields('n', ['nid']);
+  $query->condition('type', "iform_page", "=");
+  $nids = $query->execute();
+  $permissions = array();
+  foreach ($nids as $row) {
+    $node = \Drupal\node\Entity\Node::load($row->nid);
+    if ($node->field_iform->value && !empty($node->params['view_access_control'])) {
+      if (empty($node->params['permission_name'])) {
+        $permissions['access iform ' . $node->id()] = array('iform', $node->id());
+        drupal_set_message('access iform ' . $node->id());
+      }
+      else {
+        $permissions[$node->params['permission_name']] = array('iform ' . $node->params['permission_name'], 1);
+      }
+    }
+  }
+  return $permissions;
+}
+
+function iform_node_grants(\Drupal\Core\Session\AccountInterface $account, $op) {
+  $grants = array();
+  $permissions = iform_all_permissions();
+  foreach ($permissions as $permission => $grantInfo) {
+    if ($account->hasPermission($permission))
+      $grants[$grantInfo[0]] = array($grantInfo[1]);
+  }
+  return $grants;
+}
+
+/**
+ * Implements hook_node_access_records.
+ * Returns grants required to access a particular iform node.
+ * @param \Drupal\node\NodeInterface $node
+ * @return array
+ */
+function iform_node_access_records(\Drupal\node\NodeInterface $node) {
+  if ($node->getType() === 'iform_page' && isset($node->params['view_access_control'])
+      && $node->params['view_access_control']) {
+    $grants = array();
+    if (empty($node->params['permission_name'])) {
+      $realm = 'iform';
+      $gid = $node->id();
+    } else {
+      $realm = 'iform ' . $node->params['permission_name'];
+      $gid = 1;
+    }
+    if ($node->isPublished()) {
+      $grants[] = array(
+        'realm' => $realm,
+        'gid' => $gid,
+        'grant_view' => 1,
+        'grant_update' => 0,
+        'grant_delete' => 0
+      );
+    }
+    return $grants;
+  }
+}
 
 /**
  * Implements hook_form_BASE_FORM_ID_alter.
@@ -107,10 +177,9 @@ function iform_form_node_form_alter(&$form, \Drupal\Core\Form\FormStateInterface
       '#title' => t('Form Selection'),
       '#weight' => 35
     );
-    $config = \Drupal::config('indicia.settings');
+    $config = \Drupal::config('iform.settings');
     // @todo This needs to use $node to get the correct node specific connection
     $connection = iform_get_connection_details($node);
-    form_helper::$base_url = $connection['base_url'];
     $readAuth = form_helper::get_read_auth($connection['website_id'], $connection['password']);
     $form['iform_forms']['picker'] = array(
       '#markup' => SafeMarkup::format(form_helper::prebuilt_form_picker($readAuth, array(
@@ -224,6 +293,20 @@ function iform_node_load($entities) {
         foreach ($params as $k => $v) {
           $node->params[$k] = $v;
         }
+        // For the currently loading node only, we might want to globally switch to a different
+        // warehouse. Can't use routeMatch as the node is not yet loaded!
+        if (\Drupal::service('path.current')->getPath()==='/node/' . $node->id()
+             && isset($node->params['base_url'])) {
+          iform_load_helpers(array('data_entry_helper'));
+          if ($node->params['base_url']!==data_entry_helper::$base_url) {
+            global $_iform_warehouse_override;
+            $_iform_warehouse_override = array(
+              'base_url' => $node->params['base_url'],
+              'website_id' => $node->params['website_id'],
+              'password' => $node->params['password']
+            );
+          }
+        }
       }
     }
   }
@@ -293,23 +376,36 @@ function iform_form_user_login_alter(&$form, &$form_state) {
  * contains a boolean using_drupal_vars which is true if the site-wide 
  * configuration is being used.
  */
-function iform_get_connection_details($node) {
-  $r = array();
-  // convert a nid to a node
-  if (!is_object($node)) {
-    $node = \Drupal\node\Entity\Node::load($node);
+function iform_get_connection_details($node=null) {
+  // node is not null and override set for this node, use it
+  // node is not null load node,
+  //   and has override settings - use them and store them
+  global $_iform_warehouse_override;
+
+  // If we don't know the node but the current node overrides the config, use the override
+  if ($node===null && $_iform_warehouse_override) {
+    return $_iform_warehouse_override;
   }
-  $config = \Drupal::config('indicia.settings');
-  $r['base_url']=$config->get('base_url');
-  $r['website_id']=$config->get('website_id');
-  $r['password']=$config->get('password');
-  // @todo Check that $node->params[] is the correct way to do this.
-  if (empty($r['base_url']) || $config->get('allow_connection_override'))
-    $r['base_url'] = isset($node->params['base_url']) ? $node->params['base_url'] : $r['base_url'];
-  if (empty($r['website_id']) || $config->get('allow_connection_override'))
-    $r['website_id'] = isset($node->params['website_id']) ? $node->params['website_id'] : $r['website_id'];
-  if (empty($r['password']) || $config->get('allow_connection_override'))
-    $r['password'] = isset($node->params['password']) ? $node->params['password'] : $r['password'];
+  // load the default config
+  $config = \Drupal::config('iform.settings');
+  $r = array(
+    'base_url'  =>$config->get('base_url'),
+    'website_id'=>$config->get('website_id'),
+    'password'  =>$config->get('password')
+  );
+  if ($node && $config->get('allow_connection_override')) {
+    if (!is_object($node))
+      $node = \Drupal\node\Entity\Node::load($node);
+    if (isset($node->params['base_url']) && $node->params['base_url'] !== $r['base_url']) {
+      iform_load_helpers(array('data_entry_helper'));
+      data_entry_helper::$base_url = $node->params['base_url'];
+      $r['base_url'] = $node->params['base_url'];
+    }
+    if (isset($node->params['website_id']))
+      $r['website_id'] = $node->params['website_id'];
+    if (isset($node->params['password']))
+      $r['password'] = $node->params['password'];
+  }
   return $r;
 }
 
@@ -371,7 +467,7 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
 
       // Make buttons have a hover effect
       data_entry_helper::$javascript .= "indiciaFns.enableHoverEffect();\n";
-      $config = \Drupal::config('indicia.settings');
+      $config = \Drupal::config('iform.settings');
       _iform_apply_variables_to_args($args, $config);
       // preferred location for custom node configuration files now under Drupal files folder
       $filePath = hostsite_get_public_file_path();
@@ -565,8 +661,6 @@ function iform_library_info_build() {
   $libraries = [];
   iform_build_client_helper_libraries($libraries);
   iform_build_node_specific_libraries($libraries);
-  \Drupal::logger('iform')
-    ->notice(var_export(array_keys($libraries), true));
   return $libraries;
 }
 
@@ -748,8 +842,10 @@ function iform_preprocess_page(&$variables){
  */
 function iform_page_attachments(array &$attachments) {
   if (class_exists('helper_base')) {
+    \Drupal::logger('iform')->notice('Got helper base');
     global $_iform_base_resources;
     $attachments['#attached']['library'][] = 'iform/base';
+    \Drupal::logger('iform')->notice('Adding ' . var_export(helper_base::$required_resources, true));
     foreach (helper_base::$required_resources as $resource) {
       // switch to Fancybox v2 since D8 always uses a more recent jQuery version than v1 supports
       if ($resource==='fancybox')
@@ -817,18 +913,22 @@ function iform_load_language_files($iform, $nid) {
   global $language, $custom_terms, $custom_term_overrides;
   $language = \Drupal::service('language.default')->get();
   $moduleLangFilePath = iform_client_helpers_path() . "prebuilt_forms/lang/";
-  $siteSpecificLangFilePath = drupal_get_path('module', 'iform') . '/client_helpers/prebuilt_forms/lang/';
+  $filepath = PrivateStream::basePath();
+  if (!$filepath) {
+    $filepath = PublicStream::basePath();
+  }
+  $filesLangFilePath = "$filepath/indicia/lang/";
   $formLangFileName = $iform . '.' . $language->getId() . '.php';
   $nodeLangFileName = 'node.' . $nid . '.' . $language->getId() . '.php';
   $formFallbackFileName = $iform . '.en.php';
   $nodeFallbackFileName = 'node.' . $nid . '.en.php';
   // Define a priority ordered list of file names that could contain the custom terms list.
-  if ($siteSpecificLangFilePath) {
+  if ($filesLangFilePath) {
     $langFiles = array(
-      $siteSpecificLangFilePath . $nodeLangFileName,
-      $siteSpecificLangFilePath . $formLangFileName,
-      $siteSpecificLangFilePath . $nodeFallbackFileName,
-      $siteSpecificLangFilePath . $formFallbackFileName
+      $filesLangFilePath . $nodeLangFileName,
+      $filesLangFilePath . $formLangFileName,
+      $filesLangFilePath . $nodeFallbackFileName,
+      $filesLangFilePath . $formFallbackFileName
     );
   }
   else {
@@ -868,7 +968,7 @@ function iform_load_language_files($iform, $nid) {
  */
 function iform_load_helpers(array $files, $base_url='') {
   $configLoaded = class_exists('helper_config');
-  $config = \Drupal::config('indicia.settings');
+  $config = \Drupal::config('iform.settings');
   if (!is_array($files)) {
     throw new exception('Call to iform_load_helpers must pass an array of helper file names');
   }
@@ -944,7 +1044,6 @@ function iform_media_folder_path() {
       $r = str_replace('modules', 'libraries', $r);
     }
     $_iform_media_folder_path = $r;
-    drupal_set_message($_iform_media_folder_path);
     return $r;
   }
 }

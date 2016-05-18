@@ -36,7 +36,7 @@ class IformController extends ControllerBase {
     // if node not supplied, or does not have its own website Id and password, use the
     // global drupal vars from the settings form.
     if (!$website_id || !$password) {
-      $config = \Drupal::config('indicia.settings');
+      $config = \Drupal::config('iform.settings');
       $website_id=$config->get('website_id');
       $password=$config->get('password');
     }

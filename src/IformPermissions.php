@@ -39,8 +39,8 @@ class IformPermissions {
         }
       }
       if (!empty($node->params['view_access_control'])) {
-        if (!empty($params['permission_name'])) {
-          $perm = $params['permission_name'];
+        if (!empty($node->params['permission_name'])) {
+          $perm = $node->params['permission_name'];
         }
         else {
           $perm = 'access iform ' . $node->id();
