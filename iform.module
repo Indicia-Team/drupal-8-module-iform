@@ -305,6 +305,7 @@ function iform_node_load($entities) {
               'website_id' => $node->params['website_id'],
               'password' => $node->params['password']
             );
+            data_entry_helper::$base_url = $node->params['base_url'];
           }
         }
       }
@@ -398,7 +399,6 @@ function iform_get_connection_details($node=null) {
       $node = \Drupal\node\Entity\Node::load($node);
     if (isset($node->params['base_url']) && $node->params['base_url'] !== $r['base_url']) {
       iform_load_helpers(array('data_entry_helper'));
-      data_entry_helper::$base_url = $node->params['base_url'];
       $r['base_url'] = $node->params['base_url'];
     }
     if (isset($node->params['website_id']))

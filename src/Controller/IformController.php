@@ -28,15 +28,26 @@ class IformController extends ControllerBase {
     $class = "\iform_$form";
     $method = "ajax_$method";
     require_once \iform_client_helpers_path() . 'prebuilt_forms/' . $form . '.php';
+    $config = \Drupal::config('iform.settings');
     if ($nid) {
       $node = \Drupal\node\Entity\Node::load($nid);
       $website_id=$node->params['website_id'];
       $password=$node->params['password'];
+      if (isset($node->params['base_url']) && $node->params['base_url']!==$config->get('base_url')) {
+        global $_iform_warehouse_override;
+        $_iform_warehouse_override = array(
+          'base_url' => $node->params['base_url'],
+          'website_id' => $website_id,
+          'password' => $password
+        );
+        $path = iform_client_helpers_path();
+        require_once $path . 'helper_base.php';
+        \helper_base::$base_url = $node->params['base_url'];
+      }
     }
     // if node not supplied, or does not have its own website Id and password, use the
     // global drupal vars from the settings form.
     if (!$website_id || !$password) {
-      $config = \Drupal::config('iform.settings');
       $website_id=$config->get('website_id');
       $password=$config->get('password');
     }

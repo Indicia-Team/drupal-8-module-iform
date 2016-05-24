@@ -28,6 +28,15 @@ class Iform_ajaxproxyController extends ControllerBase {
           $conn=array('website_id'=>$config->get('website_id'), 'password'=>$config->get('password'));
         else {
           $node = \Drupal\node\Entity\Node::load($nid);
+          if (isset($node->params['base_url']) && $node->params['base_url']!==$config->get('base_url')) {
+            global $_iform_warehouse_override;
+            $_iform_warehouse_override = array(
+              'base_url' => $node->params['base_url'],
+              'website_id' => $node->params['website_id'],
+              'password' => $node->params['password']
+            );
+            \data_entry_helper::$base_url = $node->params['base_url'];
+          }
           $conn = iform_get_connection_details($node);
           if($node->getType() != 'iform_page') {
             $error = t('Drupal node is not an iform node.');
