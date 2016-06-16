@@ -680,9 +680,6 @@ function iform_build_client_helper_libraries(&$libraries) {
     // some resources are always included, forcing the Drupal version of jQuery.
     if (in_array($name, $_iform_base_resources))
       continue;
-    // skip the fancybox resource as we swap to v2
-    if ($name==='fancybox')
-      continue;
     $libraries[$name] = [
       'version' => 'VERSION'
     ];
@@ -847,9 +844,6 @@ function iform_page_attachments(array &$attachments) {
     $attachments['#attached']['library'][] = 'iform/base';
     \Drupal::logger('iform')->notice('Adding ' . var_export(helper_base::$required_resources, true));
     foreach (helper_base::$required_resources as $resource) {
-      // switch to Fancybox v2 since D8 always uses a more recent jQuery version than v1 supports
-      if ($resource==='fancybox')
-        $resource .= '2';
       // exclude resources covered by iform/base
       if (!in_array($resource, $_iform_base_resources)) {
         $attachments['#attached']['library'][] = "iform/$resource";
