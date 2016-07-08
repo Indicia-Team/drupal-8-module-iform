@@ -337,7 +337,7 @@ function hostsite_module_exists($module) {
 function _iform_get_alternative_user_id($account, $default) {
   global $_iform_warehouse_override;
   $alternatives = isset($account->field_alt_indicia_user_ids->value) ?
-      $account->field_alt_indicia_user_ids->value : '{}';
+    $account->field_alt_indicia_user_ids->value : '{}';
   iform_load_helpers(array('data_entry_helper'));
   $alternatives = json_decode($alternatives, true);
   if (array_key_exists($_iform_warehouse_override['base_url'], $alternatives))
