@@ -62,6 +62,28 @@ function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid 
   }
 }
 
+
+/**
+ * Function that allows Indicia code to hook into the Drupal user profile to set a field value, without
+ * introducing a Drupal code dependency.
+ * @global type $user
+ * @param type $field The name of a profile field.
+ * @param type $data The data to be saved into the field.
+ * @return boolean Returns false if the uid or field is not available so data cannot be written
+ */
+function hostsite_set_user_field($field, $data) {
+  $account = \Drupal::currentUser();
+  if ($account->id()) {
+    $fieldname = (substr($field, 0, 6) === 'field_' ? '' : 'field_') . $field;
+    if ($account->$fieldname) {
+      $account->$fieldname->setValue($data);
+      $account->save();
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
 /**
  * Returns true if the current user is permitted to perform a named task.
  * @param string $task
@@ -73,69 +95,6 @@ function hostsite_user_has_permission($task, $uid = FALSE) {
 }
 
 /**
- * Function that allows Indicia code to hook into the Drupal user profile to set a field value, without
- * introducing a Drupal code dependency.
- * @global type $user
- * @param type $field The name of a profile field.
- * @param type $data The data to be saved into the field.
- * @return boolean Returns false if the uid or field is not available so data cannot be written
- *
- * function hostsite_set_user_field($field, $data) {
- * global $user;
- * if ($user->uid) {
- * $fieldname = (substr($field, 0, 6)==='field_' ? '' : 'field_') . $field;
- * $account = user_load($user->uid);
- * if (!isset($account->$fieldname))
- * return FALSE;
- * $field = $account->$fieldname;
- * $language = $account->language ? $account->language : 'und';
- * if (isset($field[$language]))
- * $field[$language][0]['value'] = $data;
- * else
- * $field[$language]=array(array('value' => $data));
- * $account->$fieldname = $field;
- * $info = field_info_field($fieldname);
- * $fields = array($info['id']);
- *
- * // Execute the storage function
- * field_sql_storage_field_storage_write('user', $account, 'update', $fields);
- *
- * // Clear field cache
- * cache_clear_all("field:user:$account->uid", 'cache_field');
- * return TRUE;
- * }
- * return FALSE;
- * }
- *
- * /**
- * Enable a library in rhw host website.
- * @param string $library Name of the library. The following are supported:
- *
- * collapse - To enable collapsible fieldsets. Requires the class collapsible to be added to a fieldset.
- * jquery-ui - Adds the jQuery ui library with tab and datepicker support.
- *
- * function hostsite_add_library($library) {
- * switch ($library) {
- * case 'collapse':
- * drupal_add_library('system', 'drupal.form');
- * drupal_add_library('system', 'drupal.collapse');
- * break;
- * case 'jquery-ui':
- * drupal_add_library('system', 'jquery-ui');
- * drupal_add_library('system', 'ui.datepicker');
- * drupal_add_library('system', 'ui.tabs');
- * drupal_add_library('system', 'ui.progressbar');
- * drupal_add_library('system', 'ui.sortable');
- * drupal_add_library('system', 'ui.dialog');
- * drupal_add_library('system', 'effects.fade');
- * drupal_add_library('system', 'effects.slide');
- * break;
- * default:
- * \Drupal::logger('iform')->notice("Unknown library requested: $library");
- * }
- * }
- *
- * /**
  * Display a message in a way that can be unhooked from Drupal.
  * @param string $msg Message to display
  * @param string $type Message type, one of 'status', 'warning' and 'error'.
@@ -337,7 +296,7 @@ function hostsite_module_exists($module) {
 function _iform_get_alternative_user_id($account, $default) {
   global $_iform_warehouse_override;
   $alternatives = isset($account->field_alt_indicia_user_ids->value) ?
-    $account->field_alt_indicia_user_ids->value : '{}';
+      $account->field_alt_indicia_user_ids->value : '{}';
   iform_load_helpers(array('data_entry_helper'));
   $alternatives = json_decode($alternatives, true);
   if (array_key_exists($_iform_warehouse_override['base_url'], $alternatives))
