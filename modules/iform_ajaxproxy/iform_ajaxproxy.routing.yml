@@ -1,0 +1,7 @@
+iform_ajaxproxy.callback:
+  path: '/iform/ajaxproxy'
+  defaults:
+    _controller: '\Drupal\iform_ajaxproxy\Controller\Iform_ajaxproxyController::ajaxCallback'
+    _title: 'Ajax proxy passthrough'
+  requirements:
+    _permission: 'iform ajax proxy passthrough'

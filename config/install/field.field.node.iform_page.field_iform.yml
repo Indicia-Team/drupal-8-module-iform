@@ -1,0 +1,20 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_iform
+    - node.type.iform_page
+id: node.iform_page.field_iform
+field_name: field_iform
+entity_type: node
+bundle: iform_page
+label: 'Indicia prebuilt form'
+description: 'Select the Indicia prebuilt code file for this page.'
+required: true
+translatable: false
+default_value:
+  -
+    value: ''
+default_value_callback: ''
+settings: {  }
+field_type: string

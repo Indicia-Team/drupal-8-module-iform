@@ -1,0 +1,21 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.body
+    - node.type.iform_page
+  module:
+    - text
+id: node.iform_page.body
+field_name: body
+entity_type: node
+bundle: iform_page
+label: 'Page introductory text'
+description: 'Content to appear at the top of your Indicia generated page.'
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  display_summary: true
+field_type: text_with_summary

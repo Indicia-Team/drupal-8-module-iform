@@ -1,0 +1,34 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.iform_page.body
+    - field.field.node.iform_page.field_available_for_groups
+    - field.field.node.iform_page.field_iform
+    - field.field.node.iform_page.field_limit_to_group_id
+    - field.field.node.iform_page.field_params
+    - node.type.iform_page
+  module:
+    - options
+    - text
+    - user
+id: node.iform_page.default
+targetEntityType: node
+bundle: iform_page
+mode: default
+content:
+  body:
+    type: text_default
+    weight: 0
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+  links:
+    weight: 100
+    settings: {  }
+    third_party_settings: {  }
+hidden:
+  field_available_for_groups: true
+  field_limit_to_group_id: true
+  field_iform: true
+  field_params: true

@@ -1,0 +1,34 @@
+iform.admin_config_iform:
+  path: '/admin/config/iform'
+  defaults:
+    _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
+    _title: 'Indicia settings'
+  requirements:
+    _permission: 'admin iform'
+iform.settings:
+  path: '/admin/config/iform/settings'
+  defaults:
+    _form: '\Drupal\iform\Form\SettingsForm'
+    _title: 'Indicia settings'
+  requirements:
+    _permission: 'admin iform'
+iform.cache:
+  path: '/admin/config/iform/cache'
+  defaults:
+    _form: '\Drupal\iform\Form\CacheForm'
+    _title: 'Indicia cache management'
+  requirements:
+    _permission: 'admin iform'
+iform.diagnostics:
+  path: '/admin/config/iform/diagnostics'
+  defaults:
+    _form: '\Drupal\iform\Form\DiagnosticsForm'
+    _title: 'Indicia diagnostics'
+  requirements:
+    _permission: 'admin iform'
+iform.ajax:
+  path: '/iform/ajax/{form}/{method}/{nid}'
+  defaults:
+    _controller: '\Drupal\iform\Controller\IformController::ajaxCallback'
+  requirements:
+    _permission: 'access iform'

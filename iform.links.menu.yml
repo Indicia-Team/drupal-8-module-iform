@@ -1,0 +1,24 @@
+iform.admin_config_iform:
+  title: 'Indicia integration'
+  route_name: iform.admin_config_iform
+  parent: system.admin_config
+  description: 'Settings and management of Indicia integration'
+  weight: -10
+iform.settings:
+  title: 'Indicia settings'
+  description: 'Settings page for the Indicia module'
+  parent: iform.admin_config_iform
+  route_name: iform.settings
+  weight: 0
+iform.cache:
+  title: 'Indicia cache management'
+  description: 'Manage the Indicia cache'
+  parent: iform.admin_config_iform
+  route_name: iform.cache
+  weight: 10
+iform.diagnostics:
+  title: 'Indicia diagnostics'
+  description: 'Run diagnostics against the Indicia settings'
+  parent: iform.admin_config_iform
+  route_name: iform.diagnostics
+  weight: 20

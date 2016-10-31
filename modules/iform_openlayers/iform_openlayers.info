@@ -1,0 +1,6 @@
+name = "Indicia Openlayers"
+description = "A module allowing the configuration of the OpenLayers file downloaded by the Iform module."
+core = 7.x
+package = "Indicia"
+dependencies[] = "iform"
+version = "7.x-1.0"
