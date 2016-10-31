@@ -1,0 +1,37 @@
+Inline Javascript
+=================
+
+1. Download & copy the module to modules directory.
+2. Overrride th core js render service with the service provided by this module.
+   by updating sites/default/services.yml file with below lines:
+
+services:
+  asset.js.collection_renderer:
+    class: Drupal\inlinejs\Asset\InlineJsCollectionRenderer
+    arguments: [ '@state' ]
+
+3. Implements the hook in your module to add inline js scripts. like this:
+
+/**
+ * Implements hook_inlinejs_alter().
+ */
+function MODULENAME_inlinejs_alter() {
+  $js_asset['header'][] = array(
+    'data' => 'alert("header before");',
+    'group' => JS_LIBRARY - 1,
+  );
+  $js_asset['header'][] = array(
+    'data' => 'alert("header after");',
+    'group' => JS_LIBRARY + 1,
+  );
+  $js_asset['footer'][] = array(
+    'data' => 'alert("footer before");',
+    'group' => JS_LIBRARY - 1,
+  );
+  $js_asset['footer'][] = array(
+    'data' => 'alert("footer after");',
+    'group' => JS_LIBRARY + 1,
+  );
+  return $js_asset;
+}
+

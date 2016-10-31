@@ -1,0 +1,4 @@
+services:
+  asset.js.inline_collection_renderer:
+    class: Drupal\iformInlinejs\Asset\InlineJsCollectionRenderer
+    arguments: [ '@state' ]
