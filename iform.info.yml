@@ -6,4 +6,4 @@ package: "Indicia"
 configure: action.settings
 type: module
 dependencies:
-  - inlinejs
+  - iform_inlinejs
