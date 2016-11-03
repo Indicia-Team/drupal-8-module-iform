@@ -839,10 +839,8 @@ function iform_preprocess_page(&$variables){
  */
 function iform_page_attachments(array &$attachments) {
   if (class_exists('helper_base')) {
-    \Drupal::logger('iform')->notice('Got helper base');
     global $_iform_base_resources;
     $attachments['#attached']['library'][] = 'iform/base';
-    \Drupal::logger('iform')->notice('Adding ' . var_export(helper_base::$required_resources, true));
     foreach (helper_base::$required_resources as $resource) {
       // exclude resources covered by iform/base
       if (!in_array($resource, $_iform_base_resources)) {

@@ -5,7 +5,7 @@
  * Contains Drupal\indiciaInlinejs\Asset\InlineJsCollectionRenderer.
  */
 
-namespace Drupal\iformInlinejs\Asset;
+namespace Drupal\iform_inlinejs\Asset;
 
 
 use Drupal\Component\Serialization\Json;
