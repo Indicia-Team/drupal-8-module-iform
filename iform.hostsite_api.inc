@@ -1,6 +1,7 @@
 <?php
 
 use Drupal\Core\StreamWrapper\PublicStream;
+use Drupal\Component\Utility;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
@@ -288,6 +289,15 @@ function hostsite_get_group_compatible_pages($group_id) {
  */
 function hostsite_module_exists($module) {
   return \Drupal::moduleHandler()->moduleExists($module);
+}
+
+/**
+ * Encodes a string for use in a mime header.
+ * @param $string
+ * @return string
+ */
+function hostsite_mime_header_encode($string) {
+  return Utility\Unicode::mimeHeaderEncode($string);
 }
 
 /**
