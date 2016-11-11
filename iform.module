@@ -27,6 +27,18 @@ $_iform_warehouse_override = false;
 //   fix for indicia_ or iform_ prefix inconsistencies.
 
 /**
+ * Implements hook_preprocess_node.
+ * Allows iform code to override the page title.
+ * @param $variables
+ */
+function iform_preprocess_node(&$variables) {
+  global $indicia_page_title;
+  if (isset($indicia_page_title)) {
+    $variables['label'] = $indicia_page_title;
+  }
+}
+
+/**
 * Implements hook_help.
 * Display help and module information.
 * @param string $route_name The route as defined in the routing .yml file
@@ -525,12 +537,6 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
           'max-age' => 0
         ],
       );
-
-      // @todo Set page title is not working in Drupal 8 yet
-      global $indicia_page_title;
-      if (isset($indicia_page_title)) {
-        $build['#title'] = $indicia_page_title;
-      }
     }
   }
 }
