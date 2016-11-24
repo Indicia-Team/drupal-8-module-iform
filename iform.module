@@ -76,7 +76,6 @@ function iform_all_permissions() {
     $permissions = array();
     foreach ($nids as $row) {
       $node = \Drupal\node\Entity\Node::load($row->nid);
-      drupal_set_message('Loading a node ' . $row->nid);
       if ($node->field_iform->value && !empty($node->params['view_access_control'])) {
         if (empty($node->params['permission_name'])) {
           $permissions['access iform ' . $node->id()] = array('iform', $node->id());
