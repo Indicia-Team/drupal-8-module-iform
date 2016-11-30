@@ -569,9 +569,9 @@ function iform_handle_posted_form($node, $args) {
       drupal_set_message(t('An error occurred whilst saving the new site details.'));
       unset($s);
     }
-    // And allow the form to dynamically set the destination after post
-    if (!empty($_POST['redirect_on_success'])) {
-      $args['redirect_on_success'] = $_POST['redirect_on_success'];
+    // And allow the form or calling URL to dynamically set the destination after post
+    if (!empty($_REQUEST['redirect_on_success'])) {
+      $args['redirect_on_success'] = $_REQUEST['redirect_on_success'];
     }
     if (method_exists("iform_$iform", 'get_redirect_on_success')) {
       $redirect = call_user_func(array(
