@@ -1,7 +1,7 @@
 <?php
 
 use Drupal\Core\StreamWrapper\PublicStream;
-use Drupal\Component\Utility;
+use Drupal\Component\Utility\Unicode;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
@@ -297,7 +297,7 @@ function hostsite_module_exists($module) {
  * @return string
  */
 function hostsite_mime_header_encode($string) {
-  return Utility\Unicode::mimeHeaderEncode($string);
+  return Unicode::mimeHeaderEncode($string);
 }
 
 /**
