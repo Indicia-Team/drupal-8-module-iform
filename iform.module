@@ -631,10 +631,8 @@ function iform_handle_posted_form($node, $args) {
           ), $params);
           $options = array('query' => $params);
           // anything left in $parts is the bookmark
-          if (count($parts)) {
-            $options['fragment'] = $parts[0];
-          }
-          return hostsite_goto_page($url, $options);
+          $fragment = count($parts) ? $parts[0] : false;
+          return hostsite_goto_page($url, $params, $fragment);
         }
         elseif (!isset($args['message_after_save']) || $args['message_after_save'] || !array_key_exists('success', $response)) {
           // This dumps errors, and/or a success message if no redirection.
