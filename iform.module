@@ -31,6 +31,18 @@ $_iform_warehouse_override = false;
 
 /**
  * Implements hook_preprocess_node.
+ * Allows iform code to override the page header <title>.
+ * @param $variables
+ */
+function iform_preprocess_html(&$variables) {
+  global $indicia_page_title;
+  if (isset($indicia_page_title)) {
+    $variables['head_title'] = $indicia_page_title;
+  }
+}
+
+/**
+ * Implements hook_preprocess_node.
  * Allows iform code to override the page title.
  * @param $variables
  */
