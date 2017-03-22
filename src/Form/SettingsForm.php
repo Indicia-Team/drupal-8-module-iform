@@ -110,25 +110,25 @@ class SettingsForm extends FormBase {
       '#title' => t('API Keys'),
       '#open' => TRUE
     );
-    $form['api_keys']['geoplanet_api_key'] = array(
-      '#type' => 'textfield',
-      '#title' => t('GeoPlanet API Key'),
-      '#description' => t('The Yahoo! GeoPlanet API is one option to lookup place names when you use the place search control. ' .
-        'It references a global database of places and returns the list of possibilities with their spatial references ' .
-        'to Indicia. To obtain your own API key for GeoPlanet, please visit <a target="_blank" href="http://developer.yahoo.com/geo/geoplanet/">' .
-        'Yahoo! GeoPlanet</a> and follow the link to get an Application ID. '),
-      '#required' => FALSE,
-      '#default_value' => $config->get('geoplanet_api_key'),
-    );
     $form['api_keys']['google_api_key'] = array(
       '#type' => 'textfield',
-      '#title' => t('Google API Key'),
+      '#title' => t('Google Place Search API Key'),
       '#description' => t('The Google API provides the Places API text search, another option to lookup place names when you use the place search control. ' .
         'It references a global database of places and returns the list of possibilities with their spatial references ' .
-        'to Indicia. To obtain your own API key for the Google API, please visit <a target="_blank" href="https://code.google.com/apis/console">' .
+        'to Indicia. To obtain your own API key for the Google Place Search API, please visit <a target="_blank" href="https://code.google.com/apis/console">' .
         'the Google APIs Console</a>. '),
       '#required' => FALSE,
       '#default_value' => $config->get('google_api_key'),
+    );
+    $form['api_keys']['google_maps_api_key'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Google Maps API Key'),
+      '#description' => t('The Google API provides the Places API text search, another option to lookup place names when you use the place search control. ' .
+        'It references a global database of places and returns the list of possibilities with their spatial references ' .
+        'to Indicia. To obtain your own API key for the Google Maps JavaScript API, please visit <a target="_blank" href="https://code.google.com/apis/console">' .
+        'the Google APIs Console</a>. '),
+      '#required' => FALSE,
+      '#default_value' => $config->get('google_maps_api_key'),
     );
     $form['api_keys']['bing_api_key'] = array(
       '#type' => 'textfield',
@@ -281,6 +281,7 @@ class SettingsForm extends FormBase {
       $config->set('password', $values['password']);
     $config->set('geoplanet_api_key', $values['geoplanet_api_key']);
     $config->set('google_api_key', $values['google_api_key']);
+    $config->set('google_maps_api_key', $values['google_maps_api_key']);
     $config->set('bing_api_key', $values['bing_api_key']);
     $config->set('map_centroid_lat', $values['map_centroid_lat']);
     $config->set('map_centroid_long', $values['map_centroid_long']);

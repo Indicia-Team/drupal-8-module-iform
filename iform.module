@@ -1013,6 +1013,7 @@ function iform_load_helpers(array $files, $base_url='') {
     // max_upload_size
     helper_config::$geoplanet_api_key = $config->get('geoplanet_api_key');
     helper_base::$google_api_key = $config->get('google_api_key');
+    helper_base::$google_maps_api_key = $config->get('google_maps_api_key');
     // bing api key may be ommitted for backwards compatibility reasons
     if (isset(helper_config::$bing_api_key)) {
       helper_config::$bing_api_key = helper_base::$bing_api_key = $config->get('bing_api_key');
