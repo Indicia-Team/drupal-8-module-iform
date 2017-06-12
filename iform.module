@@ -1276,22 +1276,21 @@ function iform_tokens($type, $tokens, array $data = array(), array $options = ar
 }
 
 /**
- * Switches the OpenGraph type to a landmark if we have lat long metadata for the page.
- * @param $output
- * @param $instance
- * @param $options
- *
-function iform_metatag_metatags_view_alter(&$output, $instance, $options) {
-  if ($instance==='node:iform') {
-    global $iform_page_metadata;
-    if (!empty($iform_page_metadata['latitude']) && !empty($iform_page_metadata['longitude'])) {
-      $output['og:type']['#attached']['drupal_add_html_head'][0][0]['#value'] = 'place';
-      $output['og:latitude']['#attached']['drupal_add_html_head'][0][0]['#name'] = 'place:location:latitude';
-      $output['og:longitude']['#attached']['drupal_add_html_head'][0][0]['#name'] = 'place:location:longitude';
-      unset($output['article:published_time']);
-      unset($output['article:modified_time']);
-    }
-
+ * Basic support for OpenGraph and other metatags when used with the metatags module.
+ * @param $metatags
+ * @param $context
+ */
+function iform_metatags_alter(&$metatags, $context) {
+  global $iform_page_metadata;
+  $supportedTags = array('title', 'description', 'image', 'latitude', 'longitude');
+  foreach ($supportedTags as $tag) {
+    if (!empty($iform_page_metadata[$tag]))
+      $metatags["og_$tag"] = $iform_page_metadata[$tag];
+    if ($tag === 'title')
+      $metatags['title'] = $iform_page_metadata[$tag];
+  }
+  // Declare page type as place if we have lat long metadata.
+  if (!empty($iform_page_metadata['latitude']) && !empty($iform_page_metadata['longitude'])) {
+    $metatags['og_type'] = 'place';
   }
 }
-*/
