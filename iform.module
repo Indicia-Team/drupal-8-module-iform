@@ -140,7 +140,6 @@ function iform_node_access_records(\Drupal\node\NodeInterface $node) {
   if ($node->getType() === 'iform_page') {
     // invalidate our cache tag so that the permissions are reloaded
     Cache::invalidateTags(array('node_list:iform_page'));
-    drupal_set_message('In iform_node_access_records');
     $grants = array();
     $grants[] = array(
       'realm' => 'iform_edit',
