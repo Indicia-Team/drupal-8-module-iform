@@ -613,6 +613,8 @@ function iform_handle_posted_form($node, $args) {
       }
       else {
         $response = data_entry_helper::forward_post_to('save', $s);
+        // Clear the Drupal cache tag so user record based reports refresh
+        Cache::invalidateTags(array('user_records:' . hostsite_get_user_field('indicia_user_id')));
         // Does the form redirect after success?
         if (is_array($response) && array_key_exists('success', $response) &&
           array_key_exists('redirect_on_success', $args) && $args['redirect_on_success']
