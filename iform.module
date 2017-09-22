@@ -259,7 +259,7 @@ function get_custom_param_values($node) {
     }
     // Json encode the parameters to store them in the Drupal database.
     return json_encode($values);
-  } 
+  }
   else {
     return json_encode($node->params);
   }
@@ -389,8 +389,8 @@ function iform_form_user_login_alter(&$form, &$form_state) {
  * Utility method that gets the base_url, website_id and password appropriate to connect
  * a given node to the warehouse.
  * @param mixed $node A node object or nid.
- * @return array Connection details, including website_id and password. Also 
- * contains a boolean using_drupal_vars which is true if the site-wide 
+ * @return array Connection details, including website_id and password. Also
+ * contains a boolean using_drupal_vars which is true if the site-wide
  * configuration is being used.
  */
 function iform_get_connection_details($node=null) {
@@ -849,6 +849,11 @@ function iform_page_attachments(array &$attachments) {
   if (class_exists('helper_base')) {
     global $_iform_base_resources;
     $attachments['#attached']['library'][] = 'iform/base';
+    $config = \Drupal::config('iform.settings');
+    // Attach theme specific library.
+    $baseTheme = $config->get('base_theme');
+    $baseTheme = $baseTheme ? $baseTheme : 'generic';
+    $attachments['#attached']['library'][] = "iform/theme.$baseTheme";
     foreach (helper_base::$required_resources as $resource) {
       // exclude resources covered by iform/base
       if (!in_array($resource, $_iform_base_resources)) {
@@ -974,10 +979,18 @@ function iform_load_helpers(array $files, $base_url='') {
   }
   $path = iform_client_helpers_path();
   require_once $path . 'helper_base.php';
+  // If using a specified theme, load the theme specific PHP file which could, for example, override templates etc.
+  $config = \Drupal::config('iform.settings');
+  $baseTheme = $config->get('base_theme');
+  $baseTheme = $baseTheme ? $baseTheme : 'generic';
+  if ($baseTheme !== 'generic') {
+    include_once $path . "templates.$baseTheme.php";
+  }
+  // Load the actual helper files.
   foreach ($files as $file) {
     require_once "$path$file.php";
   }
-  // we always need the helper_config file
+  // We always need the helper_config file.
   if (!$configLoaded) {
     require_once $path . 'helper_config.php';
     // now we have an opportunity to load warehouse settings into helper_config from the drupal variables. So a module
