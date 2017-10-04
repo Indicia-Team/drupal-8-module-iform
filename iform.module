@@ -935,11 +935,13 @@ function iform_load_language_files($iform, $nid) {
     $filesLangFilePath . $formLangFileName,
     $filesLangFilePath . $nodeFallbackFileName,
     $filesLangFilePath . $formFallbackFileName,
+    $filesLangFilePath . 'default.' . $language->getId() . '.php',
     $moduleLangFilePath . $nodeLangFileName,
     $moduleLangFilePath . $formLangFileName,
     $moduleLangFilePath . $nodeFallbackFileName,
     $moduleLangFilePath . $formFallbackFileName
   );
+  drupal_set_message(var_export($langFiles, true));
   $custom_terms = array(); // this is an array of key value pairs
   $custom_term_overrides = array(); // this is an array with each item a subarray of key value pairs.
   // start at the highest priority possible language file name and loop through until we find one that defines the set of custom terms.
