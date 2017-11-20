@@ -738,16 +738,16 @@ function iform_build_node_specific_libraries(&$libraries) {
       'version' => 'VERSION',
       'js' => [],
       'css' => [
-        'component' => []
+        'base' => []
       ]
     ];
     // Prebuilt form specific CSS
     if (file_exists("$helperPath/prebuilt_forms/css/$form.css")) {
-      $libraries[$lib]['css']['component']["client_helpers/prebuilt_forms/css/$form.css"] = [];
+      $libraries[$lib]['css']['base']["client_helpers/prebuilt_forms/css/$form.css"] = [];
     }
     // Node specific CSS
     if (file_exists("$filePath/indicia/css/node.$nid.css")) {
-      $libraries[$lib]['css']['component']["/$filePath/indicia/css/node.$nid.css"] = [];
+      $libraries[$lib]['css']['base']["/$filePath/indicia/css/node.$nid.css"] = [];
     }
     if (!empty($node->params['additional_css'])) {
       $cssFiles = data_entry_helper::explode_lines($node->params['additional_css']);
@@ -786,13 +786,13 @@ function iform_build_node_specific_libraries(&$libraries) {
           if (file_exists("$helperPath/prebuilt_forms/extensions/$matches[class].js"))
             $libraries[$lib]['js']["client_helpers/prebuilt_forms/extensions/$matches[class].js"] = [];
           if (file_exists("$helperPath/prebuilt_forms/extensions/$matches[class].css")) {
-            $libraries[$lib]['css']['component']["client_helpers/prebuilt_forms/extensions/$matches[class].css"] = [];
+            $libraries[$lib]['css']['base']["client_helpers/prebuilt_forms/extensions/$matches[class].css"] = [];
           }
         }
       }
     }
     // Skip any unnecessary empty libraries
-    if (empty($libraries[$lib]['css']['module']) && empty($libraries[$lib]['js'])) {
+    if (empty($libraries[$lib]['css']['base']) && empty($libraries[$lib]['js'])) {
       unset($libraries[$lib]);
     }
   }
