@@ -24,8 +24,8 @@ class SettingsForm extends FormBase {
    */
   public function buildForm(array $form, \Drupal\Core\Form\FormStateInterface $form_state) {
     if (!\iform_check_helper_config_exists()) {
-      drupal_set_message(check_plain(t("Please create the file helper_config.php in the !path folder on the server.",
-        array('!path' => iform_client_helpers_path()))), 'warning');
+      drupal_set_message(t("Please create the file helper_config.php in the !path folder on the server.",
+        array('!path' => iform_client_helpers_path())), 'warning');
       return;
     }
     \iform_load_helpers(array('map_helper', 'data_entry_helper'));
@@ -105,30 +105,42 @@ class SettingsForm extends FormBase {
       '#description' => $pwd_description,
       '#required' => $pwd_required,
     );
+    $baseTheme = $config->get('base_theme');
+    $form['base_theme'] = array(
+      '#type' => 'select',
+      '#title' => t('Optimise output for base theme'),
+      '#description' => 'If using a supported base theme, select it here.',
+      '#required' => TRUE,
+      '#default_value' => $baseTheme ? $baseTheme : 'generic',
+      '#options' => array(
+        'generic' => 'Generic theme output',
+        'bootstrap-3' => 'Bootstrap 3 optimised output',
+      ),
+    );
     $form['api_keys'] = array(
       '#type' => 'details',
       '#title' => t('API Keys'),
       '#open' => TRUE
     );
-    $form['api_keys']['geoplanet_api_key'] = array(
-      '#type' => 'textfield',
-      '#title' => t('GeoPlanet API Key'),
-      '#description' => t('The Yahoo! GeoPlanet API is one option to lookup place names when you use the place search control. ' .
-        'It references a global database of places and returns the list of possibilities with their spatial references ' .
-        'to Indicia. To obtain your own API key for GeoPlanet, please visit <a target="_blank" href="http://developer.yahoo.com/geo/geoplanet/">' .
-        'Yahoo! GeoPlanet</a> and follow the link to get an Application ID. '),
-      '#required' => FALSE,
-      '#default_value' => $config->get('geoplanet_api_key'),
-    );
     $form['api_keys']['google_api_key'] = array(
       '#type' => 'textfield',
-      '#title' => t('Google API Key'),
+      '#title' => t('Google Place Search API Key'),
       '#description' => t('The Google API provides the Places API text search, another option to lookup place names when you use the place search control. ' .
         'It references a global database of places and returns the list of possibilities with their spatial references ' .
-        'to Indicia. To obtain your own API key for the Google API, please visit <a target="_blank" href="https://code.google.com/apis/console">' .
+        'to Indicia. To obtain your own API key for the Google Place Search API, please visit <a target="_blank" href="https://code.google.com/apis/console">' .
         'the Google APIs Console</a>. '),
       '#required' => FALSE,
       '#default_value' => $config->get('google_api_key'),
+    );
+    $form['api_keys']['google_maps_api_key'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Google Maps API Key'),
+      '#description' => t('The Google API provides the Places API text search, another option to lookup place names when you use the place search control. ' .
+        'It references a global database of places and returns the list of possibilities with their spatial references ' .
+        'to Indicia. To obtain your own API key for the Google Maps JavaScript API, please visit <a target="_blank" href="https://code.google.com/apis/console">' .
+        'the Google APIs Console</a>. '),
+      '#required' => FALSE,
+      '#default_value' => $config->get('google_maps_api_key'),
     );
     $form['api_keys']['bing_api_key'] = array(
       '#type' => 'textfield',
@@ -279,8 +291,10 @@ class SettingsForm extends FormBase {
     $config->set('website_id', $values['website_id']);
     if (!empty($values['password']))
       $config->set('password', $values['password']);
+    $config->set('base_theme', $values['base_theme']);
     $config->set('geoplanet_api_key', $values['geoplanet_api_key']);
     $config->set('google_api_key', $values['google_api_key']);
+    $config->set('google_maps_api_key', $values['google_maps_api_key']);
     $config->set('bing_api_key', $values['bing_api_key']);
     $config->set('map_centroid_lat', $values['map_centroid_lat']);
     $config->set('map_centroid_long', $values['map_centroid_long']);

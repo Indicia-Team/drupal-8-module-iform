@@ -1,6 +1,7 @@
 <?php
 
 use Drupal\Core\StreamWrapper\PublicStream;
+use Drupal\Component\Utility\Unicode;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
@@ -185,14 +186,15 @@ function hostsite_get_node_field_value($nid, $field) {
  * Goto a page on the host site.
  * @param string $path The page path.
  * @param array $params The params to add to the URL.
+ * @param string $fragment An optional named anchor to add to the URL.
  */
-function hostsite_goto_page($path, $params = FALSE) {
+function hostsite_goto_page($path, $params = FALSE, $fragment=false) {
   static $iform_redirected_to;
   if ($path === $iform_redirected_to) {
     drupal_set_message("Attempt to redirect to $path caused a redirect loop");
   }
   else {
-    $response = new RedirectResponse(hostsite_get_url($path, $params));
+    $response = new RedirectResponse(hostsite_get_url($path, $params, $fragment));
     $response->send();
     exit();
   }
@@ -202,14 +204,16 @@ function hostsite_goto_page($path, $params = FALSE) {
  * Retrieve the URL for a page identified by a path (e.g. node/1 or an alias).
  * @param string $path The page path.
  * @param array $params The params to add to the URL.
+ * @param string $fragment An optional named anchor to add to the URL.
  */
-function hostsite_get_url($path, $params = FALSE) {
+function hostsite_get_url($path, $params = FALSE, $fragment=false) {
   if ($path==='<front>')
     $path = '';
   $opts = array();
-  if ($params) {
+  if ($params)
     $opts['query'] = $params;
-  }
+  if ($fragment)
+    $opts['query']=$fragment;
   return \Drupal\Core\Url::fromUri("base:$path", $opts)->toString();
 }
 
@@ -288,6 +292,15 @@ function hostsite_get_group_compatible_pages($group_id) {
  */
 function hostsite_module_exists($module) {
   return \Drupal::moduleHandler()->moduleExists($module);
+}
+
+/**
+ * Encodes a string for use in a mime header.
+ * @param $string
+ * @return string
+ */
+function hostsite_mime_header_encode($string) {
+  return Unicode::mimeHeaderEncode($string);
 }
 
 /**

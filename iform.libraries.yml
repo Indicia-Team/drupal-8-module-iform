@@ -17,3 +17,13 @@ admin:
   version: VERSION
   js:
     iform.admin.js: {}
+theme.generic:
+  version: VERSION
+  css:
+    component:
+      media/css/theme-generic.css: {}
+theme.bootstrap-3:
+  version: VERSION
+  css:
+    component:
+      media/css/theme-bootstrap-3.css: {}

@@ -23,7 +23,7 @@ function iform_user_ui_options_form_user_profile_form_alter(&$form) {
       }
       $form['Preferences']['ui_options']["iform_user_ui_$name"] = array(
         '#type' => 'radios',
-        '#title' => check_plain(t($optionset['title'])),
+        '#title' => t($optionset['title']),
         '#options' => $radioOptions,
         '#default_value' => !empty($currentOpts[$name]) ? $currentOpts[$name] : 'default'
       );
