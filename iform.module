@@ -259,7 +259,7 @@ function get_custom_param_values($node) {
     }
     // Json encode the parameters to store them in the Drupal database.
     return json_encode($values);
-  } 
+  }
   else {
     return json_encode($node->params);
   }
@@ -389,8 +389,8 @@ function iform_form_user_login_alter(&$form, &$form_state) {
  * Utility method that gets the base_url, website_id and password appropriate to connect
  * a given node to the warehouse.
  * @param mixed $node A node object or nid.
- * @return array Connection details, including website_id and password. Also 
- * contains a boolean using_drupal_vars which is true if the site-wide 
+ * @return array Connection details, including website_id and password. Also
+ * contains a boolean using_drupal_vars which is true if the site-wide
  * configuration is being used.
  */
 function iform_get_connection_details($node=null) {
@@ -740,16 +740,16 @@ function iform_build_node_specific_libraries(&$libraries) {
       'version' => 'VERSION',
       'js' => [],
       'css' => [
-        'component' => []
+        'base' => []
       ]
     ];
     // Prebuilt form specific CSS
     if (file_exists("$helperPath/prebuilt_forms/css/$form.css")) {
-      $libraries[$lib]['css']['component']["client_helpers/prebuilt_forms/css/$form.css"] = [];
+      $libraries[$lib]['css']['base']["client_helpers/prebuilt_forms/css/$form.css"] = [];
     }
     // Node specific CSS
     if (file_exists("$filePath/indicia/css/node.$nid.css")) {
-      $libraries[$lib]['css']['component']["/$filePath/indicia/css/node.$nid.css"] = [];
+      $libraries[$lib]['css']['base']["/$filePath/indicia/css/node.$nid.css"] = [];
     }
     if (!empty($node->params['additional_css'])) {
       $cssFiles = data_entry_helper::explode_lines($node->params['additional_css']);
@@ -788,13 +788,13 @@ function iform_build_node_specific_libraries(&$libraries) {
           if (file_exists("$helperPath/prebuilt_forms/extensions/$matches[class].js"))
             $libraries[$lib]['js']["client_helpers/prebuilt_forms/extensions/$matches[class].js"] = [];
           if (file_exists("$helperPath/prebuilt_forms/extensions/$matches[class].css")) {
-            $libraries[$lib]['css']['component']["client_helpers/prebuilt_forms/extensions/$matches[class].css"] = [];
+            $libraries[$lib]['css']['base']["client_helpers/prebuilt_forms/extensions/$matches[class].css"] = [];
           }
         }
       }
     }
     // Skip any unnecessary empty libraries
-    if (empty($libraries[$lib]['css']['module']) && empty($libraries[$lib]['js'])) {
+    if (empty($libraries[$lib]['css']['base']) && empty($libraries[$lib]['js'])) {
       unset($libraries[$lib]);
     }
   }
@@ -851,6 +851,11 @@ function iform_page_attachments(array &$attachments) {
   if (class_exists('helper_base')) {
     global $_iform_base_resources;
     $attachments['#attached']['library'][] = 'iform/base';
+    $config = \Drupal::config('iform.settings');
+    // Attach theme specific library.
+    $baseTheme = $config->get('base_theme');
+    $baseTheme = $baseTheme ? $baseTheme : 'generic';
+    $attachments['#attached']['library'][] = "iform/theme.$baseTheme";
     foreach (helper_base::$required_resources as $resource) {
       // exclude resources covered by iform/base
       if (!in_array($resource, $_iform_base_resources)) {
@@ -868,6 +873,7 @@ function iform_page_attachments(array &$attachments) {
 function iform_inlinejs_alter() {
   $js_asset = array();
   if (class_exists('helper_base')) {
+    data_entry_helper::setup_jquery_validation_js();
     $script = helper_base::get_scripts(helper_base::$javascript, helper_base::$late_javascript,
       helper_base::$onload_javascript, FALSE, TRUE);
     if (!empty($script)) {
@@ -925,23 +931,17 @@ function iform_load_language_files($iform, $nid) {
   $formFallbackFileName = $iform . '.en.php';
   $nodeFallbackFileName = 'node.' . $nid . '.en.php';
   // Define a priority ordered list of file names that could contain the custom terms list.
-  if ($filesLangFilePath) {
-    $langFiles = array(
-      $filesLangFilePath . $nodeLangFileName,
-      $filesLangFilePath . $formLangFileName,
-      $filesLangFilePath . $nodeFallbackFileName,
-      $filesLangFilePath . $formFallbackFileName
-    );
-  }
-  else {
-    $langFiles = array();
-  }
-  $langFiles = array_merge($langFiles, array(
+  $langFiles = array(
+    $filesLangFilePath . $nodeLangFileName,
+    $filesLangFilePath . $formLangFileName,
+    $filesLangFilePath . $nodeFallbackFileName,
+    $filesLangFilePath . $formFallbackFileName,
+    $filesLangFilePath . 'default.' . $language->getId() . '.php',
     $moduleLangFilePath . $nodeLangFileName,
     $moduleLangFilePath . $formLangFileName,
     $moduleLangFilePath . $nodeFallbackFileName,
     $moduleLangFilePath . $formFallbackFileName
-  ));
+  );
   $custom_terms = array(); // this is an array of key value pairs
   $custom_term_overrides = array(); // this is an array with each item a subarray of key value pairs.
   // start at the highest priority possible language file name and loop through until we find one that defines the set of custom terms.
@@ -976,10 +976,18 @@ function iform_load_helpers(array $files, $base_url='') {
   }
   $path = iform_client_helpers_path();
   require_once $path . 'helper_base.php';
+  // If using a specified theme, load the theme specific PHP file which could, for example, override templates etc.
+  $config = \Drupal::config('iform.settings');
+  $baseTheme = $config->get('base_theme');
+  $baseTheme = $baseTheme ? $baseTheme : 'generic';
+  if ($baseTheme !== 'generic') {
+    include_once $path . "templates.$baseTheme.php";
+  }
+  // Load the actual helper files.
   foreach ($files as $file) {
     require_once "$path$file.php";
   }
-  // we always need the helper_config file
+  // We always need the helper_config file.
   if (!$configLoaded) {
     require_once $path . 'helper_config.php';
     // now we have an opportunity to load warehouse settings into helper_config from the drupal variables. So a module
@@ -1012,7 +1020,6 @@ function iform_load_helpers(array $files, $base_url='') {
     // final_image_folder
     // indicia_upload_path
     // max_upload_size
-    helper_config::$geoplanet_api_key = $config->get('geoplanet_api_key');
     helper_base::$google_api_key = $config->get('google_api_key');
     helper_base::$google_maps_api_key = $config->get('google_maps_api_key');
     // bing api key may be ommitted for backwards compatibility reasons

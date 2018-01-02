@@ -105,6 +105,18 @@ class SettingsForm extends FormBase {
       '#description' => $pwd_description,
       '#required' => $pwd_required,
     );
+    $baseTheme = $config->get('base_theme');
+    $form['base_theme'] = array(
+      '#type' => 'select',
+      '#title' => t('Optimise output for base theme'),
+      '#description' => 'If using a supported base theme, select it here.',
+      '#required' => TRUE,
+      '#default_value' => $baseTheme ? $baseTheme : 'generic',
+      '#options' => array(
+        'generic' => 'Generic theme output',
+        'bootstrap-3' => 'Bootstrap 3 optimised output',
+      ),
+    );
     $form['api_keys'] = array(
       '#type' => 'details',
       '#title' => t('API Keys'),
@@ -279,6 +291,7 @@ class SettingsForm extends FormBase {
     $config->set('website_id', $values['website_id']);
     if (!empty($values['password']))
       $config->set('password', $values['password']);
+    $config->set('base_theme', $values['base_theme']);
     $config->set('geoplanet_api_key', $values['geoplanet_api_key']);
     $config->set('google_api_key', $values['google_api_key']);
     $config->set('google_maps_api_key', $values['google_maps_api_key']);
