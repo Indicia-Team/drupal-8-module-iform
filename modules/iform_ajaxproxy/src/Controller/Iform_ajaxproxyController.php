@@ -48,13 +48,12 @@ class Iform_ajaxproxyController extends ControllerBase {
         $response = \data_entry_helper::http_post(\data_entry_helper::$base_url.'/index.php/services/security/get_nonce',
             $postargs, false);
         $nonce = $response['output'];
-        if(!array_key_exists('website_id', $_POST))
+        if (!array_key_exists('website_id', $_POST)) {
           $error = t("Indicia website_id not provided in POST.");
-        else if($_POST['website_id'] != $conn['website_id'])
-          $error = t("Indicia website_id in POST does not match the stored website ID.");
+        }
       }
     }
-    if($error){
+    if ($error) {
       return new Response("{error:\"iform_ajaxproxy Error: ".$error."\"}", 400);
     }
     $writeTokens = array('nonce'=>$nonce, 'auth_token' => sha1($nonce.":".$conn['password']));
