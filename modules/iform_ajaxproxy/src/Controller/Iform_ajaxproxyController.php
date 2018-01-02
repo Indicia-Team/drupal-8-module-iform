@@ -51,6 +51,9 @@ class Iform_ajaxproxyController extends ControllerBase {
         if (!array_key_exists('website_id', $_POST)) {
           $error = t("Indicia website_id not provided in POST.");
         }
+        elseif ($_POST['website_id'] != $conn['website_id']) {
+          $error = t("Indicia website_id in POST does not match the stored website ID.");
+        }
       }
     }
     if ($error) {
