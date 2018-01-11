@@ -292,7 +292,6 @@ class SettingsForm extends FormBase {
     if (!empty($values['password']))
       $config->set('password', $values['password']);
     $config->set('base_theme', $values['base_theme']);
-    $config->set('geoplanet_api_key', $values['geoplanet_api_key']);
     $config->set('google_api_key', $values['google_api_key']);
     $config->set('google_maps_api_key', $values['google_maps_api_key']);
     $config->set('bing_api_key', $values['bing_api_key']);

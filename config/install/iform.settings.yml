@@ -3,7 +3,6 @@ warehouse: ''
 allow_connection_override: false
 geoserver_url: ''
 private_warehouse: false
-geoplanet_api_key: ''
 google_api_key: ''
 bing_api_key: ''
 website_id: null

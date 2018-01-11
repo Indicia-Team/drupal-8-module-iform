@@ -1,4 +1,4 @@
-<?php 
+<?php
 /**
 * @file
 * Install, update, and uninstall functions for the iform module.
@@ -27,7 +27,7 @@ function iform_schema() {
       ),
       'params' => array(
         'description' => 'JSON structure containing parameters passed to the form on instantiation.',
-        'type' => 'text',        
+        'type' => 'text',
         'not null' => TRUE,
       ),
       'needs_review' => array(
@@ -61,7 +61,7 @@ function iform_schema() {
   // don't promote iforms to front page by default
   variable_set('node_options_iform', array('status'));
   // hide author and date info
-  variable_set('node_submitted_iform', FALSE); 
+  variable_set('node_submitted_iform', FALSE);
   // and default to no comments
   variable_set('comment_iform', (module_exists('comment') ? COMMENT_NODE_HIDDEN : 0));
   // Don't display date and author information for page nodes by default.
@@ -80,16 +80,16 @@ function iform_uninstall() {
   variable_del('indicia_allow_connection_override');
   variable_del('indicia_base_url');
   variable_del('indicia_geoserver_url');
-  variable_del('indicia_geoplanet_api_key');
   variable_del('indicia_google_api_key');
   variable_del('indicia_google_maps_api_key');
   variable_del('indicia_bing_api_key');
-  // This variable is deprecated but might exist from pre 0.8 installs.
-  variable_del('indicia_google_search_api_key');
   variable_del('indicia_map_centroid_lat');
   variable_del('indicia_map_centroid_long');
   variable_del('indicia_map_zoom');
-  variable_del('indicia_spatial_systems');*/
+  variable_del('indicia_spatial_systems');
+  // These variables is deprecated but might exist from older installs.
+  variable_del('indicia_google_search_api_key');
+  variable_del('indicia_geoplanet_api_key');*/
 }
 
 /**
