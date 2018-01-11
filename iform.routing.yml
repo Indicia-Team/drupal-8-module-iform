@@ -31,4 +31,4 @@ iform.ajax:
   defaults:
     _controller: '\Drupal\iform\Controller\IformController::ajaxCallback'
   requirements:
-    _permission: 'access iform'
+    _permission: 'access iform content'
