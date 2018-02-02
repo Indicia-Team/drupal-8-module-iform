@@ -38,7 +38,7 @@ class Iform_ajaxproxyController extends ControllerBase {
             \data_entry_helper::$base_url = $node->params['base_url'];
           }
           $conn = iform_get_connection_details($node);
-          if($node->getType() != 'iform_page') {
+          if ($node->getType() != 'iform_page') {
             $error = t('Drupal node is not an iform node.');
           }
         }
@@ -87,7 +87,7 @@ class Iform_ajaxproxyController extends ControllerBase {
               'sample' => array('fk' => 'location_id')
             )
           );
-          if(array_key_exists('locations_website:website_id', $_POST)){
+          if (array_key_exists('locations_website:website_id', $_POST)){
             $structure['subModels']['locations_website'] = array('fk' => 'location_id');
           }
           $Model = \data_entry_helper::build_submission($_POST, $structure);
@@ -103,8 +103,8 @@ class Iform_ajaxproxyController extends ControllerBase {
             )
           );
           $Model = \data_entry_helper::build_submission($_POST, $structure);
-          if(array_key_exists('locations_website:website_id', $_POST)){
-            if(isset($Model['superModels'][0]['model']['subModels']))
+          if (array_key_exists('locations_website:website_id', $_POST)){
+            if (isset($Model['superModels'][0]['model']['subModels']))
               $Model['superModels'][0]['model']['subModels'] = array();
             $Model['superModels'][0]['model']['subModels'][] = array(
               'fkId' => 'location_id',
@@ -112,7 +112,7 @@ class Iform_ajaxproxyController extends ControllerBase {
                 'fields' => array('website_id' => array('value' => $_POST['locations_website:website_id']))));
           }
           foreach($_POST as $key=>$value){
-            if(substr($key,0,14) == 'determination:'){
+            if (substr($key,0,14) == 'determination:'){
               $Model['subModels'][0]['model']['subModels'][] = array(
                 'fkId' => 'occurrence_id',
                 'model' => \data_entry_helper::wrap($_POST, 'determination', 'determination')
@@ -138,17 +138,17 @@ class Iform_ajaxproxyController extends ControllerBase {
           $media_id = 'upload_file';
           // At the moment this only needs to handle a single media file at a time
           if (array_key_exists($media_id, $_FILES)) { //there is a single upload field
-            if($_FILES[$media_id]['name'] != '') { //that field has a file
+            if ($_FILES[$media_id]['name'] != '') { //that field has a file
               $file = $_FILES[$media_id];
               $return = array();
               $uploadpath = \helper_config::$upload_path;
               $target_url = \helper_config::$base_url."/index.php/services/data/handle_media";
               $name = $file['name'];
               $fname = $file['tmp_name'];
-              $parts = explode(".",$name);
+              $parts = explode(".", $name);
               $fext = array_pop($parts);
               // Generate a file id to store the image as
-              $destination = time().str_pad((string)rand(0,999),3,'0',STR_PAD_LEFT).".".$fext;
+              $destination = time() . str_pad((string)rand(0,999),3,'0',STR_PAD_LEFT).".".$fext;
               if (move_uploaded_file($fname, $uploadpath.$destination)) { //successfully stored locally - send to the warehouse
                 $postargs = array('name_is_guid' => 'true'); // we've done the time etc thing, so server doesn't need to.
                 if (array_key_exists('auth_token', $_POST)) $postargs['auth_token'] = $_POST['auth_token'];
@@ -156,20 +156,22 @@ class Iform_ajaxproxyController extends ControllerBase {
                 $file_to_upload = array('media_upload'=>'@'.realpath($uploadpath.$destination));
                 $response = \data_entry_helper::http_post($target_url, $file_to_upload + $postargs);
                 $output = json_decode($response['output'], true);
-                if (is_array($output)) { //an array signals an error - attach the errors to the control that caused them
+                if (is_array($output)) {
+                  // An array signals an error - attach the errors to the
+                  // control that caused them.
                   if (array_key_exists('error', $output)) {
                     $return['error'] = $output['error'];
                     if (array_key_exists('errors', $output)) $return['errors'][$media_id] = $output['errors']['media_upload'];
                   }
                 } else { //filenames are returned without structure - the output of json_decode may not be valid.
-                  $exif = exif_read_data($uploadpath.$destination, 0, true);
-                  if(!is_array($exif) || !isset($exif["IFD0"]) || !is_array($exif["IFD0"]))
+                  $exif = exif_read_data($uploadpath . $destination, 0, true);
+                  if (!is_array($exif) || !isset($exif["IFD0"]) || !is_array($exif["IFD0"]))
                     $exif = array("IFD0" => array());
-                  if(!isset($exif["IFD0"]["Make"])) $exif["IFD0"]["Make"] = '';
-                  if(!isset($exif["IFD0"]["Model"])) $exif["IFD0"]["Model"] = '';
-                  if(!isset($exif["IFD0"]["DateTime"])) $exif["IFD0"]["DateTime"] = '';
+                  if (!isset($exif["IFD0"]["Make"])) $exif["IFD0"]["Make"] = '';
+                  if (!isset($exif["IFD0"]["Model"])) $exif["IFD0"]["Model"] = '';
+                  if (!isset($exif["IFD0"]["DateTime"])) $exif["IFD0"]["DateTime"] = '';
                   $return['files'][] = array('filename' => $response['output'],
-                    'EXIF_Camera_Make' => $exif["IFD0"]["Make"].' '.$exif["IFD0"]["Model"],
+                    'EXIF_Camera_Make' => $exif["IFD0"]["Make"].' ' . $exif["IFD0"]["Model"],
                     'EXIF_DateTime' => $exif["IFD0"]["DateTime"]);
                 }
                 unlink($uploadpath.$destination); //remove local copy
@@ -177,13 +179,15 @@ class Iform_ajaxproxyController extends ControllerBase {
                 $return['error'] = 'iform_ajaxproxy Error: Upload error';
                 $return['errors'][$media_id] = 'Sorry, there was a problem uploading this file - move failed.';
               }
-            } else { //attach the errors to the control that caused them
+            }
+            else { //attach the errors to the control that caused them
               $return['error'] = 'iform_ajaxproxy Error: Upload error';
               $return['errors'][$media_id] = 'Sorry, no file present for "'.$media_id.'".';
             }
-          } else {
+          }
+          else {
             $return['error'] = 'iform_ajaxproxy Error: Upload error';
-            $return['errors'][$media_id] = 'Sorry, "'.$media_id.'" not present in _FILES.';
+            $return['errors'][$media_id] = 'Sorry, "' . $media_id . '" not present in _FILES.';
           }
           //If no errors in the response array, all went well.
           $return['success'] = !(array_key_exists('error', $return) || array_key_exists('errors', $return));
@@ -191,8 +195,8 @@ class Iform_ajaxproxyController extends ControllerBase {
         case "occurrence":
           $structure = array('model' => 'occurrence');
           // Only include determination or comment record if determination in post
-          foreach($_POST as $key=>$value){
-            if(substr($key,0,14) == 'determination:'){
+          foreach ($_POST as $key=>$value){
+            if (substr($key,0,14) == 'determination:'){
               $structure['subModels'] = array('determination' => array('fk' => 'occurrence_id'));
               break;
             } elseif (substr($key,0,19) == 'occurrence_comment:'){
@@ -202,25 +206,32 @@ class Iform_ajaxproxyController extends ControllerBase {
           }
           $Model = \data_entry_helper::build_submission($_POST, $structure);
           break;
+
         case "occ-comment":
           $Model = \data_entry_helper::wrap($_POST, 'occurrence_comment');
           break;
+
         case "smp-comment":
           $Model = \data_entry_helper::wrap($_POST, 'sample_comment');
           break;
+
         case "determination":
           $Model = \data_entry_helper::wrap($_POST, 'determination');
           break;
+
         case "notification":
           $Model = \data_entry_helper::wrap($_POST, 'notification');
           break;
+
         case "user-trust":
           $structure = array('model' => 'user_trust');
           $Model = \data_entry_helper::build_submission($_POST, $structure);
           break;
+
         case "person_attribute_value":
           $Model = \data_entry_helper::wrap($_POST, 'person_attribute_value');
           break;
+
         case "filter":
           $Model = \data_entry_helper::wrap($_POST, 'filter');
           break;
@@ -228,12 +239,19 @@ class Iform_ajaxproxyController extends ControllerBase {
           $structure = array('model' => 'filter', 'subModels' => array('filters_user' => array('fk' => 'filter_id')));
           $Model = \data_entry_helper::build_submission($_POST, $structure);
           break;
+
         case "groups_location":
           $Model = \data_entry_helper::wrap($_POST, 'groups_location');
           break;
+
         case "groups_user":
           $Model = \data_entry_helper::wrap($_POST, 'groups_user');
           break;
+
+        case "scratchpad_list":
+          $Model = \data_entry_helper::wrap($_POST, 'scratchpad_list');
+          break;
+
         default:
           return new Response("{error:\"iform_ajaxproxy Error: Current defined methods are: sample, location, loc-sample, loc-smp-occ, smp-occ, '.
               'media, occurrence, occ-comment, smp-comment, determination, notification, user-trust, person_attribute_value\"}");
