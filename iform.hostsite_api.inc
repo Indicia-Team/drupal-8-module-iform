@@ -3,6 +3,7 @@
 use Drupal\Core\StreamWrapper\PublicStream;
 use Drupal\Component\Utility\Unicode;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Drupal\user\Entity\User;
 
 /**
  * @file
@@ -11,16 +12,27 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
  */
 
 /**
- * Function that allows Indicia code to hook into the Drupal user fields to find out a field value, without
- * introducing a Drupal code dependency.
- * @global type $user
- * @param string $field Name of a user field to return. This can be 'language' which returns a user's 2 character language code,
- * 'id' to return the user's ID, 'name' to return the username, or a profile field, e.g. indicia_user_id as introduced
- * by the Easy Login feature. This will be converted to the profile field name if not prefixed with 'profile_'.
- * @param mixed $default Default value to return if not set.
- * @param boolean $array Set to true if this field allows multiple values so you need an array
- * @param type $uid User ID of user to load data for. Defaults to current user.
+ * Retrieve a user field value.
+ *
+ * Function that allows Indicia code to hook into the Drupal user fields to
+ * find out a field value, without introducing a Drupal code dependency.
+ *
+ * @param string $field
+ *   Name of a user field to return. This can be 'language' which returns a
+ *   user's 2 character language code, 'id' to return the user's ID, 'name' to
+ *   return the username, or a profile field, e.g. indicia_user_id as
+ *   introduced by the Easy Login feature. This will be converted to the
+ *   profile field name if not prefixed with 'profile_'.
+ * @param mixed $default
+ *   Default value to return if not set.
+ * @param bool $array
+ *   Set to true if this field allows multiple values so you need an array.
+ * @param int $uid
+ *   User ID of user to load data for. Defaults to current user.
+ *
  * @return mixed
+ *   Field value.
+ *
  * @todo Search client_helpers for references to global $user and uid
  */
 function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid = FALSE) {
@@ -29,23 +41,20 @@ function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid 
   if ($field === 'uid' || $field === 'id') {
     return $uid === FALSE ? $account->id() : $uid;
   }
-  // do we need to load a different user account, e.g. if viewing another user's details?
+  // Do we need to load a different user account, e.g. if viewing another
+  // user's details?
   $differentUser = ($uid !== FALSE && $uid !== $account->id());
   $uid = ($uid === FALSE) ? $account->id() : $uid;
-  $account = \Drupal\user\Entity\User::load($uid);
-  if ($_iform_warehouse_override && $field === 'indicia_user_id')
-    // If switched to a different warehouse, the default stored indicia User ID will be wrong.
+  $account = User::load($uid);
+  if ($_iform_warehouse_override && $field === 'indicia_user_id') {
+    // If switched to a different warehouse, the default stored indicia User ID
+    // will be wrong.
     return _iform_get_alternative_user_id($account, $default);
-  // Only load the account's language if inspecting another user, else use the UI language.
+  }
+  // Only load the account's language if inspecting another user, else use the
+  // UI language.
   if ($field === 'language') {
-    // @todo Test loading user's language under i18n environment
-    if (isset($account->language) && $differentUser) {
-      return $account->language->getId();
-    }
-    else {
-      global $language;
-      return $language->getId();
-    }
+    return \Drupal::languageManager()->getCurrentLanguage()->getId();
   }
   elseif ($field === 'name') {
     return $account->getUsername();
@@ -63,14 +72,18 @@ function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid 
   }
 }
 
-
 /**
  * Function that allows Indicia code to hook into the Drupal user profile to set a field value, without
  * introducing a Drupal code dependency.
- * @global type $user
- * @param type $field The name of a profile field.
- * @param type $data The data to be saved into the field.
- * @return boolean Returns false if the uid or field is not available so data cannot be written
+ *
+ * @param string $field
+ *   The name of a profile field.
+ * @param mixed $data
+ *   The data to be saved into the field.
+ *
+ * @return boolean
+ *   Returns false if the uid or field is not available so data cannot be
+ *   written.
  */
 function hostsite_set_user_field($field, $data) {
   $account = \Drupal::currentUser();
