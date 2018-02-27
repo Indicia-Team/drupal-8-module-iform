@@ -919,15 +919,20 @@ function iform_check_helper_config_exists() {
  */
 function iform_load_language_files($iform, $nid) {
   global $language, $custom_terms, $custom_term_overrides;
-  $language = \Drupal::service('language.default')->get();
+  if (function_exists('t') && !empty(helper_config::$delegate_translation_to_hostsite)) {
+    $languageId = 'en';
+  }
+  else {
+    $languageId = \Drupal::service('language.default')->get()->getId();
+  }
   $moduleLangFilePath = iform_client_helpers_path() . "prebuilt_forms/lang/";
   $filepath = PrivateStream::basePath();
   if (!$filepath) {
     $filepath = PublicStream::basePath();
   }
   $filesLangFilePath = "$filepath/indicia/lang/";
-  $formLangFileName = $iform . '.' . $language->getId() . '.php';
-  $nodeLangFileName = 'node.' . $nid . '.' . $language->getId() . '.php';
+  $formLangFileName = $iform . '.' . $languageId . '.php';
+  $nodeLangFileName = 'node.' . $nid . '.' . $languageId . '.php';
   $formFallbackFileName = $iform . '.en.php';
   $nodeFallbackFileName = 'node.' . $nid . '.en.php';
   // Define a priority ordered list of file names that could contain the custom terms list.
@@ -936,7 +941,7 @@ function iform_load_language_files($iform, $nid) {
     $filesLangFilePath . $formLangFileName,
     $filesLangFilePath . $nodeFallbackFileName,
     $filesLangFilePath . $formFallbackFileName,
-    $filesLangFilePath . 'default.' . $language->getId() . '.php',
+    $filesLangFilePath . 'default.' . $languageId . '.php',
     $moduleLangFilePath . $nodeLangFileName,
     $moduleLangFilePath . $formLangFileName,
     $moduleLangFilePath . $nodeFallbackFileName,
