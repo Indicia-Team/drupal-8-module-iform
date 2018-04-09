@@ -269,16 +269,24 @@ class SettingsForm extends FormBase {
       if ($config->get('base_url') !== $urls['base_url']) {
         \data_entry_helper::clear_cache();
       }
-      $read_auth = \data_entry_helper::get_read_auth($values['website_id'], $values['password']);
-      $test = \data_entry_helper::get_population_data([
-        'table' => 'survey',
-        'extraParams' => $read_auth + ['limit' => 0],
-        'nocache' => TRUE,
-      ]);
-      if (isset($test['error'])) {
+      try {
+        $read_auth = \data_entry_helper::get_read_auth($values['website_id'], $values['password']);
+        $test = \data_entry_helper::get_population_data([
+          'table' => 'survey',
+          'extraParams' => $read_auth + ['limit' => 0],
+          'nocache' => TRUE,
+        ]);
+        if (isset($test['error'])) {
+          $form_state->setErrorByName(
+            'website_id',
+            $this->t('The configuration for the connection to the warehouse is incorrect. This could be an incorrect or unavailable Indicia Warehouse, an incorrect Indicia Website ID or Password.')
+          );
+        }
+      }
+      catch (\Exception $e) {
         $form_state->setErrorByName(
-          'website_id',
-          $this->t('The configuration for the connection to the warehouse is incorrect. This could be an incorrect or unavailable Indicia Warehouse, an incorrect Indicia Website ID or Password.')
+          'warehouse',
+          $e->getMessage()
         );
       }
     }
