@@ -8,6 +8,7 @@ base:
       media/css/default_site.css: {}
   dependencies:
     - core/jquery
+    - core/jquery.ui.autocomplete
     - core/jquery.ui.sortable
     - core/jquery.ui.datepicker
     - core/jquery.ui.dialog
