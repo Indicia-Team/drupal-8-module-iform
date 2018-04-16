@@ -1,4 +1,3 @@
 iform ajax proxy passthrough:
   title: 'IForm AJAX Proxy passthrough'
-  description: 'IForm AJAX Proxy passthrough.'
-  restrict access: TRUE
+  description: 'Allows Indicia forms to post changes via AJAX. Required for some Indicia functionality to work correctly.'
