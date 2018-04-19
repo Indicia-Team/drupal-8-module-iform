@@ -54,7 +54,6 @@ class SettingsForm extends FormBase {
     $form['other_warehouse'] = [
       '#type' => 'details',
       '#attributes' => ['id' => 'warehouse_details'],
-      '#collapsible' => TRUE,
       '#open' => $config->get('warehouse') === 'other',
       '#title' => t('Other Warehouse Details')
     ];
