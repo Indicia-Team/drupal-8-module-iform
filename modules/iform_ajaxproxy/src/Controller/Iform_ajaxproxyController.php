@@ -252,6 +252,10 @@ class Iform_ajaxproxyController extends ControllerBase {
           $Model = \data_entry_helper::wrap($_POST, 'scratchpad_list');
           break;
 
+        case "comment_quick_reply_page_auth":
+          $Model = \data_entry_helper::wrap($_POST, 'comment_quick_reply_page_auth');
+          break;
+
         default:
           return new Response("{error:\"iform_ajaxproxy Error: Current defined methods are: sample, location, loc-sample, loc-smp-occ, smp-occ, '.
               'media, occurrence, occ-comment, smp-comment, determination, notification, user-trust, person_attribute_value\"}");
