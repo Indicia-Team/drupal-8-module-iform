@@ -443,7 +443,7 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
     if (!empty($iform)) {
       $nid = $entity->id();
       iform_load_language_files($iform, $nid);
-      $language = \Drupal::service('language.default')->get();
+      $language =\Drupal::languageManager()->getCurrentLanguage();
       $args = array('language' => $language->getId());
       require_once "$helperPath/prebuilt_forms/$iform.php";
       ob_start();
