@@ -727,6 +727,7 @@ function iform_build_client_helper_libraries(&$libraries) {
 function iform_build_node_specific_libraries(&$libraries) {
   $nids = \Drupal::entityQuery('node')
     ->condition('type', 'iform_page')
+    ->accessCheck(FALSE)
     ->execute();
   $node_storage = \Drupal::entityManager()->getStorage('node');
   $nodes = $node_storage->loadMultiple($nids);
@@ -1032,10 +1033,12 @@ function iform_load_helpers(array $files, $base_url='') {
       helper_config::$bing_api_key = helper_base::$bing_api_key = $config->get('bing_api_key');
     }
   }
-  // ensure css and js is loaded locally
-  helper_base::$js_path = base_path() . iform_media_folder_path() . 'js/';
-  helper_base::$css_path = base_path() . iform_media_folder_path() . 'css/';
-  helper_base::$images_path = base_path() . iform_media_folder_path() . 'images/';
+  // Ensure css and js is loaded locally. Use global as base_url() not available
+  // if bootstrapped too early.
+  global $base_path;
+  helper_base::$js_path = ($base_path ?: '/') . iform_media_folder_path() . 'js/';
+  helper_base::$css_path = ($base_path ?: '/') . iform_media_folder_path() . 'css/';
+  helper_base::$images_path = ($base_path ?: '/') . iform_media_folder_path() . 'images/';
   if ($config->get('private_warehouse')) {
     $relative_proxy_path = iform_client_helpers_path() . 'proxy.php?url=' . helper_base::$base_url;
     // convert to absolute by removing the leading '.' and prepending the base URL
