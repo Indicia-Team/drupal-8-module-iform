@@ -214,6 +214,13 @@ function hostsite_goto_page($path, $params = FALSE, $fragment=false) {
 }
 
 /**
+ * Return from the current request with 403 access denied.
+ */
+function hostsite_access_denied() {
+  throw new Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException();
+}
+
+/**
  * Retrieve the URL for a page identified by a path (e.g. node/1 or an alias).
  * @param string $path The page path.
  * @param array $params The params to add to the URL.
