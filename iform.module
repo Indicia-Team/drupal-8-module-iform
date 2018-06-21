@@ -783,8 +783,8 @@ function iform_build_node_specific_libraries(&$libraries) {
     // Extension classes can be referred to in the form structure parameter of any page
     // and can contain JS or CSS code in addition to the PHP class.
     if (!empty($node->params['structure'])) {
-      if (preg_match('/\[[a-z_]+\.[a-z_]+\]/', $node->params['structure'], $extensions)) {
-        foreach ($extensions as $extension) {
+      if (preg_match_all('/\[[a-z_]+\.[a-z_]+\]/', $node->params['structure'], $extensions)) {
+        foreach ($extensions[0] as $extension) {
           preg_match('/\[(?P<class>[a-z_]+)/', $extension, $matches);
           if (file_exists("$helperPath/prebuilt_forms/extensions/$matches[class].js"))
             $libraries[$lib]['js']["client_helpers/prebuilt_forms/extensions/$matches[class].js"] = [];
