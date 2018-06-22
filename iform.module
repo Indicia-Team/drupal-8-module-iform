@@ -760,12 +760,12 @@ function iform_build_node_specific_libraries(&$libraries) {
         $file = str_replace(array(
           '{mediacss}',
           //'{theme}',
-          '{prebuiltformcss}'
+          '{prebuiltformcss}',
         ),
           array(
-            iform_media_folder_path() . 'css',
+            'media/css',
             //path_to_theme(),
-            iform_client_helpers_path() . 'prebuilt_forms/css'
+            'client_helpers/prebuilt_forms/css',
           ),
           $file
         );
