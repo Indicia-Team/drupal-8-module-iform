@@ -5,6 +5,7 @@ use Drupal\Core\StreamWrapper\PrivateStream;
 use Drupal\Core\StreamWrapper\PublicStream;
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Core\Cache\Cache;
+use function Drupal\Core\Form\drupal_set_message;
 
 require_once 'iform.hostsite_api.inc';
 
@@ -293,16 +294,20 @@ function iform_node_presave(Drupal\Core\Entity\EntityInterface $entity) {
 }
 
 /**
-* Implemenation of hook_load
+* Implemenation of hook_load().
+*
 * @param node object to load additional information for
-* @return object with iform fields
+*
+* @return object
+*   Iform parameters.
 */
 function iform_node_load($entities) {
   foreach ($entities as &$node) {
-    if ($node->bundle()==='iform_page') {
+    if ($node->bundle() === 'iform_page') {
+      $translation = $node->getTranslation(\Drupal::languageManager()->getCurrentLanguage()->getId());
       unset($node->params);
-      $node->params = array();
-      $params = json_decode($node->field_params->value, TRUE);
+      $node->params = [];
+      $params = json_decode($translation->field_params->value, TRUE);
       if (function_exists('iform_user_ui_options_preprocess_iform')) {
         iform_user_ui_options_preprocess_iform($params);
       }
