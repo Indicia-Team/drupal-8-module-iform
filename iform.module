@@ -234,28 +234,34 @@ function iform_form_node_form_alter(&$form, \Drupal\Core\Form\FormStateInterface
 }
 
 /**
+ * Retrieves iform parameters.
+ *
  * Retrieves the parameters required by an iform and creates a JSON string to store
  * them in the database. The iform data must be in the $_POST array or in the node if
  * not in the $_POST.
- * @return string JSON encoded string containing the parameter values.
+ *
+ * @return string
+ *   JSON encoded string containing the parameter values.
  */
 function get_custom_param_values($node) {
   // We need to grab the parameter values for the custom parameters that were defined by the form.
-  if (isset($_POST['iform']) && $_POST['iform']!=-1) {
-    iform_load_helpers(array('form_helper'));
+  if (isset($_POST['iform']) && $_POST['iform'] != -1) {
+    iform_load_helpers(['form_helper']);
     ob_start();
     $params = form_helper::get_form_parameters($_POST['iform']);
     ob_end_clean();
-    $values = array();
-    // always want the website id and password
-    $values['website_id']=$_POST['website_id'];
-    $values['password']=$_POST['password'];
-    if (!empty($_POST['base_url']))
-      $values['base_url']=$_POST['base_url'];
-    // now get the rest of the parameters
+    $values = [];
+    // Always want the website id and password.
+    $values['website_id'] = $_POST['website_id'];
+    $values['password'] = $_POST['password'];
+    if (!empty($_POST['base_url'])) {
+      $values['base_url'] = $_POST['base_url'];
+    }
+    // Now get the rest of the parameters.
     foreach ($params as $param) {
-      if (isset($_POST[$param['fieldname']]))
+      if (isset($_POST[$param['fieldname']])) {
         $values[$param['fieldname']] = $_POST[$param['fieldname']];
+      }
     }
     // Json encode the parameters to store them in the Drupal database.
     return json_encode($values);
@@ -267,21 +273,21 @@ function get_custom_param_values($node) {
 
 /**
  * Implements hook_ENTITY_TYPE_presave.
+ *
  * Saves iform specific information.
  */
 function iform_node_presave(Drupal\Core\Entity\EntityInterface $entity) {
-  if ($entity->bundle()==='iform_page' && isset($_POST['iform'])) {
+  if ($entity->bundle() === 'iform_page' && isset($_POST['iform'])) {
     $iform = $_POST['iform'];
     $entity->field_iform->setValue($iform);
-    $params=get_custom_param_values($entity);
+    $params = get_custom_param_values($entity);
     $entity->field_params->setValue($params);
     $entity->field_available_for_groups->setValue(
       empty($_POST['available_for_groups']) ? '0' : '1'
     );
     $entity->field_limit_to_group_id->setValue(
-      empty($_POST['limit_to_group_id']) ? null : $_POST['limit_to_group_id']
+      empty($_POST['limit_to_group_id']) ? NULL : $_POST['limit_to_group_id']
     );
-    // @todo needs_review?
     // @todo limit_to_group_id
   }
 }
