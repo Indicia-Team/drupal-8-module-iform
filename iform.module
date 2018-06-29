@@ -294,20 +294,26 @@ function iform_node_presave(Drupal\Core\Entity\EntityInterface $entity) {
 }
 
 /**
-* Implemenation of hook_load().
-*
-* @param node object to load additional information for
-*
-* @return object
-*   Iform parameters.
-*/
-function iform_node_load($entities) {
+ * Implemenation of hook_entity_load().
+ *
+ * Updates the iform node objects so that their params property contains a
+ * decoded array of parameters rather than a JSON object.
+ */
+function iform_node_load(array $entities) {
   foreach ($entities as &$node) {
     if ($node->bundle() === 'iform_page') {
-      $translation = $node->getTranslation(\Drupal::languageManager()->getCurrentLanguage()->getId());
+      // Get the parameters, using the translated version if necessary.
+      $currentLang = \Drupal::languageManager()->getCurrentLanguage()->getId();
+      if ($currentLang !== \Drupal::languageManager()->getDefaultLanguage()->getId()) {
+        $translation = $node->getTranslation($currentLang);
+        $params = json_decode($translation->field_params->value, TRUE);
+      }
+      else {
+        $params = json_decode($node->field_params->value, TRUE);
+      }
       unset($node->params);
       $node->params = [];
-      $params = json_decode($translation->field_params->value, TRUE);
+
       if (function_exists('iform_user_ui_options_preprocess_iform')) {
         iform_user_ui_options_preprocess_iform($params);
       }
@@ -322,16 +328,16 @@ function iform_node_load($entities) {
         }
         // For the currently loading node only, we might want to globally switch to a different
         // warehouse. Can't use routeMatch as the node is not yet loaded!
-        if (\Drupal::service('path.current')->getPath()==='/node/' . $node->id()
+        if (\Drupal::service('path.current')->getPath() === '/node/' . $node->id()
              && isset($node->params['base_url'])) {
-          iform_load_helpers(array('data_entry_helper'));
-          if ($node->params['base_url']!==data_entry_helper::$base_url) {
+          iform_load_helpers(['data_entry_helper']);
+          if ($node->params['base_url'] !== data_entry_helper::$base_url) {
             global $_iform_warehouse_override;
-            $_iform_warehouse_override = array(
+            $_iform_warehouse_override = [
               'base_url' => $node->params['base_url'],
               'website_id' => $node->params['website_id'],
-              'password' => $node->params['password']
-            );
+              'password' => $node->params['password'],
+            ];
             data_entry_helper::$base_url = $node->params['base_url'];
           }
         }
