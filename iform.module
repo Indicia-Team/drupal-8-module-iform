@@ -184,52 +184,53 @@ function iform_node_access_records(\Drupal\node\NodeInterface $node) {
  * @throws \exception
  */
 function iform_form_node_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
-  if ($form_id==='node_iform_page_form' || $form_id==='node_iform_page_edit_form') {
+  if ($form_id === 'node_iform_page_form' || $form_id === 'node_iform_page_edit_form') {
     $node = $form_state->getFormObject()->getEntity();
     $iform = $node->field_iform->value;
-    iform_load_helpers(array('form_helper'));
-    // Define the new form fields
-    $form['iform_forms'] = array(
+    iform_load_helpers(['form_helper']);
+    // Define the new form fields.
+    $form['iform_forms'] = [
       '#type' => 'details',
       '#title' => t('Form Selection'),
-      '#weight' => 35
-    );
+      '#weight' => 35,
+    ];
     $config = \Drupal::config('iform.settings');
     // @todo This needs to use $node to get the correct node specific connection
     $connection = iform_get_connection_details($node);
     $readAuth = form_helper::get_read_auth($connection['website_id'], $connection['password']);
-    $form['iform_forms']['picker'] = array(
-      '#markup' => SafeMarkup::format(form_helper::prebuilt_form_picker($readAuth, array(
+    $form['iform_forms']['picker'] = [
+      '#markup' => SafeMarkup::format(form_helper::prebuilt_form_picker($readAuth, [
         'form' => $iform,
         'base_url' => $connection['base_url'],
         'website_id' => $connection['website_id'],
         'password' => $connection['password'],
         'allowConnectionOverride' => $config->get('allow_connection_override'),
         'available_for_groups' => $node->field_available_for_groups->value === '1',
-        'limit_to_group_id' => isset($node->field_limit_to_group_id->value) ? $node->field_limit_to_group_id->value : NULL
-      )), array()
-    ));
+        'limit_to_group_id' => isset($node->field_limit_to_group_id->value) ? $node->field_limit_to_group_id->value : NULL,
+      ]), []),
+    ];
     if ($iform) {
-      $form['form-params'] = array(
-        '#markup' => SafeMarkup::format(form_helper::prebuilt_form_params_form(array(
+      $form['form-params'] = [
+        '#markup' => SafeMarkup::format(form_helper::prebuilt_form_params_form([
           'form' => $iform,
           // @todo Load params properly from node
           'currentSettings' => $node->params,
-          'readAuth' => form_helper::get_read_auth($connection['website_id'], $connection['password'])
-        )), array()),
+          'readAuth' => form_helper::get_read_auth($connection['website_id'], $connection['password']),
+        ]), []),
         '#prefix' => '<div id="form-params">',
         '#suffix' => '</div>',
-        '#weight' => 36
-      );
+        '#weight' => 36,
+      ];
       form_helper::enable_validation('node-form');
     }
     else {
-      $form['form-params'] = array(
-        '#markup' => ' ', // must be a space or Drupal drops the div
+      $form['form-params'] = [
+        // Must be a space or Drupal drops the div.
+        '#markup' => ' ',
         '#prefix' => '<div id="form-params">',
         '#suffix' => '</div>',
-        '#weight' => 36
-      );
+        '#weight' => 36,
+      ];
     }
   }
 }
@@ -237,15 +238,16 @@ function iform_form_node_form_alter(&$form, \Drupal\Core\Form\FormStateInterface
 /**
  * Retrieves iform parameters.
  *
- * Retrieves the parameters required by an iform and creates a JSON string to store
- * them in the database. The iform data must be in the $_POST array or in the node if
- * not in the $_POST.
+ * Retrieves the parameters required by an iform and creates a JSON string to
+ * store them in the database. The iform data must be in the $_POST array or in
+ * the node if not in the $_POST.
  *
  * @return string
  *   JSON encoded string containing the parameter values.
  */
 function get_custom_param_values($node) {
-  // We need to grab the parameter values for the custom parameters that were defined by the form.
+  // We need to grab the parameter values for the custom parameters that were
+  // defined by the form.
   if (isset($_POST['iform']) && $_POST['iform'] != -1) {
     iform_load_helpers(['form_helper']);
     ob_start();
@@ -273,7 +275,7 @@ function get_custom_param_values($node) {
 }
 
 /**
- * Implements hook_ENTITY_TYPE_presave.
+ * Implements hook_ENTITY_presave().
  *
  * Saves iform specific information.
  */
@@ -304,7 +306,9 @@ function iform_node_load(array $entities) {
     if ($node->bundle() === 'iform_page') {
       // Get the parameters, using the translated version if necessary.
       $currentLang = \Drupal::languageManager()->getCurrentLanguage()->getId();
-      if ($currentLang !== \Drupal::languageManager()->getDefaultLanguage()->getId()) {
+      $translationsAvailable = array_keys($node->getTranslationLanguages());
+      if ($currentLang !== \Drupal::languageManager()->getDefaultLanguage()->getId()
+          && in_array($currentLang, $translationsAvailable)) {
         $translation = $node->getTranslation($currentLang);
         $params = json_decode($translation->field_params->value, TRUE);
       }
@@ -318,16 +322,17 @@ function iform_node_load(array $entities) {
         iform_user_ui_options_preprocess_iform($params);
       }
       if (!is_array($params)) {
-        drupal_set_message(t('This page\'s configuration has not been stored correctly.') . ' ' .
+        drupal_set_message(t("This page's configuration has not been stored correctly.") . ' ' .
           $node->field_params->value, 'warning');
       }
       if (is_array($params)) {
-        // Merge the params into the loaded object
+        // Merge the params into the loaded object.
         foreach ($params as $k => $v) {
           $node->params[$k] = $v;
         }
-        // For the currently loading node only, we might want to globally switch to a different
-        // warehouse. Can't use routeMatch as the node is not yet loaded!
+        // For the currently loading node only, we might want to globally
+        // switch to a different warehouse. Can't use routeMatch as the node is
+        // not yet loaded!
         if (\Drupal::service('path.current')->getPath() === '/node/' . $node->id()
              && isset($node->params['base_url'])) {
           iform_load_helpers(['data_entry_helper']);
