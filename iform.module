@@ -415,34 +415,37 @@ function iform_form_user_login_alter(&$form, &$form_state) {
  * contains a boolean using_drupal_vars which is true if the site-wide
  * configuration is being used.
  */
-function iform_get_connection_details($node=null) {
-  // node is not null and override set for this node, use it
-  // node is not null load node,
-  //   and has override settings - use them and store them
+function iform_get_connection_details($node = NULL) {
+  // Node is not null and override set for this node, use it.
+  // Node is not null load node,
+  //   and has override settings - use them and store them.
   global $_iform_warehouse_override;
 
-  // If we don't know the node but the current node overrides the config, use the override
-  if ($node===null && $_iform_warehouse_override) {
+  // If we don't know the node but the current node overrides the config, use
+  // the override.
+  if ($node === NULL && $_iform_warehouse_override) {
     return $_iform_warehouse_override;
   }
-  // load the default config
+  // Load the default config.
   $config = \Drupal::config('iform.settings');
-  $r = array(
-    'base_url'  =>$config->get('base_url'),
-    'website_id'=>$config->get('website_id'),
-    'password'  =>$config->get('password')
-  );
+  $r = [
+    'base_url' => $config->get('base_url'),
+    'website_id' => $config->get('website_id'),
+    'password'  => $config->get('password'),
+  ];
   if ($node && $config->get('allow_connection_override')) {
     if (!is_object($node))
       $node = \Drupal\node\Entity\Node::load($node);
     if (isset($node->params['base_url']) && $node->params['base_url'] !== $r['base_url']) {
-      iform_load_helpers(array('data_entry_helper'));
+      iform_load_helpers(['data_entry_helper']);
       $r['base_url'] = $node->params['base_url'];
     }
-    if (isset($node->params['website_id']))
+    if (isset($node->params['website_id'])) {
       $r['website_id'] = $node->params['website_id'];
-    if (isset($node->params['password']))
+    }
+    if (isset($node->params['password'])) {
       $r['password'] = $node->params['password'];
+    }
   }
   return $r;
 }
@@ -465,11 +468,11 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
     if (!empty($iform)) {
       $nid = $entity->id();
       iform_load_language_files($iform, $nid);
-      $language =\Drupal::languageManager()->getCurrentLanguage();
+      $language = \Drupal::languageManager()->getCurrentLanguage();
       $args = array('language' => $language->getId());
       require_once "$helperPath/prebuilt_forms/$iform.php";
       ob_start();
-      // also force the theme path to be local
+      // Also force the theme path to be local.
       global $indicia_theme_path;
       $indicia_theme_path = iform_media_folder_path() . 'themes/';
       $connection = iform_get_connection_details($entity);
@@ -477,9 +480,10 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
       $args['website_id'] = $connection['website_id'];
       $args['password'] = $connection['password'];
       $args['available_for_groups']=$entity->field_available_for_groups->value;
-      if (isset($entity->limit_to_group_id->value))
+      if (isset($entity->limit_to_group_id->value)) {
         $args['limit_to_group_id']=$entity->limit_to_group_id->value;
-      // we need to grab each requested parameter from the node to pass to the form
+      }
+      // We need to grab each requested parameter from the node to pass to the form.
       $params = form_helper::get_form_parameters($iform);
 
       foreach ($params as $param) {
