@@ -932,22 +932,12 @@ $js
 }
 
 /**
- * Returns true if the helper_config file exists.
- */
-function iform_check_helper_config_exists() {
-  // initial safety check for the presence of the helper_config file
-  $path = iform_client_helpers_path();
-  // we always need the helper_config file
-  return file_exists("$path/helper_config.php");
-}
-
-/**
  * Loads language files defined for the form. This includes language files defined in the module folder or in the site specific
  * Drupal folders, and also includes files named with the form name or node nid.
  */
 function iform_load_language_files($iform, $nid) {
   global $language, $custom_terms, $custom_term_overrides;
-  if (function_exists('t') && !empty(helper_config::$delegate_translation_to_hostsite)) {
+  if (function_exists('t') && !empty(helper_base::$delegate_translation_to_hostsite)) {
     $languageId = 'en';
   }
   else {
@@ -1002,7 +992,7 @@ function iform_load_language_files($iform, $nid) {
  * @param string $base_url Warehouse base URL. Only required if overriding the default.
  */
 function iform_load_helpers(array $files, $base_url='') {
-  $configLoaded = class_exists('helper_config');
+  static $indiciaConfigLoaded = FALSE;
   $config = \Drupal::config('iform.settings');
   if (!is_array($files)) {
     throw new exception('Call to iform_load_helpers must pass an array of helper file names');
@@ -1020,24 +1010,23 @@ function iform_load_helpers(array $files, $base_url='') {
   foreach ($files as $file) {
     require_once "$path$file.php";
   }
-  // We always need the helper_config file.
-  if (!$configLoaded) {
-    require_once $path . 'helper_config.php';
-    // now we have an opportunity to load warehouse settings into helper_config from the drupal variables. So a module
-    // could load a different warehouse per page.
+  if (!$indiciaConfigLoaded) {
+    // Now we have an opportunity to load warehouse settings into helper_base
+    // from the drupal variables. So a module could load a different warehouse
+    // per page.
     if (function_exists('iform_load_warehouse_details')) {
       iform_load_warehouse_details();
     }
     else {
-      helper_config::$base_url = empty($base_url) ? $config->get('base_url') : $base_url;
-      helper_config::$geoserver_url = $config->get('geoserver_url');
+      helper_base::$base_url = empty($base_url) ? $config->get('base_url') : $base_url;
+      helper_base::$geoserver_url = $config->get('geoserver_url');
     }
     if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS']!=='off') {
-      helper_config::$base_url = preg_replace('/^http:/', 'https:', helper_config::$base_url);
-      helper_config::$geoserver_url = preg_replace('/^http:/', 'https:', helper_config::$geoserver_url);
+      helper_base::$base_url = preg_replace('/^http:/', 'https:', helper_base::$base_url);
+      helper_base::$geoserver_url = preg_replace('/^http:/', 'https:', helper_base::$geoserver_url);
     }
     if (!helper_base::$cache_folder) {
-      // path unique to the warehouse, so no problems if we switch warehouse
+      // Path unique to the warehouse, so no problems if we switch warehouse.
       $folder = preg_replace("/[^a-zA-Z0-9]+/", "", helper_base::$base_url);
       // cache folder into private file path if specified as its more secure, otherwise public.
       $filepath = PrivateStream::basePath();
@@ -1055,10 +1044,9 @@ function iform_load_helpers(array $files, $base_url='') {
     // max_upload_size
     helper_base::$google_api_key = $config->get('google_api_key');
     helper_base::$google_maps_api_key = $config->get('google_maps_api_key');
-    // bing api key may be ommitted for backwards compatibility reasons
-    if (isset(helper_config::$bing_api_key)) {
-      helper_config::$bing_api_key = helper_base::$bing_api_key = $config->get('bing_api_key');
-    }
+    helper_base::$os_api_key = helper_base::$os_api_key = $config->get('os_api_key');
+    helper_base::$bing_api_key = helper_base::$bing_api_key = $config->get('bing_api_key');
+    $indiciaConfigLoaded = TRUE;
   }
   // Ensure css and js is loaded locally. Use global as base_url() not available
   // if bootstrapped too early.

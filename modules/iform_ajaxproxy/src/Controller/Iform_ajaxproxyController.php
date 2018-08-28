@@ -140,9 +140,9 @@ class Iform_ajaxproxyController extends ControllerBase {
           if (array_key_exists($media_id, $_FILES)) { //there is a single upload field
             if ($_FILES[$media_id]['name'] != '') { //that field has a file
               $file = $_FILES[$media_id];
-              $return = array();
-              $uploadpath = \helper_config::$upload_path;
-              $target_url = \helper_config::$base_url."/index.php/services/data/handle_media";
+              $return = [];
+              $uploadpath = \helper_base::$upload_path;
+              $target_url = \helper_base::$base_url . "/index.php/services/data/handle_media";
               $name = $file['name'];
               $fname = $file['tmp_name'];
               $parts = explode(".", $name);
