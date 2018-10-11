@@ -1,11 +1,10 @@
 <?php
 
-use Drupal\Core;
 use Drupal\Core\StreamWrapper\PrivateStream;
 use Drupal\Core\StreamWrapper\PublicStream;
 use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Core\Cache\Cache;
-use function Drupal\Core\Form\drupal_set_message;
+use Drupal\node\NodeInterface;
 
 require_once 'iform.hostsite_api.inc';
 
@@ -15,7 +14,7 @@ global $_iform_base_resources;
 $_iform_base_resources = [
   'jquery',
   'jquery_ui',
-  'indiciaFns'
+  'indiciaFns',
 ];
 
 /*
@@ -24,7 +23,7 @@ $_iform_base_resources = [
  * @var array|Boolean
  */
 global $_iform_warehouse_override;
-$_iform_warehouse_override = false;
+$_iform_warehouse_override = FALSE;
 
 // @todo Implement features review code?
 // @todo Convert all variable_get and variable_set to non-version specific code, with a
@@ -43,9 +42,9 @@ function iform_preprocess_html(&$variables) {
 }
 
 /**
- * Implements hook_preprocess_node.
+ * Implements hook_preprocess_node().
+ *
  * Allows iform code to override the page title.
- * @param $variables
  */
 function iform_preprocess_node(&$variables) {
   global $indicia_page_title;
@@ -55,20 +54,18 @@ function iform_preprocess_node(&$variables) {
 }
 
 /**
-* Implements hook_help.
-* Display help and module information.
-* @param string $route_name The route as defined in the routing .yml file
-* @param \Drupal\Core\Routing\RouteMatchInterface $route_match The current route match
-* @return string Help text for the path
-*/
+ * Implements hook_help().
+ *
+ * Display help and module information.
+ */
 function iform_help($route_name, \Drupal\Core\Routing\RouteMatchInterface $route_match) {
-  $output = '';  //declare your output variable
+  $output = '';
   switch ($route_name) {
     case 'help.page.iform':
       $output = '';
       $output .= '<h3>' . t('About') . '</h3>';
       $output .= '<p>' . t('Generates Indicia powered data entry forms and reports.  <a href="!link">More info</a>.',
-          array('!link' => 'http://indicia-docs.readthedocs.org/en/latest/site-building/iform/index.html')) . '</p>';
+          ['!link' => 'http://indicia-docs.readthedocs.org/en/latest/site-building/iform/index.html']) . '</p>';
       return $output;
   }
   return $output;
@@ -132,23 +129,22 @@ function iform_node_grants(\Drupal\Core\Session\AccountInterface $account, $op) 
 }
 
 /**
- * Implements hook_node_access_records.
+ * Implements hook_node_access_records().
+ *
  * Returns grants required to access a particular iform node.
- * @param \Drupal\node\NodeInterface $node
- * @return array
  */
-function iform_node_access_records(\Drupal\node\NodeInterface $node) {
+function iform_node_access_records(NodeInterface $node) {
   if ($node->getType() === 'iform_page') {
-    // invalidate our cache tag so that the permissions are reloaded
-    Cache::invalidateTags(array('node_list:iform_page'));
-    $grants = array();
-    $grants[] = array(
+    // Invalidate our cache tag so that the permissions are reloaded.
+    Cache::invalidateTags(['node_list:iform_page']);
+    $grants = [];
+    $grants[] = [
       'realm' => 'iform_edit',
       'gid' => IFORM_GRANT_ALL,
       'grant_view' => 1,
       'grant_update' => 1,
-      'grant_delete' => 1
-    );
+      'grant_delete' => 1,
+    ];
     if ($node->isPublished()) {
       $hasAccessControl = isset($node->params['view_access_control']) && $node->params['view_access_control'];
       if ($hasAccessControl && empty($node->params['permission_name'])) {
@@ -162,13 +158,13 @@ function iform_node_access_records(\Drupal\node\NodeInterface $node) {
         $realm = 'iform_view';
         $gid = IFORM_GRANT_ALL;
       }
-      $grants[] = array(
+      $grants[] = [
         'realm' => $realm,
         'gid' => $gid,
         'grant_view' => 1,
         'grant_update' => 0,
         'grant_delete' => 0
-      );
+      ];
     }
     return $grants;
   }
@@ -188,6 +184,12 @@ function iform_form_node_form_alter(&$form, \Drupal\Core\Form\FormStateInterface
     $node = $form_state->getFormObject()->getEntity();
     $iform = $node->field_iform->value;
     iform_load_helpers(['form_helper']);
+    // @todo This needs to use $node to get the correct node specific connection
+    $connection = iform_get_connection_details($node);
+    if (empty($connection['base_url']) || empty($connection['website_id']) || empty($connection['password'])) {
+      drupal_set_message(t('Indicia configuration is incomplete. Indicia pages cannot be set up until the warehouse settings are provided.'), 'warning');
+      return;
+    }
     // Define the new form fields.
     $form['iform_forms'] = [
       '#type' => 'details',
@@ -195,8 +197,6 @@ function iform_form_node_form_alter(&$form, \Drupal\Core\Form\FormStateInterface
       '#weight' => 35,
     ];
     $config = \Drupal::config('iform.settings');
-    // @todo This needs to use $node to get the correct node specific connection
-    $connection = iform_get_connection_details($node);
     $readAuth = form_helper::get_read_auth($connection['website_id'], $connection['password']);
     $form['iform_forms']['picker'] = [
       '#markup' => SafeMarkup::format(form_helper::prebuilt_form_picker($readAuth, [
@@ -573,13 +573,19 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
 }
 
 /**
- * When an Indicia form sends POST data back, this method handles the submission of the
- * data to the warehouse.
- * @param $node
- * @param $args
+ * Handle posting an Indicia form.
+ *
+ * When an Indicia form sends POST data back, this method handles the
+ * submission of the data to the warehouse.
+ *
+ * @param object $node
+ *   Node object.
+ * @param array $args
+ *   Form arguments.
+ *
  * @return string|void
  */
-function iform_handle_posted_form($node, $args) {
+function iform_handle_posted_form($node, array $args) {
   $iform = $node->field_iform->value;
   $r = '';
   if ($_POST && (array_key_exists('website_id', $_POST)) && method_exists("iform_$iform", 'get_submission')) {
@@ -594,41 +600,43 @@ function iform_handle_posted_form($node, $args) {
     }
     // Ask the form to submit itself.
     try {
-      // attach the path to the input form. It'll just get skipped if we are not posting a sample.
+      // Attach the path to the input form. It'll just get skipped if we are
+      // not posting a sample.
       $_POST['sample:input_form'] = trim(\Drupal::service('path.alias_manager')
         ->getAliasByPath("/node/$nid"), '/');
-      $s = call_user_func(array(
+      $s = call_user_func([
         "iform_$iform",
-        'get_submission'
-      ), $_POST, $args, $nid);
+        'get_submission',
+      ], $_POST, $args, $nid);
     } catch (Exception $e) {
       \Drupal::logger('iform')
         ->notice('Exception occurred during build of form submission: ' . $e->getMessage());
       drupal_set_message(t('An error occurred whilst saving the new site details.'));
       unset($s);
     }
-    // And allow the form or calling URL to dynamically set the destination after post
+    // And allow the form or calling URL to dynamically set the destination
+    // after post.
     if (!empty($_REQUEST['redirect_on_success'])) {
       $args['redirect_on_success'] = $_REQUEST['redirect_on_success'];
     }
     if (method_exists("iform_$iform", 'get_redirect_on_success')) {
-      $redirect = call_user_func(array(
+      $redirect = call_user_func([
         "iform_$iform",
-        'get_redirect_on_success'
-      ), $_POST, $args);
+        'get_redirect_on_success',
+      ], $_POST, $args);
       if (!empty($redirect)) {
         $args['redirect_on_success'] = $redirect;
       }
     }
     // if for some reason the iform gives back an empty submission, ignore it
     if (isset($s) && $s) {
-      $errors = array();
+      $errors = [];
       // does this Drupal node have any in-built validation code?
       if (method_exists("iform_$iform", 'get_validation_errors')) {
-        $errors = call_user_func(array(
+        $errors = call_user_func([
           "iform_$iform",
-          'get_validation_errors'
-        ), $_POST, $args);
+          'get_validation_errors',
+        ], $_POST, $args);
       }
       // does this Drupal node have any custom validation code?
       if (file_exists("$helperPath/prebuilt_forms/validation/validate.$nid.php")) {
@@ -636,12 +644,12 @@ function iform_handle_posted_form($node, $args) {
         $errors = array_merge($errors, iform_custom_validation($_POST));
       }
       if (!empty($errors)) {
-        $r .= data_entry_helper::dump_errors(array('errors' => $errors));
+        $r .= data_entry_helper::dump_errors(['errors' => $errors]);
       }
       else {
         $response = data_entry_helper::forward_post_to('save', $s);
-        // Clear the Drupal cache tag so user record based reports refresh
-        Cache::invalidateTags(array('user_records:' . hostsite_get_user_field('indicia_user_id')));
+        // Clear the Drupal cache tag so user record based reports refresh.
+        Cache::invalidateTags(['user_records:' . hostsite_get_user_field('indicia_user_id')]);
         // Does the form redirect after success?
         if (is_array($response) && array_key_exists('success', $response) &&
           array_key_exists('redirect_on_success', $args) && $args['redirect_on_success']
@@ -650,11 +658,14 @@ function iform_handle_posted_form($node, $args) {
             drupal_set_message($msg);
           }
           $parts = explode('?', $args['redirect_on_success'], 2);
-          $url = array_shift($parts); // first item removed from array
+          // First item removed from array.
+          $url = array_shift($parts);
           if (count($parts)) {
             $parts = explode('#', $parts[0], 2);
-            $queryStr = array_shift($parts); // info between the ? and # is the query string
-            // Get an array of the redirect_on_success specified query string params
+            // Info between the ? and # is the query string.
+            $queryStr = array_shift($parts);
+            // Get an array of the redirect_on_success specified query string
+            // params.
             parse_str($queryStr, $params);
           }
           else {
@@ -853,20 +864,20 @@ function _iform_apply_variable_to_args($variable, &$args, $config) {
 }
 
 /**
- * Implements hook_preprocess_page.
- * We use this to detect messages set before a redirection and show them on the redirected page.
- * A bit of custom handling required here because under Drupal 8 drupal_set_message messages
- * are cleared when you redirect, so we have to store them in a custom session var to ensure
- * they aren't lost.
- * @param $variables
+ * Implements hook_preprocess_page().
+ *
+ * We use this to detect messages set before a redirection and show them on the
+ * redirected page. A bit of custom handling required here because under Drupal
+ * 8 drupal_set_message messages are cleared when you redirect, so we have to
+ * store them in a custom session var to ensure they aren't lost.
  */
-function iform_preprocess_page(&$variables){
+function iform_preprocess_page(&$variables) {
   if (isset($_SESSION['iform-messages']) && $_SESSION['iform-redirect-from'] !== hostsite_get_current_page_path()) {
     foreach ($_SESSION['iform-messages'] as $message) {
       drupal_set_message($message[0]);
     }
     \Drupal::logger('iform')->notice('cleared');
-    unset ($_SESSION['iform-messages']);
+    unset($_SESSION['iform-messages']);
   }
 }
 
