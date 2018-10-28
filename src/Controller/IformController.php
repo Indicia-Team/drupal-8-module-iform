@@ -1,17 +1,16 @@
 <?php
-/**
- * @file
- * Contains \Drupal\iform\Controller\IformController.
- */
 
 namespace Drupal\iform\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Symfony\Component\HttpFoundation\Response;
+use Drupal\node\Entity\Node;
 
 class IformController extends ControllerBase {
 
   /**
+   * Prebuilt form ajax function callback.
+   *
    * An Ajax callback for prebuilt forms, routed from iform/ajax.
    * Lets prebuilt forms expose a method called ajax_* which is then
    * available on a path iform/ajax/* for AJAX requests from the page.
@@ -20,35 +19,43 @@ class IformController extends ControllerBase {
    *   The filename of the form, excluding .php.
    * @param string $method
    *   The method name, excluding the ajax_ prefix.
-   * @param integer $nid
+   * @param int $nid
    *   Node ID, used to get correct website and password. If not passed, then
    *   looks to use the globally set website Id and password.
    *
    * @return \Symfony\Component\HttpFoundation\Response
+   *   Ajax response.
    */
   public function ajaxCallback($form, $method, $nid) {
-    if ($form === NULL || $method === NULL) {
+    if ($form === NULL || $method === NULL || $nid === NULL) {
       return t('Incorrect AJAX call');
     }
     $class = "\iform_$form";
     $method = "ajax_$method";
     require_once \iform_client_helpers_path() . 'prebuilt_forms/' . $form . '.php';
     $config = \Drupal::config('iform.settings');
-    if ($nid) {
-      $node = \Drupal\node\Entity\Node::load($nid);
-      $website_id = $node->params['website_id'];
-      $password = $node->params['password'];
-      if (isset($node->params['base_url']) && $node->params['base_url'] !== $config->get('base_url')) {
-        global $_iform_warehouse_override;
-        $_iform_warehouse_override = [
-          'base_url' => $node->params['base_url'],
-          'website_id' => $website_id,
-          'password' => $password
-        ];
-        $path = iform_client_helpers_path();
-        require_once $path . 'helper_base.php';
-        \helper_base::$base_url = $node->params['base_url'];
+    $node = Node::load($nid);
+    if ($node->field_iform->value !== $form) {
+      hostsite_access_denied();
+    }
+    if ($node->params['view_access_control'] === '1') {
+      $permission = empty($node->params['permission_name']) ? "access iform $nid" : $node->params['permission_name'];
+      if (!hostsite_user_has_permission($permission)) {
+        hostsite_access_denied();
       }
+    }
+    $website_id = $node->params['website_id'];
+    $password = $node->params['password'];
+    if (isset($node->params['base_url']) && $node->params['base_url'] !== $config->get('base_url')) {
+      global $_iform_warehouse_override;
+      $_iform_warehouse_override = [
+        'base_url' => $node->params['base_url'],
+        'website_id' => $website_id,
+        'password' => $password,
+      ];
+      $path = iform_client_helpers_path();
+      require_once $path . 'helper_base.php';
+      \helper_base::$base_url = $node->params['base_url'];
     }
     // If node not supplied, or does not have its own website Id and password, use the
     // global drupal vars from the settings form.
