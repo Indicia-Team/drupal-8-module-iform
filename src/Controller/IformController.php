@@ -27,28 +27,35 @@ class IformController extends ControllerBase {
    * @return \Symfony\Component\HttpFoundation\Response
    */
   public function ajaxCallback($form, $method, $nid) {
-    if ($form === NULL || $method === NULL) {
+    if ($form === NULL || $method === NULL || $nid === NULL) {
       return t('Incorrect AJAX call');
     }
     $class = "\iform_$form";
     $method = "ajax_$method";
     require_once \iform_client_helpers_path() . 'prebuilt_forms/' . $form . '.php';
     $config = \Drupal::config('iform.settings');
-    if ($nid) {
-      $node = \Drupal\node\Entity\Node::load($nid);
-      $website_id = $node->params['website_id'];
-      $password = $node->params['password'];
-      if (isset($node->params['base_url']) && $node->params['base_url'] !== $config->get('base_url')) {
-        global $_iform_warehouse_override;
-        $_iform_warehouse_override = [
-          'base_url' => $node->params['base_url'],
-          'website_id' => $website_id,
-          'password' => $password
-        ];
-        $path = iform_client_helpers_path();
-        require_once $path . 'helper_base.php';
-        \helper_base::$base_url = $node->params['base_url'];
+    $node = \Drupal\node\Entity\Node::load($nid);
+    if ($node->field_iform->value !== $form) {
+      hostsite_access_denied();
+    }
+    if ($node->params['view_access_control'] === '1') {
+      $permission = empty($node->params['permission_name']) ? "access iform $nid" : $node->params['permission_name'];
+      if (!hostsite_user_has_permission($permission)) {
+        hostsite_access_denied();
       }
+    }
+    $website_id = $node->params['website_id'];
+    $password = $node->params['password'];
+    if (isset($node->params['base_url']) && $node->params['base_url'] !== $config->get('base_url')) {
+      global $_iform_warehouse_override;
+      $_iform_warehouse_override = [
+        'base_url' => $node->params['base_url'],
+        'website_id' => $website_id,
+        'password' => $password,
+      ];
+      $path = iform_client_helpers_path();
+      require_once $path . 'helper_base.php';
+      \helper_base::$base_url = $node->params['base_url'];
     }
     // If node not supplied, or does not have its own website Id and password, use the
     // global drupal vars from the settings form.
