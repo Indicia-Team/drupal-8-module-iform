@@ -457,19 +457,17 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
     \Drupal\Core\Entity\Display\EntityViewDisplayInterface $display, $view_mode) {
   if ($entity->bundle() === 'iform_page') {
     global $language;
-    iform_load_helpers(array('data_entry_helper', 'form_helper'), empty($entity->params['base_url']) ? '' : $entity->params['base_url']);
+    iform_load_helpers(['data_entry_helper', 'form_helper'], empty($entity->params['base_url']) ? '' : $entity->params['base_url']);
     // @todo Drupal 8 might allow us to be more intelligent rather than killing the entire page cache
     \Drupal::service('page_cache_kill_switch')->trigger();
-
-    // @todo Handling of iform review mode
-
     $helperPath = realpath(iform_client_helpers_path());
     $iform = $entity->field_iform->value;
     if (!empty($iform)) {
       $nid = $entity->id();
+      data_entry_helper::$javascript .= "indiciaData.nid = $nid;\n";
       iform_load_language_files($iform, $nid);
       $language = \Drupal::languageManager()->getCurrentLanguage();
-      $args = array('language' => $language->getId());
+      $args = ['language' => $language->getId()];
       require_once "$helperPath/prebuilt_forms/$iform.php";
       ob_start();
       // Also force the theme path to be local.
@@ -479,11 +477,12 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
       $args['base_url'] = $connection['base_url'];
       $args['website_id'] = $connection['website_id'];
       $args['password'] = $connection['password'];
-      $args['available_for_groups']=$entity->field_available_for_groups->value;
+      $args['available_for_groups'] = $entity->field_available_for_groups->value;
       if (isset($entity->limit_to_group_id->value)) {
-        $args['limit_to_group_id']=$entity->limit_to_group_id->value;
+        $args['limit_to_group_id'] = $entity->limit_to_group_id->value;
       }
-      // We need to grab each requested parameter from the node to pass to the form.
+      // We need to grab each requested parameter from the node to pass to the
+      // form.
       $params = form_helper::get_form_parameters($iform);
 
       foreach ($params as $param) {
@@ -502,7 +501,7 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
       if (method_exists("iform_$iform", 'indicia_define_remembered_fields')) {
         call_user_func(array(
           "iform_$iform",
-          'indicia_define_remembered_fields'
+          'indicia_define_remembered_fields',
         ), $args);
       }
       $r .= iform_handle_posted_form($entity, $args);
@@ -1057,7 +1056,7 @@ function iform_load_helpers(array $files, $base_url='') {
       if (!is_dir(helper_base::$interim_image_folder)) {
         mkdir(helper_base::$interim_image_folder, 0777, true);
       }
-    }	
+    }
     // final_image_folder
     // indicia_upload_path
     // max_upload_size
