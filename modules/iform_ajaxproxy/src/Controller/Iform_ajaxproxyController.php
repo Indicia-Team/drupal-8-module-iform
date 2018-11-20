@@ -256,6 +256,38 @@ class Iform_ajaxproxyController extends ControllerBase {
           $Model = \data_entry_helper::wrap($_POST, 'comment_quick_reply_page_auth');
           break;
 
+        case "taxa_taxon_list_attribute":
+          $Model = \data_entry_helper::wrap($_POST, 'taxa_taxon_list_attribute');
+          break;
+      
+        case "occurrence_attribute_website":
+          $Model = \data_entry_helper::wrap($_POST, 'occurrence_attribute_website');
+          break;
+      
+        case "taxon_lists_taxa_taxon_list_attribute":
+          $Model = \data_entry_helper::wrap($_POST, 'taxon_lists_taxa_taxon_list_attribute');
+          break;
+      
+        case "attribute_set":
+          $Model = \data_entry_helper::wrap($_POST, 'attribute_set');
+          break;
+
+        case "attribute_sets_taxa_taxon_list_attribute":
+          $Model = \data_entry_helper::wrap($_POST, 'attribute_sets_taxa_taxon_list_attribute');
+          break;
+      
+        case "occurrence_attributes_taxa_taxon_list_attribute":
+          $Model = \data_entry_helper::wrap($_POST, 'occurrence_attributes_taxa_taxon_list_attribute');
+          break;
+
+        case "attribute_sets_taxon_restriction":
+          $Model = \data_entry_helper::wrap($_POST, 'attribute_sets_taxon_restriction');
+          break;
+
+        case "attribute_sets_survey":
+          $Model = \data_entry_helper::wrap($_POST, 'attribute_sets_survey');
+          break;
+
         default:
           return new Response("{error:\"iform_ajaxproxy Error: Current defined methods are: sample, location, loc-sample, loc-smp-occ, smp-occ, '.
               'media, occurrence, occ-comment, smp-comment, determination, notification, user-trust, person_attribute_value\"}");
