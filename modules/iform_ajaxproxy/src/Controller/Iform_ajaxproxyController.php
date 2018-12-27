@@ -140,9 +140,9 @@ class Iform_ajaxproxyController extends ControllerBase {
           if (array_key_exists($media_id, $_FILES)) { //there is a single upload field
             if ($_FILES[$media_id]['name'] != '') { //that field has a file
               $file = $_FILES[$media_id];
-              $return = array();
-              $uploadpath = \helper_config::$upload_path;
-              $target_url = \helper_config::$base_url."/index.php/services/data/handle_media";
+              $return = [];
+              $uploadpath = \helper_base::$upload_path;
+              $target_url = \helper_base::$base_url . "/index.php/services/data/handle_media";
               $name = $file['name'];
               $fname = $file['tmp_name'];
               $parts = explode(".", $name);
@@ -254,6 +254,38 @@ class Iform_ajaxproxyController extends ControllerBase {
 
         case "comment_quick_reply_page_auth":
           $Model = \data_entry_helper::wrap($_POST, 'comment_quick_reply_page_auth');
+          break;
+
+        case "taxa_taxon_list_attribute":
+          $Model = \data_entry_helper::wrap($_POST, 'taxa_taxon_list_attribute');
+          break;
+      
+        case "occurrence_attribute_website":
+          $Model = \data_entry_helper::wrap($_POST, 'occurrence_attribute_website');
+          break;
+      
+        case "taxon_lists_taxa_taxon_list_attribute":
+          $Model = \data_entry_helper::wrap($_POST, 'taxon_lists_taxa_taxon_list_attribute');
+          break;
+      
+        case "attribute_set":
+          $Model = \data_entry_helper::wrap($_POST, 'attribute_set');
+          break;
+
+        case "attribute_sets_taxa_taxon_list_attribute":
+          $Model = \data_entry_helper::wrap($_POST, 'attribute_sets_taxa_taxon_list_attribute');
+          break;
+      
+        case "occurrence_attributes_taxa_taxon_list_attribute":
+          $Model = \data_entry_helper::wrap($_POST, 'occurrence_attributes_taxa_taxon_list_attribute');
+          break;
+
+        case "attribute_sets_taxon_restriction":
+          $Model = \data_entry_helper::wrap($_POST, 'attribute_sets_taxon_restriction');
+          break;
+
+        case "attribute_sets_survey":
+          $Model = \data_entry_helper::wrap($_POST, 'attribute_sets_survey');
           break;
 
         default:

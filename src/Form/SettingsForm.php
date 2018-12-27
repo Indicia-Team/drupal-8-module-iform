@@ -27,14 +27,6 @@ class SettingsForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    if (!\iform_check_helper_config_exists()) {
-      drupal_set_message(
-        t("Please create the file helper_config.php in the !path folder on the server.",
-        ['!path' => iform_client_helpers_path()]),
-        'warning'
-      );
-      return;
-    }
     \iform_load_helpers(['map_helper', 'data_entry_helper']);
     $config = \Drupal::config('iform.settings');
     global $_iform_warehouses;

@@ -1,17 +1,16 @@
 <?php
-/**
- * @file
- * Contains \Drupal\iform\Controller\IformController.
- */
 
 namespace Drupal\iform\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Symfony\Component\HttpFoundation\Response;
+use Drupal\node\Entity\Node;
 
 class IformController extends ControllerBase {
 
   /**
+   * Prebuilt form ajax function callback.
+   *
    * An Ajax callback for prebuilt forms, routed from iform/ajax.
    * Lets prebuilt forms expose a method called ajax_* which is then
    * available on a path iform/ajax/* for AJAX requests from the page.
@@ -20,11 +19,12 @@ class IformController extends ControllerBase {
    *   The filename of the form, excluding .php.
    * @param string $method
    *   The method name, excluding the ajax_ prefix.
-   * @param integer $nid
+   * @param int $nid
    *   Node ID, used to get correct website and password. If not passed, then
    *   looks to use the globally set website Id and password.
    *
    * @return \Symfony\Component\HttpFoundation\Response
+   *   Ajax response.
    */
   public function ajaxCallback($form, $method, $nid) {
     if ($form === NULL || $method === NULL || $nid === NULL) {
@@ -34,7 +34,7 @@ class IformController extends ControllerBase {
     $method = "ajax_$method";
     require_once \iform_client_helpers_path() . 'prebuilt_forms/' . $form . '.php';
     $config = \Drupal::config('iform.settings');
-    $node = \Drupal\node\Entity\Node::load($nid);
+    $node = Node::load($nid);
     if ($node->field_iform->value !== $form) {
       hostsite_access_denied();
     }
