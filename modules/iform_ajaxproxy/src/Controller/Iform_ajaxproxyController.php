@@ -60,12 +60,16 @@ class Iform_ajaxproxyController extends ControllerBase {
       return new Response("{error:\"iform_ajaxproxy Error: ".$error."\"}", 400);
     }
     $writeTokens = array('nonce'=>$nonce, 'auth_token' => sha1($nonce.":".$conn['password']));
-    if ($index==='single_verify') {
-      $this->single_verify($writeTokens);
+    if ($index === 'single_verify') {
+      $this->postVerification($writeTokens);
     }
-    elseif ($index==='single_verify_sample') {
-      $this->single_verify($writeTokens, 'single_verify_sample');
-    } else {
+    if ($index === 'list_verify') {
+      $this->postVerification($writeTokens, 'list_verify');
+    }
+    elseif ($index === 'single_verify_sample') {
+      $this->postVerification($writeTokens, 'single_verify_sample');
+    }
+    else {
       switch ($index) {
         case "sample":
           $Model = \data_entry_helper::wrap_with_attrs($_POST, 'sample');
@@ -259,15 +263,15 @@ class Iform_ajaxproxyController extends ControllerBase {
         case "taxa_taxon_list_attribute":
           $Model = \data_entry_helper::wrap($_POST, 'taxa_taxon_list_attribute');
           break;
-      
+
         case "occurrence_attribute_website":
           $Model = \data_entry_helper::wrap($_POST, 'occurrence_attribute_website');
           break;
-      
+
         case "taxon_lists_taxa_taxon_list_attribute":
           $Model = \data_entry_helper::wrap($_POST, 'taxon_lists_taxa_taxon_list_attribute');
           break;
-      
+
         case "attribute_set":
           $Model = \data_entry_helper::wrap($_POST, 'attribute_set');
           break;
@@ -275,7 +279,7 @@ class Iform_ajaxproxyController extends ControllerBase {
         case "attribute_sets_taxa_taxon_list_attribute":
           $Model = \data_entry_helper::wrap($_POST, 'attribute_sets_taxa_taxon_list_attribute');
           break;
-      
+
         case "occurrence_attributes_taxa_taxon_list_attribute":
           $Model = \data_entry_helper::wrap($_POST, 'occurrence_attributes_taxa_taxon_list_attribute');
           break;
@@ -308,21 +312,25 @@ class Iform_ajaxproxyController extends ControllerBase {
 
 
   /**
-   * Special case handler for the single_verify method, since this goes to the data_utils service for
-   * performance reasons.
+   * Verify method handler.
+   *
+   * Special case handler for the single_verify, list_verify and
+   * single_sample_verify methods, since this goes to the data_utils service
+   * for performance reasons.
    */
-  private function single_verify($writeTokens, $method='single_verify') {
-    $request = \data_entry_helper::$base_url."index.php/services/data_utils/$method";
-    $postargs = \data_entry_helper::array_to_query_string(array_merge($_POST, $writeTokens), true);
+  private function postVerification($writeTokens, $method = 'single_verify') {
+    $request = \data_entry_helper::$base_url . "index.php/services/data_utils/$method";
+    $postargs = \data_entry_helper::array_to_query_string(array_merge($_POST, $writeTokens), TRUE);
     $response = \data_entry_helper::http_post($request, $postargs);
-    // The response should be in JSON if it worked
-    $output = json_decode($response['output'], true);
+    // The response should be in JSON if it worked.
+    $output = json_decode($response['output'], TRUE);
     // If this is not JSON, it is an error, so just return it as is.
-    if (!$output)
+    if (!$output) {
       echo $response['output'];
-    else
-      echo print_r($response, true);
+    }
+    else {
+      echo print_r($response, TRUE);
+    }
   }
-
 
 }

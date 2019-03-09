@@ -806,7 +806,7 @@ function iform_build_node_specific_libraries(&$libraries) {
           ),
           $file
         );
-        $libraries[$lib]['css']['module'][$file] = [];
+        $libraries[$lib]['css']['component'][$file] = [];
       }
     }
     // Prebuilt form specific JS
