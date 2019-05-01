@@ -118,6 +118,79 @@ class SettingsForm extends FormBase {
         'bootstrap-3' => 'Bootstrap 3 optimised output',
       ],
     ];
+
+    $form['esproxy'] = [
+      '#type' => 'details',
+      '#title' => t('Elasticsearch configuration'),
+      '#open' => TRUE,
+    ];
+    $instruct = <<<TXT
+You can configure a default connection for reporting in Elasticsearch here. This will typically be for open access
+reporting data available across your site rather than a connection for specific tasks such as verification. This
+connection will be used by any blocks that use the indicia.datacomponents library to link to Elasticsearch. IForm pages
+that link to Elasticsearch may have their own connection details. See the <a
+href="https://indicia-docs.readthedocs.io/en/latest/developing/rest-web-services/elasticsearch.html">
+Indicia Elasticsearch documentation</a> for more info.
+TXT;
+    $form['esproxy']['instructions'] = [
+      '#markup' => '<p>' . t($instruct) . '</p>'
+    ];
+    $form['esproxy']['elasticsearch_endpoint'] = [
+      '#type' => 'textfield',
+      '#title' => t('Elasticsearch endpoint'),
+      '#description' => t('Elasticsearch endpoint declared in the REST API.'),
+      '#required' => FALSE,
+      '#default_value' => $config->get('elasticsearch_endpoint'),
+    ];
+    $form['esproxy']['elasticsearch_user'] = [
+      '#type' => 'textfield',
+      '#title' => t('Elasticsearch user'),
+      '#description' => t('REST API user with Elasticsearch access.'),
+      '#required' => FALSE,
+      '#default_value' => $config->get('elasticsearch_user'),
+    ];
+    $form['esproxy']['elasticsearch_secret'] = [
+      '#type' => 'textfield',
+      '#title' => t('Elasticsearch secret'),
+      '#description' => t('REST API user secret.'),
+      '#required' => FALSE,
+      '#default_value' => $config->get('elasticsearch_secret'),
+    ];
+    $form['esproxy']['elasticsearch_warehouse_prefix'] = [
+      '#type' => 'textfield',
+      '#title' => t('Warehouse prefix'),
+      '#description' => t('Prefix given to Indicia IDs on this Elasticsearch index to form a unique document _id. ' .
+        'Required if this connection will allow any update operations (e.g. for verification status changes), or can ' .
+        'be provided as a setting on each individual page that allows updates.'),
+      '#required' => FALSE,
+      '#default_value' => $config->get('warehouse_prefix'),
+    ];
+    $form['esproxy']['elasticsearch_all_records_permission'] = [
+      '#type' => 'textfield',
+      '#title' => 'Elasticsearch all records permission',
+      '#description' => t('Permission required to access all records via this connection. If the connection only provides ' .
+        'access to publically visible data then leave as "access iform"'),
+      '#required' => FALSE,
+      '#default_value' => $config->get('elasticsearch_all_records_permission'),
+    ];
+    $form['esproxy']['elasticsearch_my_records_permission'] = [
+      '#type' => 'textfield',
+      '#title' => 'Elasticsearch my records permission',
+      '#description' => t('Permission required to access a user\'s own records via this connection. Normally safe to ' .
+        'leave as "access iform"'),
+      '#required' => FALSE,
+      '#default_value' => $config->get('elasticsearch_my_records_permission'),
+    ];
+    $form['esproxy']['elasticsearch_location_collation_records_permission'] = [
+      '#type' => 'textfield',
+      '#title' => 'Elasticsearch location collaction records permission',
+      '#description' => t('Permission required to access records in a collation area (e.g. Local Record Centre ' .
+        'boundary) via this connection. If the connection only provides access to publically visible data then leave ' .
+        'as "access iform"'),
+      '#required' => FALSE,
+      '#default_value' => $config->get('elasticsearch_location_collation_records_permission'),
+    ];
+
     $form['api_keys'] = [
       '#type' => 'details',
       '#title' => t('API Keys'),
@@ -308,6 +381,13 @@ class SettingsForm extends FormBase {
       $config->set('password', $values['password']);
     }
     $config->set('base_theme', $values['base_theme']);
+    $config->set('elasticsearch_endpoint', $values['elasticsearch_endpoint']);
+    $config->set('elasticsearch_user', $values['elasticsearch_user']);
+    $config->set('elasticsearch_secret', $values['elasticsearch_secret']);
+    $config->set('elasticsearch_warehouse_prefix', $values['elasticsearch_warehouse_prefix']);
+    $config->set('elasticsearch_all_records_permission', $values['elasticsearch_all_records_permission']);
+    $config->set('elasticsearch_my_records_permission', $values['elasticsearch_my_records_permission']);
+    $config->set('elasticsearch_location_collation_records_permission', $values['elasticsearch_location_collation_records_permission']);
     $config->set('google_api_key', $values['google_api_key']);
     $config->set('google_maps_api_key', $values['google_maps_api_key']);
     $config->set('bing_api_key', $values['bing_api_key']);

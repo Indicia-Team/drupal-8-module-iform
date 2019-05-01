@@ -68,4 +68,26 @@ class IformController extends ControllerBase {
     return new Response('');
   }
 
+  /**
+   * A callback for Elasticsearch proxying.
+   *
+   * @param string $method
+   *   Name of the proxy method (e.g. searchbyparams, rawsearch, download).
+   * @param int $nid
+   *   Optional node ID if site wide ES configuration to be overridden.
+   *
+   * @return object
+   *   Drupal response.
+   */
+  function esproxyCallback($method, $nid = NULL) {
+    require_once \iform_client_helpers_path() . 'ElasticsearchProxyHelper.php';
+    try {
+      \ElasticSearchProxyHelper::callMethod($method, $nid);
+    }
+    catch (ElasticSearchProxyAbort $e) {
+      // Nothing to do.
+    }
+    return new Response('');
+  }
+
 }
