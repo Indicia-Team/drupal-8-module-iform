@@ -249,10 +249,15 @@ function hostsite_get_current_page_path() {
 
 /**
  * Retrieve a configuration value, e.g. site name or site mail, or an indicia setting.
- * @param string $context Context of the variable, either site or iform.
- * @param string $name Name of the config value to retrieve, e.g. name or mail.
- * @param mixed $default The default value to return if the config key does not exist.
- * @return mixed The config value.
+ *
+ * @param string $context
+ *   Context of the variable, either site or iform.
+ * @param string $name
+ *   Name of the config value to retrieve, e.g. name or mail.
+ * @param mixed $default
+ *   The default value to return if the config key does not exist.
+ * @return mixed
+ *   The config value.
  */
 function hostsite_get_config_value($context, $name, $default = FALSE) {
   $configName = $context === 'site' ? 'system.site' : 'iform.settings';
@@ -321,6 +326,59 @@ function hostsite_module_exists($module) {
  */
 function hostsite_mime_header_encode($string) {
   return Unicode::mimeHeaderEncode($string);
+}
+
+/**
+ * Returns the config options required to drive Elasticsearch driven content.
+ *
+ * @param integer $nid
+ *   Optional ID of node which may override site-wide Elasticsearch settings.
+ *
+ * @return array
+ *   Settings structure.
+ */
+function hostsite_get_es_config($nid) {
+  $config = \Drupal::config('iform.settings');
+  $paramNames = [
+    'endpoint',
+    'user',
+    'secret',
+    'warehouse_prefix',
+    'all_records_permission',
+    'my_records_permission',
+    'location_collation_records_permission'
+  ];
+  $esParams = [];
+  if ($nid) {
+    $nodeParams = hostsite_get_node_field_value($nid, 'params');
+  }
+  foreach ($paramNames as $name) {
+    $esParams[$name] = $config->get("elasticsearch_$name");
+    // Allow page level override.
+    if ($nid) {
+      $esParams[$name] = !empty($nodeParams[$name])
+        ? $nodeParams[$name]
+        : $esParams[$name];
+    }
+  }
+  // Also grab some Indicia connection data.
+  $paramNames = [
+    'website_id',
+    'password',
+    'base_url',
+  ];
+  $indiciaParams = [];
+  foreach ($paramNames as $name) {
+    $indiciaParams[$name] = $config->get($name, '');
+    // Allow page level override.
+    if ($nid && empty($indiciaParams[$name]) || $config->get('allow_connection_override', FALSE)) {
+      $indiciaParams[$name] = isset($nodeParams[$name]) ? $nodeParams[$name] : $indiciaParams[$name];
+    }
+  }
+  return [
+    'es' => $esParams,
+    'indicia' => $indiciaParams,
+  ];
 }
 
 /**
