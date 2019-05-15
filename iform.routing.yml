@@ -32,3 +32,9 @@ iform.ajax:
     _controller: '\Drupal\iform\Controller\IformController::ajaxCallback'
   requirements:
     _permission: 'access iform content'
+iform.esproxy:
+  path: '/iform/esproxy/{method}/{nid}'
+  defaults:
+    _controller: '\Drupal\iform\Controller\IformController::esproxyCallback'
+  requirements:
+    _permission: 'access iform content'
