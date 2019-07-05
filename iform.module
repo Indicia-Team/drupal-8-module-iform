@@ -789,6 +789,9 @@ function iform_build_node_specific_libraries(&$libraries) {
     if (file_exists("$filePath/indicia/css/node.$nid.css")) {
       $libraries[$lib]['css']['base']["/$filePath/indicia/css/node.$nid.css"] = [];
     }
+    if (file_exists("$helperPath/prebuilt_forms/css/node.$nid.css")) {
+      $libraries[$lib]['css']['base']["client_helpers/prebuilt_forms/css/node.$nid.css"] = [];
+    }
     if (!empty($node->params['additional_css'])) {
       $cssFiles = data_entry_helper::explode_lines($node->params['additional_css']);
       // @todo Theme path replacement
@@ -816,6 +819,9 @@ function iform_build_node_specific_libraries(&$libraries) {
     // Node specific JS
     if (file_exists("$filePath/indicia/js/node.$nid.js")) {
       $libraries[$lib]['js']["/$filePath/indicia/js/node.$nid.js"] = [];
+    }
+    if (file_exists("$helperPath/prebuilt_forms/js/node.$nid.js")) {
+      $libraries[$lib]['js']["client_helpers/prebuilt_forms/js/node.$nid.js"] = [];
     }
     // Extension classes can be referred to in the form structure parameter of any page
     // and can contain JS or CSS code in addition to the PHP class.
