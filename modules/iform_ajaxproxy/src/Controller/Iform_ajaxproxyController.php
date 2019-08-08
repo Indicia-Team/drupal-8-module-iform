@@ -263,6 +263,10 @@ class Iform_ajaxproxyController extends ControllerBase {
         case "taxa_taxon_list_attribute":
           $Model = \data_entry_helper::wrap($_POST, 'taxa_taxon_list_attribute');
           break;
+          
+        case "taxa_taxon_list_attribute_value":
+          $Model = \data_entry_helper::wrap($_POST, 'taxa_taxon_list_attribute_value');
+          break;
 
         case "occurrence_attribute_website":
           $Model = \data_entry_helper::wrap($_POST, 'occurrence_attribute_website');
