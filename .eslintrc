@@ -1,5 +1,6 @@
 {
   "extends" : "airbnb/legacy",
+  "root": true,
   "rules": {
     "max-len": [1, 120]
   },
