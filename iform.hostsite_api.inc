@@ -233,7 +233,7 @@ function hostsite_get_url($path, $params = FALSE, $fragment=false) {
   if ($params)
     $opts['query'] = $params;
   if ($fragment)
-    $opts['query']=$fragment;
+    $opts['fragment']=$fragment;
   return \Drupal\Core\Url::fromUri("base:$path", $opts)->toString();
 }
 
