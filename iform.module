@@ -504,7 +504,7 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
           'indicia_define_remembered_fields',
         ), $args);
       }
-      $r .= iform_handle_posted_form($entity, $args);
+      $r .= iform_handle_posted_form($entity, $args, $response);
 
       // Make buttons have a hover effect
       data_entry_helper::$javascript .= "indiciaFns.enableHoverEffect();\n";
@@ -584,7 +584,7 @@ function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $ent
  *
  * @return string|void
  */
-function iform_handle_posted_form($node, array $args) {
+function iform_handle_posted_form($node, array $args, &$response) {
   $iform = $node->field_iform->value;
   $r = '';
   if ($_POST && (array_key_exists('website_id', $_POST)) && method_exists("iform_$iform", 'get_submission')) {
