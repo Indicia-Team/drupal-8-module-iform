@@ -38,7 +38,7 @@ iform.esproxy:
     _controller: '\Drupal\iform\Controller\IformController::esproxyCallback'
   requirements:
     _permission: 'access iform content'
-iform.dynamicattrsproxy
+iform.dynamicattrsproxy:
   path: '/iform/dynamicattrsproxy/{method}'
   defaults:
     _controller: '\Drupal\iform\Controller\IformController::dynamicattrsproxyCallback'
