@@ -8,12 +8,14 @@ base:
       media/css/default_site.css: {}
   dependencies:
     - core/jquery
+    - core/jquery.form
     - core/jquery.ui.autocomplete
     - core/jquery.ui.sortable
     - core/jquery.ui.datepicker
     - core/jquery.ui.dialog
     - core/jquery.ui.progressbar
     - core/jquery.ui.tabs
+    - core/drupal.tableheader
 admin:
   version: VERSION
   js:
