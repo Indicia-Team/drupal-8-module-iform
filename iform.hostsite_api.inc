@@ -89,9 +89,10 @@ function hostsite_set_user_field($field, $data) {
   $account = \Drupal::currentUser();
   if ($account->id()) {
     $fieldname = (substr($field, 0, 6) === 'field_' ? '' : 'field_') . $field;
-    if ($account->$fieldname) {
-      $account->$fieldname->setValue($data);
-      $account->save();
+    $user = \Drupal\user\Entity\User::load($account->id());
+    if ($user->$fieldname) {
+      $user->$fieldname->setValue($data);
+      $user->save();
       return TRUE;
     }
   }
