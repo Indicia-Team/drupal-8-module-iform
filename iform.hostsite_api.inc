@@ -341,6 +341,7 @@ function hostsite_mime_header_encode($string) {
 function hostsite_get_es_config($nid) {
   $config = \Drupal::config('iform.settings');
   $paramNames = [
+    'version',
     'endpoint',
     'user',
     'secret',
@@ -349,12 +350,18 @@ function hostsite_get_es_config($nid) {
     'my_records_permission',
     'location_collation_records_permission'
   ];
+  $defaults = [
+    'version' => '6',
+  ];
   $esParams = [];
   if ($nid) {
     $nodeParams = hostsite_get_node_field_value($nid, 'params');
   }
   foreach ($paramNames as $name) {
     $esParams[$name] = $config->get("elasticsearch_$name");
+    if (!$esParams[$name] === NULL && isset($defaults[$name])) {
+      $esParams[$name] = $defaults[$name];
+    }
     // Allow page level override.
     if ($nid) {
       $esParams[$name] = !empty($nodeParams[$name])
