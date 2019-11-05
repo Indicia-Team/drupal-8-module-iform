@@ -414,3 +414,20 @@ function _iform_get_alternative_user_id($account, $default) {
     }
   }
 }
+/**
+ *
+ */
+function hostsite_get_cms_version()
+{
+  return \Drupal::VERSION;
+}
+
+/**
+ *
+ */
+function hostsite_invoke_alter_hooks($hook, &$args)
+{
+  $module_handler = \Drupal::moduleHandler();
+  $module_handler->loadAll();
+  $module_handler->alter($hook, $args);
+}
