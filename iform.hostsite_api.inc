@@ -414,19 +414,28 @@ function _iform_get_alternative_user_id($account, $default) {
     }
   }
 }
+
 /**
+ * Retrieve the current Drupal version.
  *
+ * @return string
+ *   The Drupal version value.
+
  */
-function hostsite_get_cms_version()
-{
+function hostsite_get_cms_version() {
   return \Drupal::VERSION;
 }
 
 /**
+ * Invoke a hook in each Drupal module, allowing modification of a variable.
  *
+ * @param string $hook
+ *   Name of the hook to invoke in each enabled Drupal module.
+ * @param mixed $args
+ *   Reference to an argument to be passed to the hook. This is read/write, and contents may be altered by the hook.
+ * @return none
  */
-function hostsite_invoke_alter_hooks($hook, &$args)
-{
+function hostsite_invoke_alter_hooks($hook, &$args) {
   $module_handler = \Drupal::moduleHandler();
   $module_handler->loadAll();
   $module_handler->alter($hook, $args);
