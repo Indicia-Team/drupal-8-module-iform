@@ -1,30 +1,15 @@
 <?php
 
 /**
- * Implement hook_variable_info.
- * Returns information about the variables used by this module, allowing an admin interface
- * to be created. We use a single radio group to decide if we use the custom, minimised or
- * full debug version of the OpenLayers.js file.
+ * Retrieve the current OpenLayers JS library version filename.
+ *
+ * @return String
+ *   The OpenLayers JS library filename to use.
  */
-function iform_openlayers_variable_info($options) {
-  $variable['iform_openlayers_mode']=array(
-    'title'=>t('Type of OpenLayers.js file used'),
-    'description'=>t('Whether to use the Indicia custom build of OpenLayers, the official '.
-      'minimised version, or the full debug version. The custom build has several classes '.
-      'omitted to further reduce the size, improving download times.'),
-      // TODO add list of classes omitted.
-    'type' => 'radios',
-    'options' => array('custom' => t('IForm Custom Build'),
-                       'minimised' => t('Official Minimised Version'),
-                       'debug' => t('Debug')),
-    'default'=>'custom',
-    'addToIndiciaSettingsPage'=>true
-  );
-  return $variable;
-}
-
 function iform_openlayers_get_file() {
-  switch(variable_get('iform_openlayers_mode', '')){
+  $config = \Drupal::configFactory()->getEditable('iform.openlayers.settings');
+
+  switch($config->get('openlayers_mode', 'custom')){
     case 'debug':
         return 'OpenLayers-debug.js';
     case 'minimised':
@@ -33,4 +18,38 @@ function iform_openlayers_get_file() {
     default:
         return 'OpenLayers.js';
   }
+}
+
+/**
+ * Implement hook_form_FORM_ID_alter
+ * We use a single radio group to decide if we use the custom, minimised or
+ * full debug version of the OpenLayers.js file.
+ */
+function iform_openlayers_form_iform_settings_form_alter(&$form, $form_state, $form_id) {
+  $config = \Drupal::configFactory()->getEditable('iform.openlayers.settings');
+
+  $form['openlayers_mode'] = [
+    '#type' => 'radios',
+    '#title' => t('Type of OpenLayers.js file used'),
+    '#options' => ['custom' => t('IForm Custom Build'),
+                   'minimised' => t('Official Minimised Version'),
+                   'debug' => t('Debug')],
+    '#description' => t('Whether to use the Indicia custom build of OpenLayers, the official ' .
+                        'minimised version, or the full debug version. The custom build has several classes ' .
+                        'omitted to further reduce the size, improving download times.'),
+    '#required' => TRUE,
+    '#default_value' => $config->get('openlayers_mode', 'custom')
+  ];
+  $form['submit']['#weight'] = 1000;
+  $form['#submit'][] = 'iform_openlayers_iform_settings_form_submit';
+}
+
+/**
+ * Additional Form submission function, used to set the version of the OpenLayers file we are going to use.
+ */
+function iform_openlayers_iform_settings_form_submit($form, &$form_state) {
+  $config = \Drupal::configFactory()->getEditable('iform.openlayers.settings');
+  $values = $form_state->getValues();
+  $config->set('openlayers_mode', $values['openlayers_mode']);
+  $config->save();
 }
