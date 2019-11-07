@@ -1,16 +1,17 @@
 <?php
-// $Id$
  
 /**
  * Implements hook_install().
  */
 function iform_openlayers_install() {
-  variable_set('iform_openlayers_mode', 'custom');
+  $config = \Drupal::configFactory()->getEditable('iform.openlayers.settings');
+  $config->set('openlayers_mode', 'custom');
+  $config->save();
 }
 
 /**
  * Implements hook_uninstall().
  */
 function iform_openlayers_uninstall() {
-  variable_del('iform_openlayers_mode');
+  \Drupal::configFactory()->getEditable('iform.openlayers.settings')->delete();
 }
