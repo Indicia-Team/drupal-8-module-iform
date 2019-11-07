@@ -341,6 +341,7 @@ function hostsite_mime_header_encode($string) {
 function hostsite_get_es_config($nid) {
   $config = \Drupal::config('iform.settings');
   $paramNames = [
+    'version',
     'endpoint',
     'user',
     'secret',
@@ -349,12 +350,18 @@ function hostsite_get_es_config($nid) {
     'my_records_permission',
     'location_collation_records_permission'
   ];
+  $defaults = [
+    'version' => '6',
+  ];
   $esParams = [];
   if ($nid) {
     $nodeParams = hostsite_get_node_field_value($nid, 'params');
   }
   foreach ($paramNames as $name) {
     $esParams[$name] = $config->get("elasticsearch_$name");
+    if (!$esParams[$name] === NULL && isset($defaults[$name])) {
+      $esParams[$name] = $defaults[$name];
+    }
     // Allow page level override.
     if ($nid) {
       $esParams[$name] = !empty($nodeParams[$name])
@@ -406,4 +413,30 @@ function _iform_get_alternative_user_id($account, $default) {
       return $default;
     }
   }
+}
+
+/**
+ * Retrieve the current Drupal version.
+ *
+ * @return string
+ *   The Drupal version value.
+
+ */
+function hostsite_get_cms_version() {
+  return \Drupal::VERSION;
+}
+
+/**
+ * Invoke a hook in each Drupal module, allowing modification of a variable.
+ *
+ * @param string $hook
+ *   Name of the hook to invoke in each enabled Drupal module.
+ * @param mixed $args
+ *   Reference to an argument to be passed to the hook. This is read/write, and contents may be altered by the hook.
+ * @return none
+ */
+function hostsite_invoke_alter_hooks($hook, &$args) {
+  $module_handler = \Drupal::moduleHandler();
+  $module_handler->loadAll();
+  $module_handler->alter($hook, $args);
 }

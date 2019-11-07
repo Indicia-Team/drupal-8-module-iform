@@ -135,6 +135,18 @@ TXT;
     $form['esproxy']['instructions'] = [
       '#markup' => '<p>' . t($instruct) . '</p>'
     ];
+    $esVersion = $config->get('elasticsearch_version');
+    $form['esproxy']['elasticsearch_version'] = [
+      '#type' => 'radios',
+      '#title' => t('Elasticsearch version'),
+      '#description' => t('Elasticsearch major version number.'),
+      '#options' => [
+        '6' => '6.x',
+        '7' => '7.x',
+      ],
+      '#required' => TRUE,
+      '#default_value' => $esVersion ? $esVersion : '6',
+    ];
     $form['esproxy']['elasticsearch_endpoint'] = [
       '#type' => 'textfield',
       '#title' => t('Elasticsearch endpoint'),
@@ -381,6 +393,7 @@ TXT;
       $config->set('password', $values['password']);
     }
     $config->set('base_theme', $values['base_theme']);
+    $config->set('elasticsearch_version', $values['elasticsearch_version']);
     $config->set('elasticsearch_endpoint', $values['elasticsearch_endpoint']);
     $config->set('elasticsearch_user', $values['elasticsearch_user']);
     $config->set('elasticsearch_secret', $values['elasticsearch_secret']);
