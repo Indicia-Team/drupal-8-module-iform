@@ -175,7 +175,7 @@ TXT;
         'Required if this connection will allow any update operations (e.g. for verification status changes), or can ' .
         'be provided as a setting on each individual page that allows updates.'),
       '#required' => FALSE,
-      '#default_value' => $config->get('warehouse_prefix'),
+      '#default_value' => $config->get('elasticsearch_warehouse_prefix'),
     ];
     $form['esproxy']['elasticsearch_all_records_permission'] = [
       '#type' => 'textfield',
