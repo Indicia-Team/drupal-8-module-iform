@@ -330,11 +330,13 @@ class Iform_ajaxproxyController extends ControllerBase {
     $output = json_decode($response['output'], TRUE);
     // If this is not JSON, it is an error, so just return it as is.
     if (!$output) {
-      return new Response($response['output']);
+      $r = new Response($response['output']);
     }
     else {
-      return new Response(print_r($response, TRUE));
+      $r = new Response(print_r($response, TRUE));
     }
+    $r->headers->set('Content-Type', 'text/plain');
+    return $r;
   }
 
 }
