@@ -90,7 +90,7 @@ function hostsite_set_user_field($field, $data) {
   if ($account->id()) {
     $fieldname = (substr($field, 0, 6) === 'field_' ? '' : 'field_') . $field;
     $user = \Drupal\user\Entity\User::load($account->id());
-    if ($user->$fieldname) {
+    if (isset($user->$fieldname) && $user->$fieldname) {
       $user->$fieldname->setValue($data);
       $user->save();
       return TRUE;
