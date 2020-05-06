@@ -599,10 +599,12 @@ function iform_handle_posted_form($node, array $args, &$response) {
     }
     // Ask the form to submit itself.
     try {
-      // Attach the path to the input form. It'll just get skipped if we are
-      // not posting a sample.
-      $_POST['sample:input_form'] = trim(\Drupal::service('path.alias_manager')
-        ->getAliasByPath("/node/$nid"), '/');
+      // Attach the path to the input form for new samples. It'll just get
+      // skipped if we are not posting a sample.
+      if (empty($_POST['sample:id'])) {
+        $_POST['sample:input_form'] = trim(\Drupal::service('path.alias_manager')
+          ->getAliasByPath("/node/$nid"), '/');
+      }
       $s = call_user_func([
         "iform_$iform",
         'get_submission',
