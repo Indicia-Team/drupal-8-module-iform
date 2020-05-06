@@ -61,13 +61,13 @@ class Iform_ajaxproxyController extends ControllerBase {
     }
     $writeTokens = array('nonce'=>$nonce, 'auth_token' => sha1($nonce.":".$conn['password']));
     if ($index === 'single_verify') {
-      $this->postVerification($writeTokens);
+      return $this->postVerification($writeTokens);
     }
     if ($index === 'list_verify') {
-      $this->postVerification($writeTokens, 'list_verify');
+      return $this->postVerification($writeTokens, 'list_verify');
     }
     elseif ($index === 'single_verify_sample') {
-      $this->postVerification($writeTokens, 'single_verify_sample');
+      return $this->postVerification($writeTokens, 'single_verify_sample');
     }
     else {
       switch ($index) {

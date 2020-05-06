@@ -175,7 +175,7 @@ TXT;
         'Required if this connection will allow any update operations (e.g. for verification status changes), or can ' .
         'be provided as a setting on each individual page that allows updates.'),
       '#required' => FALSE,
-      '#default_value' => $config->get('warehouse_prefix'),
+      '#default_value' => $config->get('elasticsearch_warehouse_prefix'),
     ];
     $form['esproxy']['elasticsearch_all_records_permission'] = [
       '#type' => 'textfield',
@@ -292,6 +292,8 @@ TXT;
       'utm30ed50' => t('UTM 30N (ED50)'),
       'utm30wgs84' => t('UTM 30N (WGS84)'),
       '2169' => t('LUREF Luxembourg'),
+      '3006' => t('SWEREF99 TM / Swedish Transverse Mercator'),
+      '3021' => t('RT90 2.5 gon v / Swedish Grid'),
     ];
     $selected_systems = $this->formValuesFromSrefSystems($systems, $config);
     $form['map']['spatial_ref_systems']['spatial_ref_systems_list'] = [
