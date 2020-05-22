@@ -359,7 +359,7 @@ function hostsite_get_es_config($nid) {
   }
   foreach ($paramNames as $name) {
     $esParams[$name] = $config->get("elasticsearch_$name");
-    if (!$esParams[$name] === NULL && isset($defaults[$name])) {
+    if ($esParams[$name] === NULL && isset($defaults[$name])) {
       $esParams[$name] = $defaults[$name];
     }
     // Allow page level override.
@@ -383,6 +383,7 @@ function hostsite_get_es_config($nid) {
       $indiciaParams[$name] = isset($nodeParams[$name]) ? $nodeParams[$name] : $indiciaParams[$name];
     }
   }
+  drupal_set_message(json_encode($esParams));
   return [
     'es' => $esParams,
     'indicia' => $indiciaParams,
