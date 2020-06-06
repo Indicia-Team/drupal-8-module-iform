@@ -61,13 +61,13 @@ class Iform_ajaxproxyController extends ControllerBase {
     }
     $writeTokens = array('nonce'=>$nonce, 'auth_token' => sha1($nonce.":".$conn['password']));
     if ($index === 'single_verify') {
-      $this->postVerification($writeTokens);
+      return $this->postVerification($writeTokens);
     }
     if ($index === 'list_verify') {
-      $this->postVerification($writeTokens, 'list_verify');
+      return $this->postVerification($writeTokens, 'list_verify');
     }
     elseif ($index === 'single_verify_sample') {
-      $this->postVerification($writeTokens, 'single_verify_sample');
+      return $this->postVerification($writeTokens, 'single_verify_sample');
     }
     else {
       switch ($index) {
@@ -263,7 +263,7 @@ class Iform_ajaxproxyController extends ControllerBase {
         case "taxa_taxon_list_attribute":
           $Model = \data_entry_helper::wrap($_POST, 'taxa_taxon_list_attribute');
           break;
-          
+
         case "taxa_taxon_list_attribute_value":
           $Model = \data_entry_helper::wrap($_POST, 'taxa_taxon_list_attribute_value');
           break;
@@ -330,11 +330,13 @@ class Iform_ajaxproxyController extends ControllerBase {
     $output = json_decode($response['output'], TRUE);
     // If this is not JSON, it is an error, so just return it as is.
     if (!$output) {
-      echo $response['output'];
+      $r = new Response($response['output']);
     }
     else {
-      echo print_r($response, TRUE);
+      $r = new Response(print_r($response, TRUE));
     }
+    $r->headers->set('Content-Type', 'text/plain');
+    return $r;
   }
 
 }

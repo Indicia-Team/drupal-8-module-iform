@@ -61,8 +61,8 @@ class CacheForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, \Drupal\Core\Form\FormStateInterface $form_state) {
-    iform_load_helpers(array('data_entry_helper'));
-    \data_entry_helper::clear_cache();
+    iform_load_helpers(['helper_base']);
+    \helper_base::clear_cache();
     drupal_set_message(t('The Indicia cache has been cleared.'), 'status');
   }
 
