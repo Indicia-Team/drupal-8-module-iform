@@ -383,7 +383,6 @@ function hostsite_get_es_config($nid) {
       $indiciaParams[$name] = isset($nodeParams[$name]) ? $nodeParams[$name] : $indiciaParams[$name];
     }
   }
-  drupal_set_message(json_encode($esParams));
   return [
     'es' => $esParams,
     'indicia' => $indiciaParams,
