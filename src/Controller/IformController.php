@@ -87,7 +87,7 @@ class IformController extends ControllerBase {
     catch (ElasticSearchProxyAbort $e) {
       // Nothing to do.
     }
-    return new Response('', http_response_code());
+    return new Response('', http_response_code(), 'Content-type: application/json');
   }
 
   /**
