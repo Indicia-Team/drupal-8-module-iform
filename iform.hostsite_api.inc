@@ -359,7 +359,7 @@ function hostsite_get_es_config($nid) {
   }
   foreach ($paramNames as $name) {
     $esParams[$name] = $config->get("elasticsearch_$name");
-    if (!$esParams[$name] === NULL && isset($defaults[$name])) {
+    if ($esParams[$name] === NULL && isset($defaults[$name])) {
       $esParams[$name] = $defaults[$name];
     }
     // Allow page level override.

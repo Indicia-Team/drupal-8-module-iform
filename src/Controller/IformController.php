@@ -87,7 +87,7 @@ class IformController extends ControllerBase {
     catch (ElasticSearchProxyAbort $e) {
       // Nothing to do.
     }
-    return new Response('');
+    return new Response('', http_response_code(), ['Content-type: application/json']);
   }
 
   /**
@@ -104,7 +104,7 @@ class IformController extends ControllerBase {
   function dynamicattrsproxyCallback($method) {
     require_once \iform_client_helpers_path() . 'DynamicAttrsProxyHelper.php';
     \DynamicAttrsProxyHelper::callMethod($method);
-    return new Response('');
+    return new Response('', http_response_code());
   }
 
 }
