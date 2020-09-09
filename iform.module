@@ -768,7 +768,7 @@ function iform_build_node_specific_libraries(&$libraries) {
     ->condition('type', 'iform_page')
     ->accessCheck(FALSE)
     ->execute();
-  $node_storage = \Drupal::entityManager()->getStorage('node');
+  $node_storage = \Drupal::entityTypeManager()->getStorage('node');
   $nodes = $node_storage->loadMultiple($nids);
   $helperPath = realpath(iform_client_helpers_path());
   $filePath = hostsite_get_public_file_path();
@@ -894,6 +894,7 @@ function iform_preprocess_page(&$variables) {
  * we require.
  */
 function iform_page_attachments(array &$attachments) {
+  \Drupal::logger('iform', 'In iform_page_attachments');
   if (class_exists('helper_base')) {
     global $_iform_base_resources;
     $attachments['#attached']['library'][] = 'iform/base';
