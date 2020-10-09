@@ -343,6 +343,7 @@ function hostsite_get_es_config($nid) {
   $paramNames = [
     'version',
     'endpoint',
+    'auth_method',
     'user',
     'secret',
     'warehouse_prefix',
@@ -352,6 +353,7 @@ function hostsite_get_es_config($nid) {
   ];
   $defaults = [
     'version' => '6',
+    'auth_method' => 'directClient',
   ];
   $esParams = [];
   if ($nid) {
