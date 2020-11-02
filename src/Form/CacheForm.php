@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains \Drupal\iform\Form\SettingsForm.
+ * Contains \Drupal\iform\Form\CacheForm.
  */
 
 namespace Drupal\iform\Form;

@@ -136,6 +136,7 @@ TXT;
       '#markup' => '<p>' . t($instruct) . '</p>'
     ];
     $esVersion = $config->get('elasticsearch_version');
+    $authMethod = $config->get('elasticsearch_auth_method');
     $form['esproxy']['elasticsearch_version'] = [
       '#type' => 'radios',
       '#title' => t('Elasticsearch version'),
@@ -154,12 +155,41 @@ TXT;
       '#required' => FALSE,
       '#default_value' => $config->get('elasticsearch_endpoint'),
     ];
+    // @todo Replace following with a documentation link.
+    $description = <<<TXT
+When authentication as a client, the warehouse administrator must configure the REST API and provide a user and secret
+that should be entered into the configuration below. When authenticating as a user using Java Web Tokens, you must
+generate an RSA public/private key pair, add the public key to the warehouse's configuration for your website and
+save the private key in a file called rsa_private.pem in the Drupal private files directory. The REST API must also
+be configured to provide access to Elasticsearch for the jwtUser authentication method.
+TXT;
+    $form['esproxy']['elasticsearch_auth_method'] = [
+      '#type' => 'radios',
+      '#title' => t('Elasticsearch authentication method'),
+      '#description' => t('Elasticsearch major version number.'),
+      '#options' => [
+        'directClient' => 'Authenticate as a client configured in the Warehouse REST API',
+        'jwtUser' => 'Authenticate as the logged in user using Java Web Tokens',
+      ],
+      '#required' => TRUE,
+      '#default_value' => $authMethod ? $authMethod : 'directClient',
+      '#desctription' => $this->t($description),
+      '#attributes' => [
+        'id' => 'elasticsearch_auth_method',
+      ],
+    ];
     $form['esproxy']['elasticsearch_user'] = [
       '#type' => 'textfield',
       '#title' => t('Elasticsearch user'),
       '#description' => t('REST API user with Elasticsearch access.'),
       '#required' => FALSE,
       '#default_value' => $config->get('elasticsearch_user'),
+      '#states' => [
+        // Show this control only if the directClient auth method selected.
+        'visible' => [
+          ':input[id="elasticsearch_auth_method"]' => ['value' => 'directClient'],
+        ],
+      ],
     ];
     $form['esproxy']['elasticsearch_secret'] = [
       '#type' => 'textfield',
@@ -167,6 +197,12 @@ TXT;
       '#description' => t('REST API user secret.'),
       '#required' => FALSE,
       '#default_value' => $config->get('elasticsearch_secret'),
+      '#states' => [
+        // Show this control only if the directClient auth method selected.
+        'visible' => [
+          ':input[id="elasticsearch_auth_method"]' => ['value' => 'directClient'],
+        ],
+      ],
     ];
     $form['esproxy']['elasticsearch_warehouse_prefix'] = [
       '#type' => 'textfield',
@@ -397,6 +433,7 @@ TXT;
     $config->set('base_theme', $values['base_theme']);
     $config->set('elasticsearch_version', $values['elasticsearch_version']);
     $config->set('elasticsearch_endpoint', $values['elasticsearch_endpoint']);
+    $config->set('elasticsearch_auth_method', $values['elasticsearch_auth_method']);
     $config->set('elasticsearch_user', $values['elasticsearch_user']);
     $config->set('elasticsearch_secret', $values['elasticsearch_secret']);
     $config->set('elasticsearch_warehouse_prefix', $values['elasticsearch_warehouse_prefix']);

@@ -1020,7 +1020,6 @@ function iform_load_helpers(array $files, $base_url='') {
   $path = iform_client_helpers_path();
   require_once $path . 'helper_base.php';
   // If using a specified theme, load the theme specific PHP file which could, for example, override templates etc.
-  $config = \Drupal::config('iform.settings');
   $baseTheme = $config->get('base_theme');
   $baseTheme = $baseTheme ? $baseTheme : 'generic';
   if ($baseTheme !== 'generic') {
