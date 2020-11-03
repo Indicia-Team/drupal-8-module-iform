@@ -223,18 +223,25 @@ function hostsite_access_denied() {
 
 /**
  * Retrieve the URL for a page identified by a path (e.g. node/1 or an alias).
- * @param string $path The page path.
- * @param array $params The params to add to the URL.
- * @param string $fragment An optional named anchor to add to the URL.
+ *
+ * @param string $path
+ *   The page path.
+ * @param array $params
+ *   The params to add to the URL.
+ * @param string $fragment
+ *   An optional named anchor to add to the URL.
+ * @param bool $absolute
+ *   Set to TRUE for an absolute URL.
  */
-function hostsite_get_url($path, $params = FALSE, $fragment=false) {
+function hostsite_get_url($path, $params = FALSE, $fragment = FALSE, $absolute = FALSE) {
   if ($path==='<front>')
     $path = '';
-  $opts = array();
+  $opts = ['absolute' => $absolute];
   if ($params)
     $opts['query'] = $params;
-  if ($fragment)
+  if ($fragment) {
     $opts['fragment']=$fragment;
+  }
   return \Drupal\Core\Url::fromUri("base:$path", $opts)->toString();
 }
 
