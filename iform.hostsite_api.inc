@@ -302,12 +302,11 @@ function hostsite_has_group_functionality() {
  * @return array Array of pages titles keyed by node path.
  */
 function hostsite_get_group_compatible_pages($group_id) {
+  $r = array();
   $query = \Drupal::entityQuery('node')
-    ->condition('type', 'iform_page')
     ->condition('field_available_for_groups', '1');
   $node_storage = \Drupal::entityManager()->getStorage('node');
   $nodes = $node_storage->loadMultiple($query->execute());
-  $r = array();
   foreach ($nodes as $node) {
     // some group pages are limited to a single group
     if ($node->field_limit_to_group_id->value === null || $node->field_limit_to_group_id->value === $group_id) {
