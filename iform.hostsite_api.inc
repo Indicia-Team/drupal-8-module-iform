@@ -246,6 +246,19 @@ function hostsite_get_url($path, $params = FALSE, $fragment = FALSE, $absolute =
 }
 
 /**
+ * Retrieve the path alias for a node.
+ *
+ * @param int $nid
+ *   Node ID.
+ *
+ * @return string
+ *   Path alias string.
+ */
+function hostsite_get_alias($nid) {
+  return trim(\Drupal::service('path.alias_manager')->getAliasByPath("/node/$nid"), '/');
+}
+
+/**
  * Retrieves the path for the current page.
  * @return string The current page path.
  */
