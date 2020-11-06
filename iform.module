@@ -455,7 +455,7 @@ function iform_get_connection_details($node = NULL) {
  */
 function iform_node_view(array &$build, \Drupal\Core\Entity\EntityInterface $entity,
     \Drupal\Core\Entity\Display\EntityViewDisplayInterface $display, $view_mode) {
-  if ($entity->bundle() === 'iform_page') {
+  if ($entity->bundle() === 'iform_page' && $view_mode !== 'search_index') {
     global $language;
     iform_load_helpers(['data_entry_helper', 'form_helper'], empty($entity->params['base_url']) ? '' : $entity->params['base_url']);
     // @todo Drupal 8 might allow us to be more intelligent rather than killing the entire page cache
