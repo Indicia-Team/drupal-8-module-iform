@@ -47,6 +47,10 @@ function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid 
   $uid = ($uid === FALSE) ? $account->id() : $uid;
   $account = User::load($uid);
   if ($_iform_warehouse_override && $field === 'indicia_user_id') {
+     if ($account->id() == 0) {
+      // Anonymous user.
+      return $default;
+    }
     // If switched to a different warehouse, the default stored indicia User ID
     // will be wrong.
     return _iform_get_alternative_user_id($account, $default);
