@@ -260,6 +260,11 @@ class Iform_ajaxproxyController extends ControllerBase {
           $Model = \data_entry_helper::wrap($_POST, 'comment_quick_reply_page_auth');
           break;
 
+        case "taxa_taxon_list":
+          $structure = array('model' => 'taxa_taxon_list', 'superModels' => array('taxon' => array('fk' => 'taxon_id'), 'taxon_meaning' => array('fk' => 'taxon_meaning_id')));
+          $Model = \data_entry_helper::build_submission($_POST, $structure);
+          break;
+
         case "taxa_taxon_list_attribute":
           $Model = \data_entry_helper::wrap($_POST, 'taxa_taxon_list_attribute');
           break;
