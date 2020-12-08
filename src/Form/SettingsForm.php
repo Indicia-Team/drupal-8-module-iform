@@ -174,9 +174,6 @@ TXT;
       '#required' => TRUE,
       '#default_value' => $authMethod ? $authMethod : 'directClient',
       '#desctription' => $this->t($description),
-      '#attributes' => [
-        'id' => 'elasticsearch_auth_method',
-      ],
     ];
     $form['esproxy']['elasticsearch_user'] = [
       '#type' => 'textfield',
@@ -187,7 +184,7 @@ TXT;
       '#states' => [
         // Show this control only if the directClient auth method selected.
         'visible' => [
-          ':input[id="elasticsearch_auth_method"]' => ['value' => 'directClient'],
+          ':input[name="elasticsearch_auth_method"]' => ['value' => 'directClient'],
         ],
       ],
     ];
@@ -200,7 +197,7 @@ TXT;
       '#states' => [
         // Show this control only if the directClient auth method selected.
         'visible' => [
-          ':input[id="elasticsearch_auth_method"]' => ['value' => 'directClient'],
+          ':input[name="elasticsearch_auth_method"]' => ['value' => 'directClient'],
         ],
       ],
     ];
