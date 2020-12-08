@@ -44,3 +44,15 @@ iform.dynamicattrsproxy:
     _controller: '\Drupal\iform\Controller\IformController::dynamicattrsproxyCallback'
   requirements:
     _permission: 'access iform content'
+iform.joingroup:
+  path: '/join/{title}'
+  defaults:
+    _controller: '\Drupal\iform\Controller\IformController::joinGroupCallback'
+  requirements:
+    _permission: 'access content'
+iform.joingroup:
+  path: '/join/{title}/{parent}'
+  defaults:
+    _controller: '\Drupal\iform\Controller\IformController::joinGroupCallback'
+  requirements:
+    _permission: 'access content'
