@@ -172,7 +172,7 @@ class IformController extends ControllerBase {
     if ($group['member']==='t') {
       $this->messenger->addMessage($this->t("Welcome back to the @group.", ['@group' => $this->readableGroupTitle($group)]));
       return [
-        '#markup' => $this->showGroupPage($group, $config->get('website_id'), $auth['read']);r,
+        '#markup' => $this->showGroupPage($group, $config->get('website_id'), $auth['read'])
       ];
     }
     elseif ($group['joining_method_raw']==='I') {
@@ -200,8 +200,9 @@ class IformController extends ControllerBase {
         hostsite_goto_page('<front>');
         return ;
       }
+      $r .= $this->showGroupPage($group, $config->get('website_id'), $auth['read']);
       return [
-        '#markup' => $this->showGroupPage($group, $config->get('website_id'), $auth['read']),
+        '#markup' => $r,
       ];
     }
     else {
