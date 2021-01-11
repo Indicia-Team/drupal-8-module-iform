@@ -5,6 +5,7 @@ geoserver_url: ''
 private_warehouse: false
 google_api_key: ''
 bing_api_key: ''
+os_api_key: ''
 website_id: null
 password: ''
 map_centroid_lat: 55
