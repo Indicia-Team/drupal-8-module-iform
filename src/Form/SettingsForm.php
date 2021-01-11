@@ -270,6 +270,16 @@ TXT;
       '#required' => FALSE,
       '#default_value' => $config->get('bing_api_key'),
     ];
+    $form['api_keys']['os_api_key'] = [
+      '#type' => 'textfield',
+      '#title' => t('Ordnace Survey API Key'),
+      '#description' => t('The Ordnance Survey API key is required to allow use of OS map layers but can be left blank ' .
+        'if you do not intend to use OS maps. To obtain your own key, please visit ' .
+        '<a target="_blank" href="https://developer.ordnancesurvey.co.uk/os-maps-api-enterprise">OS Maps API for ' .
+        'Enterprise</a>. There is a free trial but this is a paid-for service.'),
+      '#required' => FALSE,
+      '#default_value' => $config->get('os_api_key'),
+    ];
     $form['map'] = [
       '#type' => 'details',
       '#title' => t('Map Settings'),
@@ -441,6 +451,7 @@ TXT;
     $config->set('google_api_key', $values['google_api_key']);
     $config->set('google_maps_api_key', $values['google_maps_api_key']);
     $config->set('bing_api_key', $values['bing_api_key']);
+    $config->set('os_api_key', $values['os_api_key']);
     $config->set('map_centroid_lat', $values['map_centroid_lat']);
     $config->set('map_centroid_long', $values['map_centroid_long']);
     $config->set('map_zoom', $values['map_zoom']);
