@@ -47,6 +47,10 @@ function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid 
   $uid = ($uid === FALSE) ? $account->id() : $uid;
   $account = User::load($uid);
   if ($_iform_warehouse_override && $field === 'indicia_user_id') {
+     if ($account->id() == 0) {
+      // Anonymous user.
+      return $default;
+    }
     // If switched to a different warehouse, the default stored indicia User ID
     // will be wrong.
     return _iform_get_alternative_user_id($account, $default);
@@ -223,19 +227,39 @@ function hostsite_access_denied() {
 
 /**
  * Retrieve the URL for a page identified by a path (e.g. node/1 or an alias).
- * @param string $path The page path.
- * @param array $params The params to add to the URL.
- * @param string $fragment An optional named anchor to add to the URL.
+ *
+ * @param string $path
+ *   The page path.
+ * @param array $params
+ *   The params to add to the URL.
+ * @param string $fragment
+ *   An optional named anchor to add to the URL.
+ * @param bool $absolute
+ *   Set to TRUE for an absolute URL.
  */
-function hostsite_get_url($path, $params = FALSE, $fragment=false) {
+function hostsite_get_url($path, $params = FALSE, $fragment = FALSE, $absolute = FALSE) {
   if ($path==='<front>')
     $path = '';
-  $opts = array();
+  $opts = ['absolute' => $absolute];
   if ($params)
     $opts['query'] = $params;
-  if ($fragment)
+  if ($fragment) {
     $opts['fragment']=$fragment;
+  }
   return \Drupal\Core\Url::fromUri("base:$path", $opts)->toString();
+}
+
+/**
+ * Retrieve the path alias for a node.
+ *
+ * @param int $nid
+ *   Node ID.
+ *
+ * @return string
+ *   Path alias string.
+ */
+function hostsite_get_alias($nid) {
+  return trim(\Drupal::service('path.alias_manager')->getAliasByPath("/node/$nid"), '/');
 }
 
 /**
@@ -295,12 +319,11 @@ function hostsite_has_group_functionality() {
  * @return array Array of pages titles keyed by node path.
  */
 function hostsite_get_group_compatible_pages($group_id) {
+  $r = array();
   $query = \Drupal::entityQuery('node')
-    ->condition('type', 'iform_page')
     ->condition('field_available_for_groups', '1');
   $node_storage = \Drupal::entityManager()->getStorage('node');
   $nodes = $node_storage->loadMultiple($query->execute());
-  $r = array();
   foreach ($nodes as $node) {
     // some group pages are limited to a single group
     if ($node->field_limit_to_group_id->value === null || $node->field_limit_to_group_id->value === $group_id) {

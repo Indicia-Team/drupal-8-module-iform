@@ -174,9 +174,6 @@ TXT;
       '#required' => TRUE,
       '#default_value' => $authMethod ? $authMethod : 'directClient',
       '#desctription' => $this->t($description),
-      '#attributes' => [
-        'id' => 'elasticsearch_auth_method',
-      ],
     ];
     $form['esproxy']['elasticsearch_user'] = [
       '#type' => 'textfield',
@@ -187,7 +184,7 @@ TXT;
       '#states' => [
         // Show this control only if the directClient auth method selected.
         'visible' => [
-          ':input[id="elasticsearch_auth_method"]' => ['value' => 'directClient'],
+          ':input[name="elasticsearch_auth_method"]' => ['value' => 'directClient'],
         ],
       ],
     ];
@@ -200,7 +197,7 @@ TXT;
       '#states' => [
         // Show this control only if the directClient auth method selected.
         'visible' => [
-          ':input[id="elasticsearch_auth_method"]' => ['value' => 'directClient'],
+          ':input[name="elasticsearch_auth_method"]' => ['value' => 'directClient'],
         ],
       ],
     ];
@@ -295,7 +292,8 @@ TXT;
     global $indicia_templates;
     $indicia_templates['jsWrap'] = '{content}';
     $form['map']['panel'] = [
-      '#markup' => Xss::filterAdmin(\map_helper::map_panel([
+      '#type' => 'inline_template',
+      '#template' => \map_helper::map_panel([
         'width' => '100%',
         'height' => 500,
         'presetLayers' => ['osm'],
@@ -306,7 +304,7 @@ TXT;
         'initial_zoom' => $config->get('map_zoom'),
         'standardControls' => ['panZoomBar'],
         'scroll_wheel_zoom' => 'false',
-      ])),
+      ]),
     ];
     $form['map']['map_centroid_lat'] = [
       '#attributes' => ['id' => 'edit-map-centroid-lat'],
