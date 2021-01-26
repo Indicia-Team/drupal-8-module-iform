@@ -478,7 +478,7 @@ function hostsite_get_es_config($nid) {
 }
 
 /**
- *
+ * When a page is linked to an alternative warehouse, retrieves the user ID.
  */
 function _iform_get_alternative_user_id($account, $default) {
   global $_iform_warehouse_override;
@@ -486,8 +486,9 @@ function _iform_get_alternative_user_id($account, $default) {
       $account->field_alt_indicia_user_ids->value : '{}';
   iform_load_helpers(['data_entry_helper']);
   $alternatives = json_decode($alternatives, TRUE);
-  if (array_key_exists($_iform_warehouse_override['base_url'], $alternatives))
+  if (array_key_exists($_iform_warehouse_override['base_url'], $alternatives)) {
     return $alternatives[$_iform_warehouse_override['base_url']];
+  }
   else {
     // This user hasn't connected to this warehouse before. So get their user
     // ID.
