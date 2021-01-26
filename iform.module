@@ -187,7 +187,7 @@ function iform_form_node_form_alter(&$form, \Drupal\Core\Form\FormStateInterface
     // @todo This needs to use $node to get the correct node specific connection
     $connection = iform_get_connection_details($node);
     if (empty($connection['base_url']) || empty($connection['website_id']) || empty($connection['password'])) {
-      drupal_set_message(t('Indicia configuration is incomplete. Indicia pages cannot be set up until the warehouse settings are provided.'), 'warning');
+      \Drupal::messenger()->addMessage(t('Indicia configuration is incomplete. Indicia pages cannot be set up until the warehouse settings are provided.'), 'warning');
       return;
     }
     // Define the new form fields.
@@ -322,7 +322,7 @@ function iform_node_load(array $entities) {
         iform_user_ui_options_preprocess_iform($params);
       }
       if (!is_array($params)) {
-        drupal_set_message(t("This page's configuration has not been stored correctly.") . ' ' .
+        \Drupal::messenger()->addMessage(t("This page's configuration has not been stored correctly.") . ' ' .
           $node->field_params->value, 'warning');
       }
       if (is_array($params)) {
@@ -612,7 +612,7 @@ function iform_handle_posted_form($node, array $args, &$response) {
     } catch (Exception $e) {
       \Drupal::logger('iform')
         ->notice('Exception occurred during build of form submission: ' . $e->getMessage());
-      drupal_set_message(t('An error occurred whilst saving the new site details.'));
+      \Drupal::messenger()->addMessage(t('An error occurred whilst saving the new site details.'));
       unset($s);
     }
     // And allow the form or calling URL to dynamically set the destination
@@ -656,7 +656,7 @@ function iform_handle_posted_form($node, array $args, &$response) {
           array_key_exists('redirect_on_success', $args) && $args['redirect_on_success']
         ) {
           if (!isset($args['message_after_save']) || $args['message_after_save']) {
-            drupal_set_message($msg);
+            \Drupal::messenger()->addMessage($msg);
           }
           $parts = explode('?', $args['redirect_on_success'], 2);
           // First item removed from array.
@@ -875,13 +875,13 @@ function _iform_apply_variable_to_args($variable, &$args, $config) {
  *
  * We use this to detect messages set before a redirection and show them on the
  * redirected page. A bit of custom handling required here because under Drupal
- * 8 drupal_set_message messages are cleared when you redirect, so we have to
+ * 8 messenger service messages are cleared when you redirect, so we have to
  * store them in a custom session var to ensure they aren't lost.
  */
 function iform_preprocess_page(&$variables) {
   if (isset($_SESSION['iform-messages']) && $_SESSION['iform-redirect-from'] !== hostsite_get_current_page_path()) {
     foreach ($_SESSION['iform-messages'] as $message) {
-      drupal_set_message($message[0]);
+      \Drupal::messenger()->addMessage($message[0]);
     }
     \Drupal::logger('iform')->notice('cleared');
     unset($_SESSION['iform-messages']);
