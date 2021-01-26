@@ -35,9 +35,9 @@ $_iform_warehouse_override = FALSE;
  * @param $variables
  */
 function iform_preprocess_html(&$variables) {
-  global $indicia_page_title;
-  if (isset($indicia_page_title)) {
-    $variables['head_title'] = $indicia_page_title;
+  global $iform_page_title;
+  if (isset($iform_page_title)) {
+    $variables['head_title'] = $iform_page_title;
   }
 }
 
@@ -47,9 +47,9 @@ function iform_preprocess_html(&$variables) {
  * Allows iform code to override the page title.
  */
 function iform_preprocess_node(&$variables) {
-  global $indicia_page_title;
-  if (isset($indicia_page_title)) {
-    $variables['label'] = $indicia_page_title;
+  global $iform_page_title;
+  if (isset($iform_page_title)) {
+    $variables['label'] = $iform_page_title;
   }
 }
 

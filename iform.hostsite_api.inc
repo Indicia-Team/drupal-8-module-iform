@@ -1,15 +1,17 @@
 <?php
 
+/**
+ * @file
+ * Shim to provide version independent access to Drupal functionality.
+ *
+ * Provides hostsite_* methods to decouple client_helper code from the running
+ * content management system, in this case Drupal 8.
+ */
+
 use Drupal\Core\StreamWrapper\PublicStream;
 use Drupal\Component\Utility\Unicode;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Drupal\user\Entity\User;
-
-/**
- * @file
- * Provides hostsite_* methods to decouple client_helper code from the running content
- * management system, in this case Drupal 8.
- */
 
 /**
  * Retrieve a user field value.
@@ -26,7 +28,7 @@ use Drupal\user\Entity\User;
  * @param mixed $default
  *   Default value to return if not set.
  * @param bool $array
- *   Set to true if this field allows multiple values so you need an array.
+ *   Set to TRUE if this field allows multiple values so you need an array.
  * @param int $uid
  *   User ID of user to load data for. Defaults to current user.
  *
@@ -47,7 +49,7 @@ function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid 
   $uid = ($uid === FALSE) ? $account->id() : $uid;
   $account = User::load($uid);
   if ($_iform_warehouse_override && $field === 'indicia_user_id') {
-     if ($account->id() == 0) {
+    if ($account->id() == 0) {
       // Anonymous user.
       return $default;
     }
@@ -77,23 +79,25 @@ function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid 
 }
 
 /**
- * Function that allows Indicia code to hook into the Drupal user profile to set a field value, without
- * introducing a Drupal code dependency.
+ * Set a user field value.
+ *
+ * Function that allows Indicia code to hook into the Drupal user profile to
+ * set a field value, without introducing a Drupal code dependency.
  *
  * @param string $field
  *   The name of a profile field.
  * @param mixed $data
  *   The data to be saved into the field.
  *
- * @return boolean
- *   Returns false if the uid or field is not available so data cannot be
+ * @return bool
+ *   Returns FALSE if the uid or field is not available so data cannot be
  *   written.
  */
 function hostsite_set_user_field($field, $data) {
   $account = \Drupal::currentUser();
   if ($account->id()) {
     $fieldname = (substr($field, 0, 6) === 'field_' ? '' : 'field_') . $field;
-    $user = \Drupal\user\Entity\User::load($account->id());
+    $user = User::load($account->id());
     if (isset($user->$fieldname) && $user->$fieldname) {
       $user->$fieldname->setValue($data);
       $user->save();
@@ -104,41 +108,53 @@ function hostsite_set_user_field($field, $data) {
 }
 
 /**
- * Returns true if the current user is permitted to perform a named task.
+ * Returns TRUE if the current user is permitted to perform a named task.
+ *
  * @param string $task
- * @return boolean True if allowed
+ *   Permission name.
+ *
+ * @return bool
+ *   True if allowed.
  */
 function hostsite_user_has_permission($task, $uid = FALSE) {
-  $account = $uid ? \Drupal\user\Entity\User::load($uid) : \Drupal::currentUser();
+  $account = $uid ? User::load($uid) : \Drupal::currentUser();
   return $account->hasPermission($task);
 }
 
 /**
  * Display a message in a way that can be unhooked from Drupal.
- * @param string $msg Message to display
- * @param string $type Message type, one of 'status', 'warning' and 'error'.
- * @param boolean $redirect Set to true if the page is about to be redirected and the
- * message needs to be shown after redirecting, since Drupal 8's method of redirection
- * clears the messages so we need to save the message to be picked up after the redirection.
  *
+ * @param string $msg
+ *   Message to display.
+ * @param string $type
+ *   Message type, one of 'status', 'warning' and 'error'.
+ * @param bool $redirect
+ *   Set to TRUE if the page is about to be redirected and the message needs to
+ *   be shown after redirecting, since Drupal 8's method of redirection clears
+ *   the messages so we need to save the message to be picked up after the
+ *   redirection.
  */
-function hostsite_show_message($msg, $type = 'status', $redirect=false) {
+function hostsite_show_message($msg, $type = 'status', $redirect = FALSE) {
   if ($redirect) {
     // If about to redirect, then save the message for later.
-    if (!isset($_SESSION['iform-messages']))
+    if (!isset($_SESSION['iform-messages'])) {
       $_SESSION['iform-messages'] = [];
-    $_SESSION['iform-messages'][] = array($msg, $type);
+    }
+    $_SESSION['iform-messages'][] = [$msg, $type];
     $_SESSION['iform-redirect-from'] = hostsite_get_current_page_path();
-  } else {
-    drupal_set_message($msg, $type);
+  }
+  else {
+    \Drupal::messenger()->addMessage($msg, $type);
   }
 }
 
 /**
  * Set a breadcrumb trail in the host site.
- * @param array $breadcrumb An associative array where keys are untranslated breadcrumb
- * terms and values are the page to go to. The home page is automatically inserted at the
- * start and the current page at the end.
+ *
+ * @param array $breadcrumb
+ *   An associative array where keys are untranslated breadcrumb terms and
+ *   values are the page to go to. The home page is automatically inserted at
+ *   the start and the current page at the end.
  *
  * function hostsite_set_breadcrumb($breadcrumb) {
  * // convert to Drupal style breadcrumb array
@@ -150,14 +166,17 @@ function hostsite_show_message($msg, $type = 'status', $redirect=false) {
  * $drupal_breadcrumb[] = drupal_get_title();
  * drupal_set_breadcrumb($drupal_breadcrumb);
  * }
- *
- * /**
+ */
+
+/**
  * Set the page title in the host site.
- * @param string $title The translated page title.
+ *
+ * @param string $title
+ *   The translated page title.
  */
 function hostsite_set_page_title($title) {
-  global $indicia_page_title;
-  $indicia_page_title = $title;
+  global $iform_page_title;
+  $iform_page_title = $title;
 }
 
 /**
@@ -166,9 +185,9 @@ function hostsite_set_page_title($title) {
  * @return string
  */
 function hostsite_get_page_title($nid) {
-  static $indicia_page_title;
-  if (isset($indicia_page_title)) {
-    return $indicia_page_title;
+  static $iform_page_title;
+  if (isset($iform_page_title)) {
+    return $iform_page_title;
   }
   $node = \Drupal\node\Entity\Node::load($nid);
   return $node->getTitle();
@@ -206,7 +225,7 @@ function hostsite_get_node_field_value($nid, $field) {
  * @param array $params The params to add to the URL.
  * @param string $fragment An optional named anchor to add to the URL.
  */
-function hostsite_goto_page($path, $params = FALSE, $fragment=false) {
+function hostsite_goto_page($path, $params = FALSE, $fragment=FALSE) {
   static $iform_redirected_to;
   if ($path === $iform_redirected_to) {
     drupal_set_message("Attempt to redirect to $path caused a redirect loop");
@@ -299,7 +318,7 @@ function hostsite_get_public_file_path() {
 }
 
 /**
- * Returns true if there is a form on this site for editing groups. This allows group
+ * Returns TRUE if there is a form on this site for editing groups. This allows group
  * related functionality to be turned on and off as appropriate.
  * @return boolean True if group edit pages exist on this site.
  * @todo Port back to Drupal 6 and 7 and commit changes to form_helper which call this.
@@ -335,7 +354,7 @@ function hostsite_get_group_compatible_pages($group_id) {
 }
 
 /**
- * Returns true if a Drupal module is enabled.
+ * Returns TRUE if a Drupal module is enabled.
  * @param string $module
  * @return boolean True if enabled
  */
@@ -422,7 +441,7 @@ function _iform_get_alternative_user_id($account, $default) {
   $alternatives = isset($account->field_alt_indicia_user_ids->value) ?
       $account->field_alt_indicia_user_ids->value : '{}';
   iform_load_helpers(array('data_entry_helper'));
-  $alternatives = json_decode($alternatives, true);
+  $alternatives = json_decode($alternatives, TRUE);
   if (array_key_exists($_iform_warehouse_override['base_url'], $alternatives))
     return $alternatives[$_iform_warehouse_override['base_url']];
   else {
