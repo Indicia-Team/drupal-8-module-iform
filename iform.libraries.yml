@@ -15,7 +15,6 @@ base:
     - core/jquery.ui.dialog
     - core/jquery.ui.progressbar
     - core/jquery.ui.tabs
-    - core/jquery.ui.effects.shake
     - core/drupal.tableheader
 admin:
   version: VERSION
