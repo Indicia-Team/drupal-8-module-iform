@@ -192,7 +192,7 @@ function iform_join_public_group($group, $writeAuth, $indiciaUserId, $groupsUser
     return true;
   }
   else {
-    drupal_set_message(t("An error occurred whilst trying to join the @group.",
+    \Drupal::messenger()->addError(t("An error occurred whilst trying to join the @group.",
       array('@group'=>iform_readable_group_title($group))), 'warning');
     \Drupal::logger('iform')->notice("An error occurred whilst trying to join $group[title] for {$user->name}.");
     \Drupal::logger('iform')->notice(var_export($r, true));

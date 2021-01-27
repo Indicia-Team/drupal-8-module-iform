@@ -397,7 +397,7 @@ function hostsite_get_group_compatible_pages($group_id) {
   $r = [];
   $query = \Drupal::entityQuery('node')
     ->condition('field_available_for_groups', '1');
-  $node_storage = \Drupal::entityManager()->getStorage('node');
+  $node_storage = \Drupal::entityTypeManager()->getStorage('node');
   $nodes = $node_storage->loadMultiple($query->execute());
   foreach ($nodes as $node) {
     // some group pages are limited to a single group
