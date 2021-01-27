@@ -39,12 +39,12 @@ function iform_user_ui_options_form_user_profile_form_alter(&$form) {
 function iform_user_ui_options_load_config() {
   static $config;
   if (!isset($config)) {
-    $config=array();
-    $configPath=file_default_scheme() . ':/'  . '/iform_user_ui_options';
-    $files=scandir($configPath);
+    $config = [];
+    $configPath = \Drupal::config('system.file')->get('default_scheme') . ':/'  . '/iform_user_ui_options';
+    $files = scandir($configPath);
     foreach ($files as $file) {
       $parts = explode('.', $file);
-      if ($file==='.' || $file==='..' || count($parts)<2 || $parts[1]!=='json')
+      if ($file === '.' || $file === '..' || count($parts) < 2 || $parts[1] !== 'json')
         continue;
       $jsstring=file_get_contents($configPath . '/' . $file);
       $fileSettings=json_decode($jsstring, TRUE);

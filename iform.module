@@ -93,7 +93,7 @@ function iform_all_permissions() {
   $cached = \Drupal::cache()->get('iform:permissions');
   if ($cached === FALSE) {
     // Get list of iform nodes
-    $query = db_select('node', 'n');
+    $query = \Drupal::database()->select('node', 'n');
     $query->fields('n', ['nid']);
     $query->condition('type', "iform_page", "=");
     $nids = $query->execute();
@@ -800,16 +800,16 @@ function iform_build_node_specific_libraries(&$libraries) {
       // @todo Theme path replacement
       // @todo Also need to implement way to get to public::indicia/css folder.
       foreach ($cssFiles as $file) {
-        $file = str_replace(array(
-          '{mediacss}',
-          //'{theme}',
-          '{prebuiltformcss}',
-        ),
-          array(
+        $file = str_replace([
+            '{mediacss}',
+            //'{theme}',
+            '{prebuiltformcss}',
+          ],
+          [
             'media/css',
             //path_to_theme(),
             'client_helpers/prebuilt_forms/css',
-          ),
+          ],
           $file
         );
         $libraries[$lib]['css']['component'][$file] = [];
