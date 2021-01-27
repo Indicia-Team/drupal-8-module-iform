@@ -11,6 +11,7 @@
 use Drupal\Core\StreamWrapper\PublicStream;
 use Drupal\Core\Url;
 use Drupal\Component\Utility\Unicode;
+use Drupal\Core\Form\FormState;
 use Drupal\user\Entity\User;
 use Drupal\node\Entity\Node;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -33,7 +34,7 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
  * @param bool $array
  *   Set to TRUE if this field allows multiple values so you need an array.
  * @param int $uid
- *   User ID of user to load data for. Defaults to current user.
+ *   Drupal user ID of user to load data for. Defaults to current user.
  *
  * @return mixed
  *   Field value.
@@ -48,7 +49,6 @@ function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid 
   }
   // Do we need to load a different user account, e.g. if viewing another
   // user's details?
-  $differentUser = ($uid !== FALSE && $uid !== $account->id());
   $uid = ($uid === FALSE) ? $account->id() : $uid;
   $account = User::load($uid);
   if ($_iform_warehouse_override && $field === 'indicia_user_id') {
@@ -79,6 +79,26 @@ function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid 
   else {
     return $default;
   }
+}
+
+/**
+ * Finds a Drupal user by a field value.
+ *
+ * E.g. search by indicia_user_id.
+ *
+ * @param string $field
+ *   Name of the field to search.
+ * @param string $value
+ *   Value to search for.
+ *
+ * @return array
+ *   List of matching user IDs.
+ */
+function hostsite_find_cms_user_by_field_value($field, $value) {
+  $fieldname = (substr($field, 0, 6) === 'field_' ? '' : 'field_') . $field;
+  $query = \Drupal::entityQuery('user');
+  $query->condition($fieldname, $value);
+  return array_keys($query->execute());
 }
 
 /**
@@ -529,4 +549,36 @@ function hostsite_invoke_alter_hooks($hook, &$args) {
   $module_handler = \Drupal::moduleHandler();
   $module_handler->loadAll();
   $module_handler->alter($hook, $args);
+}
+
+/**
+ * Renders a Drupal form.
+ *
+ * @param string $formId
+ *   Form identifier.
+ * @param array $state
+ *   Form state key/value pairs.
+ *
+ * @return string
+ *   Form HTML.
+ */
+function hostsite_render_form($formId, array $state) {
+  // Auto map from D7 to D8 form IDs. Additional forms should be added as
+  // required.
+  $mappings = [
+    'user_login' => '\Drupal\user\Form\UserLoginForm',
+  ];
+  if (isset($mappings[$formId])) {
+    $formId = $mappings[$formId];
+  }
+  $form_state = new FormState();
+  // Map from D7 form state to D8 functions.
+  if (!empty($state['noredirect'])) {
+    $form_state->disableRedirect();
+    unset($state['noredirect']);
+  }
+  foreach ($state as $key => $value) {
+    $form_state->set($key, $value);
+  }
+  return \Drupal::service('renderer')->render(\Drupal::formBuilder()->buildForm($formId, $form_state));
 }
