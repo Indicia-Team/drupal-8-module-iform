@@ -9,10 +9,8 @@ base:
   dependencies:
     - core/jquery
     - core/jquery.form
-    - core/jquery.ui.sortable
-    - core/jquery.ui.datepicker
     - core/jquery.ui.dialog
-    - core/jquery.ui.tabs
+    - jquery_ui_tabs/tabs
     - core/drupal.tableheader
 admin:
   version: VERSION

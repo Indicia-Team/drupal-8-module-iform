@@ -1271,11 +1271,20 @@ function iform_tokens($type, $tokens, array $data = [], array $options = []) {
           break;
 
         case 'title':
-          $replacements[$original] = drupal_get_title();
+          if (isset($iform_page_metadata) && isset($iform_page_metadata['title'])) {
+            $replacements[$original] = $iform_page_metadata['title'];
+          }
+          elseif (!empty($data['node'])) {
+            $node = $data['node'];
+            $replacements[$original] = hostsite_get_page_title($node->id());
+          }
+          else {
+            // If we don't know the page title, set to blank.
+            $replacements[$original] = '';
+          }
           break;
 
         case 'image':
-          global $iform_page_metadata;
           if (isset($iform_page_metadata) && isset($iform_page_metadata['image'])) {
             $replacements[$original] = $iform_page_metadata['image'];
           }

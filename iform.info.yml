@@ -8,3 +8,5 @@ configure: iform.settings
 type: module
 dependencies:
   - iform_inlinejs
+  - jquery_ui
+  - jquery_ui_tabs
