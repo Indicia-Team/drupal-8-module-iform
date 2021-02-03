@@ -50,7 +50,7 @@ iform.joingroup:
     _controller: '\Drupal\iform\Controller\IformController::joinGroupCallback'
   requirements:
     _permission: 'access content'
-iform.joingroup:
+iform.joinchildgroup:
   path: '/join/{title}/{parent}'
   defaults:
     _controller: '\Drupal\iform\Controller\IformController::joinGroupCallback'

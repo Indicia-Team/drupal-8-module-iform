@@ -66,7 +66,7 @@ function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid 
     return \Drupal::languageManager()->getCurrentLanguage()->getId();
   }
   elseif ($field === 'name') {
-    return $account->getUsername();
+    return $account->getDisplayName();
   }
   elseif ($field === 'mail') {
     return $account->getEmail();
@@ -319,7 +319,7 @@ function hostsite_get_url($path, array $params = [], $fragment = FALSE, $absolut
  *   Path alias string.
  */
 function hostsite_get_alias($nid) {
-  return trim(\Drupal::service('path.alias_manager')->getAliasByPath("/node/$nid"), '/');
+  return trim(\Drupal::service('path_alias.manager')->getAliasByPath("/node/$nid"), '/');
 }
 
 /**
@@ -330,7 +330,7 @@ function hostsite_get_alias($nid) {
  */
 function hostsite_get_current_page_path() {
   $path = \Drupal::service('path.current')->getPath();
-  $alias = \Drupal::service('path.alias_manager')->getAliasByPath($path);
+  $alias = \Drupal::service('path_alias.manager')->getAliasByPath($path);
   return trim($alias, '/');
 }
 
@@ -402,7 +402,7 @@ function hostsite_get_group_compatible_pages($group_id) {
   foreach ($nodes as $node) {
     // some group pages are limited to a single group
     if ($node->field_limit_to_group_id->value === NULL || $node->field_limit_to_group_id->value === $group_id) {
-      $alias = \Drupal::service('path.alias_manager')->getAliasByPath('/node/' . $node->id());
+      $alias = \Drupal::service('path_alias.manager')->getAliasByPath('/node/' . $node->id());
       $r[trim($alias, '/')] = $node->title->value;
     }
   }
@@ -450,6 +450,7 @@ function hostsite_get_es_config($nid) {
     'version',
     'endpoint',
     'auth_method',
+    'sharing',
     'user',
     'secret',
     'warehouse_prefix',

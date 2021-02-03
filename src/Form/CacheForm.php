@@ -36,14 +36,12 @@ class CacheForm extends FormBase {
     if (count($nids)) {
       $nid = array_pop($nids);
       global $base_url;
-      $url = $base_url . \Drupal::service('path.alias_manager')->getAliasByPath("/node/$nid");
+      $url = $base_url . \Drupal::service('path_alias.manager')->getAliasByPath("/node/$nid");
       $urlWithoutCache = $url . (strpos($url, '?') === FALSE ? '?' : '&') . 'nocache';
       $urlWithRefresh = $url . (strpos($url, '?') === FALSE ? '?' : '&') . 'refreshcache';
-      $nocacheExample = ' ' . $this->t('For example, you can change the URL <a href="@url">@url</a> to ' .
-          '<a href="@urlWithoutCache">@urlWithoutCache</a> to render the page without using the Indicia cache.',
+      $nocacheExample = ' ' . $this->t('For example, you can change the URL <a href="@url">@url</a> to <a href="@urlWithoutCache">@urlWithoutCache</a> to render the page without using the Indicia cache.',
           ['@url' => $url, '@urlWithoutCache' => $urlWithoutCache]);
-      $refreshExample = ' ' . $this->t('For example, you can change the URL <a href="@url">@url</a> to ' .
-          '<a href="@urlWithRefresh">@urlWithRefresh</a> to render the page whilst refreshing just the relevant cache entries.',
+      $refreshExample = ' ' . $this->t('For example, you can change the URL <a href="@url">@url</a> to <a href="@urlWithRefresh">@urlWithRefresh</a> to render the page whilst refreshing just the relevant cache entries.',
           ['@url' => $url, '@urlWithRefresh' => $urlWithRefresh]);
     }
     else {
@@ -51,14 +49,10 @@ class CacheForm extends FormBase {
       $refreshExample = '';
     }
     $form['nocache'] = [
-      '#markup' => '<p>' . $this->t('If you want to test changes to an Indicia page without forcing a hard-reset ' .
-          'of the entire cache, then you can add a parameter called <strong>nocache</strong> to the URL of the page to reload ' .
-          'it without using the Indicia cache.') . $nocacheExample . '</p>',
+      '#markup' => '<p>' . $this->t('If you want to test changes to an Indicia page without forcing a hard-reset of the entire cache, then you can add a parameter called <strong>nocache</strong> to the URL of the page to reload it without using the Indicia cache.') . " $nocacheExample</p>",
     ];
     $form['refreshcache'] = [
-      '#markup' => '<p>' . $this->t('If you want to force a reset of just the cache entries used to build the current page, ' .
-          'then you can add a parameter called <strong>refreshcache</strong> to the URL of the page to reload ' .
-          'it and refresh the relevant cached entries.') . $refreshExample .'</p>',
+      '#markup' => '<p>' . $this->t('If you want to force a reset of just the cache entries used to build the current page, then you can add a parameter called <strong>refreshcache</strong> to the URL of the page to reload it and refresh the relevant cached entries.') . " $refreshExample</p>",
     ];
     $form['submit'] = [
       '#type' => 'submit',
