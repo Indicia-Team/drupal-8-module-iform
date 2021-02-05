@@ -12,7 +12,6 @@ base:
     - core/jquery.ui.dialog
     - jquery_ui_tabs/tabs
     - core/drupal.tableheader
-    - jquery_ui_datepicker/datepicker
 admin:
   version: VERSION
   js:
