@@ -1,26 +1,54 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\iform\Form\SettingsForm.
- */
-
 namespace Drupal\iform\Form;
 
-use Drupal\Core\Form\FormBase;
+use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Component\Utility\Xss;
 
 /**
  * Indicia settings form.
  */
-class SettingsForm extends FormBase {
+class SettingsForm extends ConfigFormBase {
 
   /**
    * {@inheritdoc}
    */
   public function getFormId() {
     return 'iform_settings_form';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function getEditableConfigNames() {
+    return [
+      'warehouse',
+      'base_url',
+      'geoserver_url',
+      'private_warehouse',
+      'allow_connection_override',
+      'website_id',
+      'password',
+      'base_theme',
+      'elasticsearch_version',
+      'elasticsearch_endpoint',
+      'elasticsearch_auth_method',
+      'elasticsearch_user',
+      'elasticsearch_secret',
+      'elasticsearch_warehouse_prefix',
+      'elasticsearch_all_records_permission',
+      'elasticsearch_my_records_permission',
+      'elasticsearch_location_collation_records_permission',
+      'google_api_key',
+      'google_maps_api_key',
+      'bing_api_key',
+      'os_api_key',
+      'map_centroid_lat',
+      'map_centroid_long',
+      'map_zoom',
+      'master_checklist_id',
+      'profile_location_type_id',
+    ];
   }
 
   /**
@@ -34,12 +62,12 @@ class SettingsForm extends FormBase {
     foreach ($_iform_warehouses as $warehouse => $def) {
       $warehouses[$warehouse] = $def['title'];
     }
-    $warehouses['other'] = t('Other');
+    $warehouses['other'] = $this->t('Other');
     $form['warehouse'] = [
       '#type' => 'radios',
-      '#title' => t('Indicia Warehouse'),
+      '#title' => $this->t('Indicia Warehouse'),
       '#options' => $warehouses,
-      '#description' => t('Select the Indicia Warehouse to connect to, or select Other and enter the details in the Warehouse URL and GeoServer URL fields.'),
+      '#description' => $this->t('Select the Indicia Warehouse to connect to, or select Other and enter the details in the Warehouse URL and GeoServer URL fields.'),
       '#required' => TRUE,
       '#default_value' => $config->get('warehouse'),
     ];
@@ -47,46 +75,42 @@ class SettingsForm extends FormBase {
       '#type' => 'details',
       '#attributes' => ['id' => 'warehouse_details'],
       '#open' => $config->get('warehouse') === 'other',
-      '#title' => t('Other Warehouse Details')
+      '#title' => $this->t('Other Warehouse Details'),
     ];
     $form['other_warehouse']['base_url'] = [
       '#type' => 'textfield',
-      '#title' => t('Warehouse URL'),
-      '#description' => t('If selecting Other for the Indicia Warehouse option, please enter the URL of the Indicia Warehouse you are connecting to, otherwise ignore this setting. ' .
-        'This should include the full path and trailing slash but not the index.php part, e.g. "http://www.mysite.com/indicia/".'),
+      '#title' => $this->t('Warehouse URL'),
+      '#description' => $this->t('If selecting Other for the Indicia Warehouse option, please enter the URL of the Indicia Warehouse you are connecting to, otherwise ignore this setting. This should include the full path and trailing slash but not the index.php part, e.g. "http://www.mysite.com/indicia/".'),
       '#maxlength' => 255,
       '#required' => FALSE,
       '#default_value' => $config->get('base_url'),
     ];
     $form['other_warehouse']['geoserver_url'] = [
       '#type' => 'textfield',
-      '#title' => t('GeoServer URL'),
-      '#description' => t('If selecting Other for the Indicia Warehouse option, please enter the URL of the GeoServer instance you are connecting to, otherwise ignore this setting. ' .
-        'This is optional, if not specified then you will not be able to use some of the advanced mapping facilities provided by GeoServer.'),
+      '#title' => $this->t('GeoServer URL'),
+      '#description' => $this->t('If selecting Other for the Indicia Warehouse option, please enter the URL of the GeoServer instance you are connecting to, otherwise ignore this setting. This is optional, if not specified then you will not be able to use some of the advanced mapping facilities provided by GeoServer.'),
       '#maxlength' => 255,
       '#required' => FALSE,
       '#default_value' => $config->get('geoserver_url'),
     ];
     $form['private_warehouse'] = [
       '#type' => 'checkbox',
-      '#title' => t('Warehouse is private'),
-      '#description' => t('If your warehouse is not publicly visible (e.g. behind a firewall) then as long as it accepts requests from the IP address of the Drupal website\'s server ' .
-        'you can tick this box to send requests to the warehouse via a proxy on the Drupal server.'),
+      '#title' => $this->t('Warehouse is private'),
+      '#description' => $this->t("If your warehouse is not publicly visible (e.g. behind a firewall) then as long as it accepts requests from the IP address of the Drupal website's server you can tick this box to send requests to the warehouse via a proxy on the Drupal server."),
       '#required' => FALSE,
       '#default_value' => $config->get('private_warehouse'),
     ];
     $form['allow_connection_override'] = [
       '#type' => 'checkbox',
-      '#title' => t('Allow website connection override'),
-      '#description' => t('Tick this box to allow forms to override the specified website ID and password on an individual basis. This allows a single Drupal installation '.
-        'to support forms which link to multiple Indicia website registrations. Leave unticked if you are not sure.'),
+      '#title' => $this->t('Allow website connection override'),
+      '#description' => $this->t('Tick this box to allow forms to override the specified website ID and password on an individual basis. This allows a single Drupal installation to support forms which link to multiple Indicia website registrations. Leave unticked if you are not sure.'),
       '#required' => FALSE,
       '#default_value' => $config->get('allow_connection_override'),
     ];
     $form['website_id'] = [
       '#type' => 'textfield',
-      '#title' => t('Indicia Website ID'),
-      '#description' => t('Please enter the numeric ID given to your website record when your website was registered on the Indicia Warehouse.'),
+      '#title' => $this->t('Indicia Website ID'),
+      '#description' => $this->t('Please enter the numeric ID given to your website record when your website was registered on the Indicia Warehouse.'),
       '#size' => 10,
       '#maxlength' => 10,
       '#required' => TRUE,
@@ -95,11 +119,10 @@ class SettingsForm extends FormBase {
     // Require the password only if not previously set.
     $pwd_required = ($config->get('password') == '');
     if ($pwd_required) {
-      $pwd_description = t('Please enter the password specified when your website was registered on the Indicia Warehouse.');
+      $pwd_description = $this->t('Please enter the password specified when your website was registered on the Indicia Warehouse.');
     }
     else {
-      $pwd_description = t('If you need to change it, enter the password specified when your website was registered on the Indicia Warehouse. ' .
-        'Otherwise leave the password blank to keep your previous settings.');
+      $pwd_description = $this->t('If you need to change it, enter the password specified when your website was registered on the Indicia Warehouse. Otherwise leave the password blank to keep your previous settings.');
     }
     $form['password'] = [
       '#type' => 'password_confirm',
@@ -109,7 +132,7 @@ class SettingsForm extends FormBase {
     $baseTheme = $config->get('base_theme');
     $form['base_theme'] = [
       '#type' => 'select',
-      '#title' => t('Optimise output for base theme'),
+      '#title' => $this->t('Optimise output for base theme'),
       '#description' => 'If using a supported base theme, select it here.',
       '#required' => TRUE,
       '#default_value' => $baseTheme ? $baseTheme : 'generic',
@@ -121,7 +144,7 @@ class SettingsForm extends FormBase {
 
     $form['esproxy'] = [
       '#type' => 'details',
-      '#title' => t('Elasticsearch configuration'),
+      '#title' => $this->t('Elasticsearch configuration'),
       '#open' => TRUE,
     ];
     $instruct = <<<TXT
@@ -133,14 +156,14 @@ href="https://indicia-docs.readthedocs.io/en/latest/developing/rest-web-services
 Indicia Elasticsearch documentation</a> for more info.
 TXT;
     $form['esproxy']['instructions'] = [
-      '#markup' => '<p>' . t($instruct) . '</p>'
+      '#markup' => '<p>' . $this->t($instruct) . '</p>',
     ];
     $esVersion = $config->get('elasticsearch_version');
     $authMethod = $config->get('elasticsearch_auth_method');
     $form['esproxy']['elasticsearch_version'] = [
       '#type' => 'radios',
-      '#title' => t('Elasticsearch version'),
-      '#description' => t('Elasticsearch major version number.'),
+      '#title' => $this->t('Elasticsearch version'),
+      '#description' => $this->t('Elasticsearch major version number.'),
       '#options' => [
         '6' => '6.x',
         '7' => '7.x',
@@ -150,25 +173,28 @@ TXT;
     ];
     $form['esproxy']['elasticsearch_endpoint'] = [
       '#type' => 'textfield',
-      '#title' => t('Elasticsearch endpoint'),
-      '#description' => t('Elasticsearch endpoint declared in the REST API.'),
+      '#title' => $this->t('Elasticsearch endpoint'),
+      '#description' => $this->t('Elasticsearch endpoint declared in the REST API.'),
       '#required' => FALSE,
       '#default_value' => $config->get('elasticsearch_endpoint'),
     ];
     // @todo Replace following with a documentation link.
     $description = <<<TXT
 When authentication as a client, the warehouse administrator must configure the REST API and provide a user and secret
-that should be entered into the configuration below. When authenticating as a user using Java Web Tokens, you must
-generate an RSA public/private key pair, add the public key to the warehouse's configuration for your website and
-save the private key in a file called rsa_private.pem in the Drupal private files directory. The REST API must also
-be configured to provide access to Elasticsearch for the jwtUser authentication method.
+that should be entered into the configuration below. Authentication as a website is automatic as long as the
+Elasticsearch endpoint specified has been configured in the REST API's configuration. When authenticating as a user
+using Java Web Tokens, you must generate an RSA public/private key pair, add the public key to the warehouse's
+configuration for your website and save the private key in a file called rsa_private.pem in the Drupal private files
+directory. The REST API must also be configured to provide access to Elasticsearch for the jwtUser authentication
+method.
 TXT;
     $form['esproxy']['elasticsearch_auth_method'] = [
       '#type' => 'radios',
-      '#title' => t('Elasticsearch authentication method'),
-      '#description' => t('Elasticsearch major version number.'),
+      '#title' => $this->t('Elasticsearch authentication method'),
+      '#description' => $this->t('Authentication approach used to connect to the Elasticsearch warehouse proxy.'),
       '#options' => [
         'directClient' => 'Authenticate as a client configured in the Warehouse REST API',
+        'directWebsite' => 'Authenticate as a website configured in the Warehouse REST API',
         'jwtUser' => 'Authenticate as the logged in user using Java Web Tokens',
       ],
       '#required' => TRUE,
@@ -177,8 +203,8 @@ TXT;
     ];
     $form['esproxy']['elasticsearch_user'] = [
       '#type' => 'textfield',
-      '#title' => t('Elasticsearch user'),
-      '#description' => t('REST API user with Elasticsearch access.'),
+      '#title' => $this->t('Elasticsearch user'),
+      '#description' => $this->t('REST API user with Elasticsearch access.'),
       '#required' => FALSE,
       '#default_value' => $config->get('elasticsearch_user'),
       '#states' => [
@@ -190,8 +216,8 @@ TXT;
     ];
     $form['esproxy']['elasticsearch_secret'] = [
       '#type' => 'textfield',
-      '#title' => t('Elasticsearch secret'),
-      '#description' => t('REST API user secret.'),
+      '#title' => $this->t('Elasticsearch secret'),
+      '#description' => $this->t('REST API user secret.'),
       '#required' => FALSE,
       '#default_value' => $config->get('elasticsearch_secret'),
       '#states' => [
@@ -203,48 +229,42 @@ TXT;
     ];
     $form['esproxy']['elasticsearch_warehouse_prefix'] = [
       '#type' => 'textfield',
-      '#title' => t('Warehouse prefix'),
-      '#description' => t('Prefix given to Indicia IDs on this Elasticsearch index to form a unique document _id. ' .
-        'Required if this connection will allow any update operations (e.g. for verification status changes), or can ' .
-        'be provided as a setting on each individual page that allows updates.'),
+      '#title' => $this->t('Warehouse prefix'),
+      '#description' => $this->t('Prefix given to Indicia IDs on this Elasticsearch index to form a unique document _id. Required if this connection will allow any update operations (e.g. for verification status changes), or can be provided as a setting on each individual page that allows updates.'),
       '#required' => FALSE,
       '#default_value' => $config->get('elasticsearch_warehouse_prefix'),
     ];
     $form['esproxy']['elasticsearch_all_records_permission'] = [
       '#type' => 'textfield',
       '#title' => 'Elasticsearch all records permission',
-      '#description' => t('Permission required to access all records via this connection. If the connection only provides ' .
-        'access to publically visible data then leave as "access iform"'),
+      '#description' => $this->t('Permission required to access all records via this connection. If the connection only provides access to publically visible data then leave as "access iform"'),
       '#required' => FALSE,
       '#default_value' => $config->get('elasticsearch_all_records_permission'),
     ];
     $form['esproxy']['elasticsearch_my_records_permission'] = [
       '#type' => 'textfield',
       '#title' => 'Elasticsearch my records permission',
-      '#description' => t('Permission required to access a user\'s own records via this connection. Normally safe to ' .
-        'leave as "access iform"'),
+      '#description' => $this->t('Permission required to access a user\'s own records via this connection. Normally safe to leave as "access iform"'),
       '#required' => FALSE,
       '#default_value' => $config->get('elasticsearch_my_records_permission'),
     ];
     $form['esproxy']['elasticsearch_location_collation_records_permission'] = [
       '#type' => 'textfield',
       '#title' => 'Elasticsearch location collaction records permission',
-      '#description' => t('Permission required to access records in a collation area (e.g. Local Record Centre ' .
-        'boundary) via this connection. If the connection only provides access to publically visible data then leave ' .
-        'as "access iform"'),
+      '#description' => $this->t('Permission required to access records in a collation area (e.g. Local Record Centre boundary) via this connection. If the connection only provides access to publically visible data then leave as "access iform"'),
       '#required' => FALSE,
       '#default_value' => $config->get('elasticsearch_location_collation_records_permission'),
     ];
 
     $form['api_keys'] = [
       '#type' => 'details',
-      '#title' => t('API Keys'),
+      '#title' => $this->t('API Keys'),
       '#open' => TRUE,
     ];
     $form['api_keys']['google_api_key'] = [
       '#type' => 'textfield',
-      '#title' => t('Google Place Search API Key'),
-      '#description' => t('The Google API provides the Places API text search, another option to lookup place names when you use the place search control. ' .
+      '#title' => $this->t('Google Place Search API Key'),
+      '#description' => $this->t('The Google API provides the Places API text search, another option to lookup place names when you use the place search control. ' .
         'It references a global database of places and returns the list of possibilities with their spatial references ' .
         'to Indicia. To obtain your own API key for the Google Place Search API, please visit <a target="_blank" href="https://code.google.com/apis/console">' .
         'the Google APIs Console</a>. '),
@@ -253,8 +273,8 @@ TXT;
     ];
     $form['api_keys']['google_maps_api_key'] = [
       '#type' => 'textfield',
-      '#title' => t('Google Maps API Key'),
-      '#description' => t('The Google API provides the Places API text search, another option to lookup place names when you use the place search control. ' .
+      '#title' => $this->t('Google Maps API Key'),
+      '#description' => $this->t('The Google API provides the Places API text search, another option to lookup place names when you use the place search control. ' .
         'It references a global database of places and returns the list of possibilities with their spatial references ' .
         'to Indicia. To obtain your own API key for the Google Maps JavaScript API, please visit <a target="_blank" href="https://code.google.com/apis/console">' .
         'the Google APIs Console</a>. '),
@@ -263,8 +283,8 @@ TXT;
     ];
     $form['api_keys']['bing_api_key'] = [
       '#type' => 'textfield',
-      '#title' => t('Bing API Key'),
-      '#description' => t('The Bing API key is required to allow use of Bing map layers but can be left blank if you do not intend ' .
+      '#title' => $this->t('Bing API Key'),
+      '#description' => $this->t('The Bing API key is required to allow use of Bing map layers but can be left blank if you do not intend ' .
         'to use Bing maps. To obtain your own key, please visit the <a target="_blank" href="http://www.bingmapsportal.com/">Bing Maps Account Center</a>. ' .
         'Please ensure that you read and adhere to the <a href="http://www.microsoft.com/maps/product/terms.html">terms of use</a>.'),
       '#required' => FALSE,
@@ -272,8 +292,8 @@ TXT;
     ];
     $form['api_keys']['os_api_key'] = [
       '#type' => 'textfield',
-      '#title' => t('Ordnace Survey API Key'),
-      '#description' => t('The Ordnance Survey API key is required to allow use of OS map layers but can be left blank ' .
+      '#title' => $this->t('Ordnace Survey API Key'),
+      '#description' => $this->t('The Ordnance Survey API key is required to allow use of OS map layers but can be left blank ' .
         'if you do not intend to use OS maps. To obtain your own key, please visit ' .
         '<a target="_blank" href="https://developer.ordnancesurvey.co.uk/os-maps-api-enterprise">OS Maps API for ' .
         'Enterprise</a>. There is a free trial but this is a paid-for service.'),
@@ -282,13 +302,14 @@ TXT;
     ];
     $form['map'] = [
       '#type' => 'details',
-      '#title' => t('Map Settings'),
-      '#open' => TRUE
+      '#title' => $this->t('Map Settings'),
+      '#open' => TRUE,
     ];
     $form['map']['instruct'] = [
-      '#markup' => '<p>' . t('Pan and zoom this map to set the default map position for your survey input and mapping pages.') . '</p>'
+      '#markup' => '<p>' . $this->t('Pan and zoom this map to set the default map position for your survey input and mapping pages.') . '</p>',
     ];
-    // kill the JavaScript wrap as Drupal 8 doesn't like outputting the JS under #markup
+    // Kill the JavaScript wrap as Drupal 8 doesn't like outputting the JS
+    // under #markup.
     global $indicia_templates;
     $indicia_templates['jsWrap'] = '{content}';
     $form['map']['panel'] = [
@@ -323,21 +344,21 @@ TXT;
     ];
     $form['map']['spatial_ref_systems'] = [
       '#type' => 'details',
-      '#title' => t('List of spatial or grid reference systems'),
+      '#title' => $this->t('List of spatial or grid reference systems'),
       '#description' => 'Please tick off each spatial or grid reference system you wish to enable for input when using this website.',
       '#open' => TRUE,
     ];
     $systems = [
-      'OSGB' => t('British National Grid'),
-      'OSIE' => t('Irish National Grid'),
-      '4326' => t('GPS Latitude and Longitude (WGS84)'),
-      'guernsey' => t('Guernsey Grid'),
-      'jersey' => t('Jersey Grid'),
-      'utm30ed50' => t('UTM 30N (ED50)'),
-      'utm30wgs84' => t('UTM 30N (WGS84)'),
-      '2169' => t('LUREF Luxembourg'),
-      '3006' => t('SWEREF99 TM / Swedish Transverse Mercator'),
-      '3021' => t('RT90 2.5 gon v / Swedish Grid'),
+      'OSGB' => $this->t('British National Grid'),
+      'OSIE' => $this->t('Irish National Grid'),
+      '4326' => $this->t('GPS Latitude and Longitude (WGS84)'),
+      'guernsey' => $this->t('Guernsey Grid'),
+      'jersey' => $this->t('Jersey Grid'),
+      'utm30ed50' => $this->t('UTM 30N (ED50)'),
+      'utm30wgs84' => $this->t('UTM 30N (WGS84)'),
+      '2169' => $this->t('LUREF Luxembourg'),
+      '3006' => $this->t('SWEREF99 TM / Swedish Transverse Mercator'),
+      '3021' => $this->t('RT90 2.5 gon v / Swedish Grid'),
     ];
     $selected_systems = $this->formValuesFromSrefSystems($systems, $config);
     $form['map']['spatial_ref_systems']['spatial_ref_systems_list'] = [
@@ -347,25 +368,25 @@ TXT;
     ];
     $form['map']['spatial_ref_systems']['spatial_ref_systems_other'] = [
       '#type' => 'textfield',
-      '#title' => t('Other'),
+      '#title' => $this->t('Other'),
       '#default_value' => $selected_systems['other'],
-      '#description' => t('For any system not in this list, you can enter a comma separated list of EPSG codes or other system names as long as they are recognised by the Indicia Warehouse you are using.'),
+      '#description' => $this->t('For any system not in this list, you can enter a comma separated list of EPSG codes or other system names as long as they are recognised by the Indicia Warehouse you are using.'),
     ];
     $form['master_checklist_id'] = [
       '#type' => 'textfield',
-      '#title' => t('Master checklist ID'),
-      '#description' => t('The species checklist ID used as an all species hierarchy.'),
+      '#title' => $this->t('Master checklist ID'),
+      '#description' => $this->t('The species checklist ID used as an all species hierarchy.'),
       '#default_value' => $config->get('master_checklist_id'),
     ];
     $form['profile_location_type_id'] = [
       '#type' => 'textfield',
-      '#title' => t('Profile location type ID'),
-      '#description' => t("The ID of the location type for the main location layer that can be associated with user profiles to indicate a user's preferences."),
+      '#title' => $this->t('Profile location type ID'),
+      '#description' => $this->t("The ID of the location type for the main location layer that can be associated with user profiles to indicate a user's preferences."),
       '#default_value' => $config->get('profile_location_type_id'),
     ];
     $form['submit'] = [
       '#type' => 'submit',
-      '#value' => t('Submit'),
+      '#value' => $this->t('Submit'),
     ];
     $form['#attached']['library'][] = 'iform/admin';
     return $form;
@@ -380,12 +401,12 @@ TXT;
     if ($values['warehouse'] === '' || ($values['warehouse'] === 'other' && empty($values['base_url']))) {
       $form_state->setErrorByName(
         'warehouse',
-        t('Please supply a warehouse URL for connection to Indicia, or select a pre-configured connection.')
+        $this->t('Please supply a warehouse URL for connection to Indicia, or select a pre-configured connection.')
       );
     }
     elseif (!empty($values['password'])) {
       // Test the connection to the warehouse.
-      $urls = self::getWarehouseUrls($values);
+      $urls = $this->getWarehouseUrls($values);
       \data_entry_helper::$base_url = $urls['base_url'];
       // Clear the cache if the linked warehouse changes.
       if ($config->get('base_url') !== $urls['base_url']) {
@@ -417,7 +438,7 @@ TXT;
       // @todo This error does not get shown properly, possibly a Drupal 8 beta bug?
       $form_state->setErrorByName(
         'spatial_ref_systems',
-        t('Please enable at least one spatial or grid reference system.')
+        $this->t('Please enable at least one spatial or grid reference system.')
       );
     }
   }
@@ -429,7 +450,7 @@ TXT;
     $config = \Drupal::configFactory()->getEditable('iform.settings');
     $values = $form_state->getValues();
     $config->set('warehouse', $values['warehouse']);
-    $urls = self::getWarehouseUrls($values);
+    $urls = $this->getWarehouseUrls($values);
     $config->set('base_url', $urls['base_url']);
     $config->set('geoserver_url', $urls['geoserver_url']);
     $config->set('private_warehouse', $values['private_warehouse']);
@@ -472,7 +493,7 @@ TXT;
     $systems = $this->srefSystemsFromForm($values);
     $config->set('spatial_systems', $systems);
     $config->save();
-    drupal_set_message(t('Indicia settings saved.'));
+    $this->messenger()->addMessage($this->t('The Indicia configuration settings have been saved.'));
   }
 
   /**
@@ -496,7 +517,7 @@ TXT;
    * Returns the base url and geoserver url defined in the submitted form.
    */
   private function getWarehouseUrls($values) {
-    if (strcasecmp($values['warehouse'], t('Other')) === 0) {
+    if (strcasecmp($values['warehouse'], $this->t('Other')) === 0) {
       return [
         'base_url' => $values['base_url'],
         'geoserver_url' => $values['geoserver_url'],
@@ -514,7 +535,7 @@ TXT;
         }
       }
       // If not found, something went wrong.
-      throw new Exception('Could not find configuration for selected warehouse.');
+      throw new \Exception('Could not find configuration for selected warehouse.');
     }
   }
 

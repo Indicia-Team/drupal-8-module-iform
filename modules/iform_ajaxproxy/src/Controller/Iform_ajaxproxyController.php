@@ -24,8 +24,9 @@ class Iform_ajaxproxyController extends ControllerBase {
       if (empty($index)){
         $error = t("invocation format problem - no data format indicator.");
       } else {
-        if (empty($nid))
-          $conn=array('website_id'=>$config->get('website_id'), 'password'=>$config->get('password'));
+        if (empty($nid)) {
+          $conn = array('website_id' => $config->get('website_id'), 'password'=>$config->get('password'));
+        }
         else {
           $node = \Drupal\node\Entity\Node::load($nid);
           if (isset($node->params['base_url']) && $node->params['base_url']!==$config->get('base_url')) {
@@ -72,7 +73,7 @@ class Iform_ajaxproxyController extends ControllerBase {
     else {
       switch ($index) {
         case "sample":
-          $Model = \data_entry_helper::wrap_with_attrs($_POST, 'sample');
+          $Model = \submission_builder::wrap_with_images($_POST, 'sample');
           break;
         case "location":
           $structure = array(
@@ -82,7 +83,7 @@ class Iform_ajaxproxyController extends ControllerBase {
           if (array_key_exists('locations_website:website_id', $_POST)){
             $structure['subModels']['locations_website'] = array('fk' => 'location_id');
           }
-          $Model = \data_entry_helper::build_submission($_POST, $structure);
+          $Model = \submission_builder::build_submission($_POST, $structure);
           break;
         case "loc-sample":
           $structure = array(
@@ -94,7 +95,7 @@ class Iform_ajaxproxyController extends ControllerBase {
           if (array_key_exists('locations_website:website_id', $_POST)){
             $structure['subModels']['locations_website'] = array('fk' => 'location_id');
           }
-          $Model = \data_entry_helper::build_submission($_POST, $structure);
+          $Model = \submission_builder::build_submission($_POST, $structure);
           break;
         case "loc-smp-occ":
           $structure = array(
@@ -106,7 +107,7 @@ class Iform_ajaxproxyController extends ControllerBase {
               'location' => array('fk' => 'location_id')
             )
           );
-          $Model = \data_entry_helper::build_submission($_POST, $structure);
+          $Model = \submission_builder::build_submission($_POST, $structure);
           if (array_key_exists('locations_website:website_id', $_POST)){
             if (isset($Model['superModels'][0]['model']['subModels']))
               $Model['superModels'][0]['model']['subModels'] = array();
@@ -119,7 +120,7 @@ class Iform_ajaxproxyController extends ControllerBase {
             if (substr($key,0,14) == 'determination:'){
               $Model['subModels'][0]['model']['subModels'][] = array(
                 'fkId' => 'occurrence_id',
-                'model' => \data_entry_helper::wrap($_POST, 'determination', 'determination')
+                'model' => \submission_builder::wrap($_POST, 'determination', 'determination')
               );
               break;
             }
@@ -132,7 +133,7 @@ class Iform_ajaxproxyController extends ControllerBase {
               'occurrence' => array('fk' => 'sample_id')
             )
           );
-          $Model = \data_entry_helper::build_submission($_POST, $structure);
+          $Model = \submission_builder::build_submission($_POST, $structure);
           break;
         case "media":
           // media handled differently. Submission is handled by the handle_media function.
@@ -208,97 +209,97 @@ class Iform_ajaxproxyController extends ControllerBase {
               break;
             }
           }
-          $Model = \data_entry_helper::build_submission($_POST, $structure);
+          $Model = \submission_builder::build_submission($_POST, $structure);
           break;
 
         case "occ-comment":
-          $Model = \data_entry_helper::wrap($_POST, 'occurrence_comment');
+          $Model = \submission_builder::wrap($_POST, 'occurrence_comment');
           break;
 
         case "smp-comment":
-          $Model = \data_entry_helper::wrap($_POST, 'sample_comment');
+          $Model = \submission_builder::wrap($_POST, 'sample_comment');
           break;
 
         case "determination":
-          $Model = \data_entry_helper::wrap($_POST, 'determination');
+          $Model = \submission_builder::wrap($_POST, 'determination');
           break;
 
         case "notification":
-          $Model = \data_entry_helper::wrap($_POST, 'notification');
+          $Model = \submission_builder::wrap($_POST, 'notification');
           break;
 
         case "user-trust":
           $structure = array('model' => 'user_trust');
-          $Model = \data_entry_helper::build_submission($_POST, $structure);
+          $Model = \submission_builder::build_submission($_POST, $structure);
           break;
 
         case "person_attribute_value":
-          $Model = \data_entry_helper::wrap($_POST, 'person_attribute_value');
+          $Model = \submission_builder::wrap($_POST, 'person_attribute_value');
           break;
 
         case "filter":
-          $Model = \data_entry_helper::wrap($_POST, 'filter');
+          $Model = \submission_builder::wrap($_POST, 'filter');
           break;
         case "filter_and_user":
           $structure = array('model' => 'filter', 'subModels' => array('filters_user' => array('fk' => 'filter_id')));
-          $Model = \data_entry_helper::build_submission($_POST, $structure);
+          $Model = \submission_builder::build_submission($_POST, $structure);
           break;
 
         case "groups_location":
-          $Model = \data_entry_helper::wrap($_POST, 'groups_location');
+          $Model = \submission_builder::wrap($_POST, 'groups_location');
           break;
 
         case "groups_user":
-          $Model = \data_entry_helper::wrap($_POST, 'groups_user');
+          $Model = \submission_builder::wrap($_POST, 'groups_user');
           break;
 
         case "scratchpad_list":
-          $Model = \data_entry_helper::wrap($_POST, 'scratchpad_list');
+          $Model = \submission_builder::wrap($_POST, 'scratchpad_list');
           break;
 
         case "comment_quick_reply_page_auth":
-          $Model = \data_entry_helper::wrap($_POST, 'comment_quick_reply_page_auth');
+          $Model = \submission_builder::wrap($_POST, 'comment_quick_reply_page_auth');
           break;
 
         case "taxa_taxon_list":
           $structure = array('model' => 'taxa_taxon_list', 'superModels' => array('taxon' => array('fk' => 'taxon_id'), 'taxon_meaning' => array('fk' => 'taxon_meaning_id')));
-          $Model = \data_entry_helper::build_submission($_POST, $structure);
+          $Model = \submission_builder::build_submission($_POST, $structure);
           break;
 
         case "taxa_taxon_list_attribute":
-          $Model = \data_entry_helper::wrap($_POST, 'taxa_taxon_list_attribute');
+          $Model = \submission_builder::wrap($_POST, 'taxa_taxon_list_attribute');
           break;
 
         case "taxa_taxon_list_attribute_value":
-          $Model = \data_entry_helper::wrap($_POST, 'taxa_taxon_list_attribute_value');
+          $Model = \submission_builder::wrap($_POST, 'taxa_taxon_list_attribute_value');
           break;
 
         case "occurrence_attribute_website":
-          $Model = \data_entry_helper::wrap($_POST, 'occurrence_attribute_website');
+          $Model = \submission_builder::wrap($_POST, 'occurrence_attribute_website');
           break;
 
         case "taxon_lists_taxa_taxon_list_attribute":
-          $Model = \data_entry_helper::wrap($_POST, 'taxon_lists_taxa_taxon_list_attribute');
+          $Model = \submission_builder::wrap($_POST, 'taxon_lists_taxa_taxon_list_attribute');
           break;
 
         case "attribute_set":
-          $Model = \data_entry_helper::wrap($_POST, 'attribute_set');
+          $Model = \submission_builder::wrap($_POST, 'attribute_set');
           break;
 
         case "attribute_sets_taxa_taxon_list_attribute":
-          $Model = \data_entry_helper::wrap($_POST, 'attribute_sets_taxa_taxon_list_attribute');
+          $Model = \submission_builder::wrap($_POST, 'attribute_sets_taxa_taxon_list_attribute');
           break;
 
         case "occurrence_attributes_taxa_taxon_list_attribute":
-          $Model = \data_entry_helper::wrap($_POST, 'occurrence_attributes_taxa_taxon_list_attribute');
+          $Model = \submission_builder::wrap($_POST, 'occurrence_attributes_taxa_taxon_list_attribute');
           break;
 
         case "attribute_sets_taxon_restriction":
-          $Model = \data_entry_helper::wrap($_POST, 'attribute_sets_taxon_restriction');
+          $Model = \submission_builder::wrap($_POST, 'attribute_sets_taxon_restriction');
           break;
 
         case "attribute_sets_survey":
-          $Model = \data_entry_helper::wrap($_POST, 'attribute_sets_survey');
+          $Model = \submission_builder::wrap($_POST, 'attribute_sets_survey');
           break;
 
         default:
