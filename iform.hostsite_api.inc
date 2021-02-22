@@ -367,16 +367,18 @@ function hostsite_get_es_config($nid) {
     'version',
     'endpoint',
     'auth_method',
+    'scope',
     'user',
     'secret',
     'warehouse_prefix',
     'all_records_permission',
     'my_records_permission',
-    'location_collation_records_permission'
+    'location_collation_records_permission',
   ];
   $defaults = [
     'version' => '6',
     'auth_method' => 'directClient',
+    'scope' => 'reporting',
   ];
   $esParams = [];
   if ($nid) {
