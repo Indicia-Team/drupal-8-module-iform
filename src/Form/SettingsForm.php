@@ -213,27 +213,23 @@ TXT;
     $form['esproxy']['elasticsearch_all_records_permission'] = [
       '#type' => 'textfield',
       '#title' => 'Elasticsearch all records permission',
-      '#description' => t('Permission required to access all records via this connection. If the connection only provides ' .
-        'access to publically visible data then leave as "access iform"'),
+      '#description' => $this->t('Permission required to access all records via this connection.'),
       '#required' => FALSE,
-      '#default_value' => $config->get('elasticsearch_all_records_permission'),
+      '#default_value' => empty($config->get('elasticsearch_all_records_permission')) ? 'indicia data admin' : $config->get('elasticsearch_all_records_permission'),
     ];
     $form['esproxy']['elasticsearch_my_records_permission'] = [
       '#type' => 'textfield',
       '#title' => 'Elasticsearch my records permission',
-      '#description' => t('Permission required to access a user\'s own records via this connection. Normally safe to ' .
-        'leave as "access iform"'),
+      '#description' => $this->t('Permission required to access a user\'s own records via this connection. Normally safe to leave as "access iform content"'),
       '#required' => FALSE,
-      '#default_value' => $config->get('elasticsearch_my_records_permission'),
+      '#default_value' => empty($config->get('elasticsearch_my_records_permission')) ? 'access iform content' : $config->get('elasticsearch_my_records_permission'),
     ];
     $form['esproxy']['elasticsearch_location_collation_records_permission'] = [
       '#type' => 'textfield',
-      '#title' => 'Elasticsearch location collaction records permission',
-      '#description' => t('Permission required to access records in a collation area (e.g. Local Record Centre ' .
-        'boundary) via this connection. If the connection only provides access to publically visible data then leave ' .
-        'as "access iform"'),
+      '#title' => 'Elasticsearch location collation records permission',
+      '#description' => $this->t('Permission required to access records in a collation area (e.g. Local Record Centre boundary) via this connection.'),
       '#required' => FALSE,
-      '#default_value' => $config->get('elasticsearch_location_collation_records_permission'),
+      '#default_value' => empty($config->get('elasticsearch_location_collation_records_permission')) ? 'indicia data admin' : $config->get('elasticsearch_location_collation_records_permission'),
     ];
 
     $form['api_keys'] = [
