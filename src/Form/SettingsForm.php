@@ -4,6 +4,7 @@ namespace Drupal\iform\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\Markup;
 
 /**
  * Indicia settings form.
@@ -313,8 +314,7 @@ TXT;
     global $indicia_templates;
     $indicia_templates['jsWrap'] = '{content}';
     $form['map']['panel'] = [
-      '#type' => 'inline_template',
-      '#template' => \map_helper::map_panel([
+      '#markup' => Markup::create(\map_helper::map_panel([
         'width' => '100%',
         'height' => 500,
         'presetLayers' => ['osm'],
@@ -325,7 +325,7 @@ TXT;
         'initial_zoom' => $config->get('map_zoom'),
         'standardControls' => ['panZoomBar'],
         'scroll_wheel_zoom' => 'false',
-      ]),
+      ])),
     ];
     $form['map']['map_centroid_lat'] = [
       '#attributes' => ['id' => 'edit-map-centroid-lat'],

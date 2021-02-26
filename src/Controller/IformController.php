@@ -3,8 +3,9 @@
 namespace Drupal\iform\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
-use Symfony\Component\HttpFoundation\Response;
+use Drupal\Core\Render\Markup;
 use Drupal\node\Entity\Node;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -206,8 +207,7 @@ class IformController extends ControllerBase {
       }
       $r .= $this->showGroupPage($group, $config->get('website_id'), $auth['read']);
       return [
-        '#type' => 'inline_template',
-        '#template' => $r,
+        '#template' => Markup::create($r),
       ];
     }
     else {

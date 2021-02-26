@@ -7,7 +7,6 @@
 
 use Drupal\Core\StreamWrapper\PrivateStream;
 use Drupal\Core\StreamWrapper\PublicStream;
-use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Core\Cache\Cache;
 use Drupal\node\NodeInterface;
 use Drupal\node\Entity\Node;
@@ -15,6 +14,7 @@ use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\Markup;
 
 require_once 'iform.hostsite_api.inc';
 
@@ -208,8 +208,7 @@ function iform_form_node_form_alter(&$form, FormStateInterface $form_state, $for
     $config = \Drupal::config('iform.settings');
     $readAuth = form_helper::get_read_auth($connection['website_id'], $connection['password']);
     $form['iform_forms']['picker'] = [
-      '#type' => 'inline_template',
-      '#template' => form_helper::prebuilt_form_picker($readAuth, [
+      '#markup' => Markup::create(form_helper::prebuilt_form_picker($readAuth, [
         'form' => $iform,
         'base_url' => $connection['base_url'],
         'website_id' => $connection['website_id'],
@@ -217,17 +216,16 @@ function iform_form_node_form_alter(&$form, FormStateInterface $form_state, $for
         'allowConnectionOverride' => $config->get('allow_connection_override'),
         'available_for_groups' => $node->field_available_for_groups->value === '1',
         'limit_to_group_id' => isset($node->field_limit_to_group_id->value) ? $node->field_limit_to_group_id->value : NULL,
-      ]),
+      ])),
     ];
     if ($iform) {
       $form['form-params'] = [
-        '#type' => 'inline_template',
-        '#template' => form_helper::prebuilt_form_params_form([
+        '#markup' => Markup::create(form_helper::prebuilt_form_params_form([
           'form' => $iform,
           // @todo Load params properly from node
           'currentSettings' => $node->params,
           'readAuth' => form_helper::get_read_auth($connection['website_id'], $connection['password']),
-        ]),
+        ])),
         '#prefix' => '<div id="form-params">',
         '#suffix' => '</div>',
         '#weight' => 36,
@@ -551,8 +549,7 @@ function iform_node_view(array &$build, EntityInterface $entity, EntityViewDispl
       }
       ob_end_clean();
       $build['iform'] = [
-        '#type' => 'inline_template',
-        '#template' => $r,
+        '#markup' => Markup::create($r),
         '#weight' => 1,
         '#cache' => [
           'contexts' => [
