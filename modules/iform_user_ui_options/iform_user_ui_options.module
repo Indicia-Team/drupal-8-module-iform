@@ -1,18 +1,21 @@
 <?php
-// $Id$
+
+use Drupal\Core\Form\FormStateInterface;
 
 /**
- * Implements hook_user_profile_form_alter.
- * Adds radio buttons to the end of the preferences tab of a user account to allow the user to select from any
- * available user interface configuration choices.
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Adds radio buttons to the end of the preferences tab of a user account to
+ * allow the user to select from any available user interface configuration
+ * choices.
  */
-function iform_user_ui_options_form_user_profile_form_alter(&$form) {
+function iform_user_ui_options_form_user_form_alter(&$form, FormStateInterface $form_state, $form_id) {
   $currentOpts = json_decode(hostsite_get_user_field('iform_ui_options', '{}'), TRUE);
   $config = iform_user_ui_options_load_config();
   if (count($config)>0) {
     $form['Preferences']['ui_options'] = array(
       '#type' => 'fieldset',
-      '#title' => t('User Interface Options')
+      '#title' => t('User Interface Options'),
     );
     foreach ($config as $name => $optionset) {
       if (!isset($optionset['title']) || !isset($optionset['choices']))
@@ -29,7 +32,11 @@ function iform_user_ui_options_form_user_profile_form_alter(&$form) {
       );
     }
   }
-  $form['#validate'][] = 'iform_user_ui_options_form_submit';
+  foreach (array_keys($form['actions']) as $action) {
+    if ($action != 'preview' && isset($form['actions'][$action]['#type']) && $form['actions'][$action]['#type'] === 'submit') {
+      $form['actions'][$action]['#submit'][] = 'iform_user_ui_options_form_submit';
+    }
+  }
 }
 
 /**
@@ -46,8 +53,8 @@ function iform_user_ui_options_load_config() {
       $parts = explode('.', $file);
       if ($file === '.' || $file === '..' || count($parts) < 2 || $parts[1] !== 'json')
         continue;
-      $jsstring=file_get_contents($configPath . '/' . $file);
-      $fileSettings=json_decode($jsstring, TRUE);
+      $jsstring = file_get_contents($configPath . '/' . $file);
+      $fileSettings = json_decode($jsstring, TRUE);
       $config = array_merge($config, $fileSettings);
     }
   }
@@ -56,18 +63,19 @@ function iform_user_ui_options_load_config() {
 
 /**
  * Submit handler for the account form.
+ *
  * Store user preference options in their profile.
  */
-function iform_user_ui_options_form_submit($form, &$form_state) {
-  $options = array();
+function iform_user_ui_options_form_submit($form, FormStateInterface &$form_state) {
+  $options = [];
   $currentOpts = json_decode(hostsite_get_user_field('iform_ui_options', '{}'), TRUE);
-  foreach ($form_state['values'] as $key => $value) {
+  foreach ($form_state->getValues() as $key => $value) {
     if (preg_match('/^iform_user_ui_(?P<key>.+)/', $key, $matches)) {
       $options[$matches['key']] = $value;
       if (!isset($currentOpts[$matches['key']]) || $currentOpts[$matches['key']]!==$value) {
         // We are switching from one config set to another. This might mean we need to clear out cookies, e.g. if switching map layers from one
         // projection to another then we don't want to remember the map position.
-        $config=iform_user_ui_options_load_config();
+        $config = iform_user_ui_options_load_config();
         if (isset($config[$matches['key']]['clearCookies'])) {
           foreach ($config[$matches['key']]['clearCookies'] as $cookie) {
             setcookie($cookie, '', \Drupal::time()->getRequestTime() + 3600, "/");
@@ -76,8 +84,9 @@ function iform_user_ui_options_form_submit($form, &$form_state) {
       }
     }
   }
-  if (!empty($options))
-    form_set_value($form['field_iform_ui_options'], array(LANGUAGE_NONE => array(0 => array('value' => json_encode($options)))), $form_state);
+  if (!empty($options)) {
+    hostsite_set_user_field('iform_ui_options', json_encode($options));
+  }
 }
 
 /**
@@ -91,9 +100,9 @@ function iform_user_ui_options_preprocess_iform(&$params) {
   // use a static to hold the params, in case loading multiple nodes, e.g. when building the menu
   static $paramsToApply;
   if (!isset($paramsToApply)) {
-    iform_load_helpers(array('data_entry_helper'));
-    data_entry_helper::$data['structureControlOverrides'] = array();
-    $paramsToApply=array();
+    iform_load_helpers(['data_entry_helper']);
+    data_entry_helper::$data['structureControlOverrides'] = [];
+    $paramsToApply = [];
     $userOpts = json_decode(hostsite_get_user_field('iform_ui_options', '{}'), TRUE);
     if ($userOpts) {
       $config = iform_user_ui_options_load_config();
@@ -102,20 +111,20 @@ function iform_user_ui_options_preprocess_iform(&$params) {
           foreach ($config[$option]['choices'][$choice]['params'] as $param => $value) {
             if (strpos($param, '|')===FALSE)
               // an iform parameter override
-              $paramsToApply[$param]=$value;
+              $paramsToApply[$param] = $value;
             else {
               // a form structure control property override. Store it for later, will be used by dynamic.php in get_tab_content.
               $tokens = explode('|', $param);
               if (!isset(data_entry_helper::$data['structureControlOverrides'][$tokens[0]]))
-                data_entry_helper::$data['structureControlOverrides'][$tokens[0]]=array();
-              data_entry_helper::$data['structureControlOverrides'][$tokens[0]][$tokens[1]]=$value;
+                data_entry_helper::$data['structureControlOverrides'][$tokens[0]] = array();
+              data_entry_helper::$data['structureControlOverrides'][$tokens[0]][$tokens[1]] = $value;
             }
           }
         }
       }
     }
   }
-  $paramsAllowedToApply=$paramsToApply;
+  $paramsAllowedToApply = $paramsToApply;
   if (!empty($params['locked_params'])) {
     $lockedParams = explode(',', $params['locked_params']);
     foreach ($lockedParams as $lockedParam)
@@ -130,12 +139,12 @@ function iform_user_ui_options_preprocess_iform(&$params) {
  * return Array List of parameters to add to each iform config form.
  */
 function iform_user_ui_options_additional_params() {
-  return array(array(
-      'fieldname' => 'locked_params',
-      'label' => 'Params to lock',
-      'helpText' => 'Enter a comma separated list of the names of form parameters which are essential to the operation of this form and must not be overrridden by the ' .
-          'iform_user_ui_options module.',
-      'type' => 'text_input',
-      'required' => FALSE
-  ));
+  return array([
+    'fieldname' => 'locked_params',
+    'label' => 'Params to lock',
+    'helpText' => 'Enter a comma separated list of the names of form parameters which are essential to the operation of this form and must not be overrridden by the ' .
+        'iform_user_ui_options module.',
+    'type' => 'text_input',
+    'required' => FALSE
+  ]);
 }
