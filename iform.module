@@ -863,7 +863,7 @@ function _iform_apply_variables_to_args(&$args, $config) {
  */
 function _iform_apply_variable_to_args($variable, &$args, $config) {
   $default = $config->get($variable);
-  if (isset($args[$variable]) && ($args[$variable] == t('default') || $args[$variable] == 'default' || $args[$variable] == '') && !empty($default)) {
+  if (isset($args[$variable]) && ((string) $args[$variable] == t('default') || $args[$variable] == 'default' || $args[$variable] == '') && !empty($default)) {
     $args[$variable] = $default;
   }
 }
