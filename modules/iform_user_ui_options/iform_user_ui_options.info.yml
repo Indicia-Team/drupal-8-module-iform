@@ -1,6 +1,7 @@
 name: Indicia user UI options
 description: A module allowing creation of optional user interface behaviuor that is configured in the user account. E.g. allows a user to pick the map layers available for all forms.
 core: 8.x
+core_version_requirement: ^8 || ^9
 version: "8.x-4.0"
 package: "Indicia"
 configure: iform.settings
