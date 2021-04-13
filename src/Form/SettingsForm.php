@@ -387,6 +387,7 @@ TXT;
     $form['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Submit'),
+      '#weight' => 50,
     ];
     $form['#attached']['library'][] = 'iform/admin';
     return $form;
@@ -478,18 +479,6 @@ TXT;
     $config->set('map_zoom', $values['map_zoom']);
     $config->set('master_checklist_id', $values['master_checklist_id']);
     $config->set('profile_location_type_id', $values['profile_location_type_id']);
-    // Save any indicia variables declared by hook_variable_info.
-    global $language;
-    /*
-     * @todo Implement extended variables properly
-     *
-    $vars = module_invoke_all('variable_info', array("language" => $language));
-    foreach ($vars as $var=>$config) {
-      if (!empty($config['addToIndiciaSettingsPage']) && $config['addToIndiciaSettingsPage'] && isset($values[$var]))
-        $config->set($var, $values[$var]);
-    }
-     */
-
     $systems = $this->srefSystemsFromForm($values);
     $config->set('spatial_systems', $systems);
     $config->save();
