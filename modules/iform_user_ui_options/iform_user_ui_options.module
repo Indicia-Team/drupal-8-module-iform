@@ -47,7 +47,10 @@ function iform_user_ui_options_load_config() {
   static $config;
   if (!isset($config)) {
     $config = [];
-    $configPath = \Drupal::config('system.file')->get('default_scheme') . ':/'  . '/iform_user_ui_options';
+    $configPath = \Drupal::config('system.file')->get('default_scheme') . '://iform_user_ui_options';
+    if (!file_exists($configPath)) {
+      mkdir($configPath);
+    }
     $files = scandir($configPath);
     foreach ($files as $file) {
       $parts = explode('.', $file);
