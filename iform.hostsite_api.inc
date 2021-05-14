@@ -1,15 +1,21 @@
 <?php
 
-use Drupal\Core\StreamWrapper\PublicStream;
-use Drupal\Component\Utility\Unicode;
-use Symfony\Component\HttpFoundation\RedirectResponse;
-use Drupal\user\Entity\User;
-
 /**
  * @file
- * Provides hostsite_* methods to decouple client_helper code from the running content
- * management system, in this case Drupal 8.
+ * Shim to provide version independent access to Drupal functionality.
+ *
+ * Provides hostsite_* methods to decouple client_helper code from the running
+ * content management system, in this case Drupal 8.
  */
+
+use Drupal\Core\StreamWrapper\PublicStream;
+use Drupal\Core\Url;
+use Drupal\Component\Utility\Unicode;
+use Drupal\Core\Form\FormState;
+use Drupal\user\Entity\User;
+use Drupal\node\Entity\Node;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
  * Retrieve a user field value.
@@ -26,9 +32,9 @@ use Drupal\user\Entity\User;
  * @param mixed $default
  *   Default value to return if not set.
  * @param bool $array
- *   Set to true if this field allows multiple values so you need an array.
+ *   Set to TRUE if this field allows multiple values so you need an array.
  * @param int $uid
- *   User ID of user to load data for. Defaults to current user.
+ *   Drupal user ID of user to load data for. Defaults to current user.
  *
  * @return mixed
  *   Field value.
@@ -43,11 +49,10 @@ function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid 
   }
   // Do we need to load a different user account, e.g. if viewing another
   // user's details?
-  $differentUser = ($uid !== FALSE && $uid !== $account->id());
   $uid = ($uid === FALSE) ? $account->id() : $uid;
   $account = User::load($uid);
   if ($_iform_warehouse_override && $field === 'indicia_user_id') {
-     if ($account->id() == 0) {
+    if ($account->id() == 0) {
       // Anonymous user.
       return $default;
     }
@@ -61,7 +66,7 @@ function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid 
     return \Drupal::languageManager()->getCurrentLanguage()->getId();
   }
   elseif ($field === 'name') {
-    return $account->getUsername();
+    return $account->getDisplayName();
   }
   elseif ($field === 'mail') {
     return $account->getEmail();
@@ -77,23 +82,45 @@ function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid 
 }
 
 /**
- * Function that allows Indicia code to hook into the Drupal user profile to set a field value, without
- * introducing a Drupal code dependency.
+ * Finds a Drupal user by a field value.
+ *
+ * E.g. search by indicia_user_id.
+ *
+ * @param string $field
+ *   Name of the field to search.
+ * @param string $value
+ *   Value to search for.
+ *
+ * @return array
+ *   List of matching user IDs.
+ */
+function hostsite_find_cms_user_by_field_value($field, $value) {
+  $fieldname = (substr($field, 0, 6) === 'field_' ? '' : 'field_') . $field;
+  $query = \Drupal::entityQuery('user');
+  $query->condition($fieldname, $value);
+  return array_keys($query->execute());
+}
+
+/**
+ * Set a user field value.
+ *
+ * Function that allows Indicia code to hook into the Drupal user profile to
+ * set a field value, without introducing a Drupal code dependency.
  *
  * @param string $field
  *   The name of a profile field.
  * @param mixed $data
  *   The data to be saved into the field.
  *
- * @return boolean
- *   Returns false if the uid or field is not available so data cannot be
+ * @return bool
+ *   Returns FALSE if the uid or field is not available so data cannot be
  *   written.
  */
 function hostsite_set_user_field($field, $data) {
   $account = \Drupal::currentUser();
   if ($account->id()) {
     $fieldname = (substr($field, 0, 6) === 'field_' ? '' : 'field_') . $field;
-    $user = \Drupal\user\Entity\User::load($account->id());
+    $user = User::load($account->id());
     if (isset($user->$fieldname) && $user->$fieldname) {
       $user->$fieldname->setValue($data);
       $user->save();
@@ -104,41 +131,53 @@ function hostsite_set_user_field($field, $data) {
 }
 
 /**
- * Returns true if the current user is permitted to perform a named task.
+ * Returns TRUE if the current user is permitted to perform a named task.
+ *
  * @param string $task
- * @return boolean True if allowed
+ *   Permission name.
+ *
+ * @return bool
+ *   True if allowed.
  */
 function hostsite_user_has_permission($task, $uid = FALSE) {
-  $account = $uid ? \Drupal\user\Entity\User::load($uid) : \Drupal::currentUser();
+  $account = $uid ? User::load($uid) : \Drupal::currentUser();
   return $account->hasPermission($task);
 }
 
 /**
  * Display a message in a way that can be unhooked from Drupal.
- * @param string $msg Message to display
- * @param string $type Message type, one of 'status', 'warning' and 'error'.
- * @param boolean $redirect Set to true if the page is about to be redirected and the
- * message needs to be shown after redirecting, since Drupal 8's method of redirection
- * clears the messages so we need to save the message to be picked up after the redirection.
  *
+ * @param string $msg
+ *   Message to display.
+ * @param string $type
+ *   Message type, one of 'status', 'warning' and 'error'.
+ * @param bool $redirect
+ *   Set to TRUE if the page is about to be redirected and the message needs to
+ *   be shown after redirecting, since Drupal 8's method of redirection clears
+ *   the messages so we need to save the message to be picked up after the
+ *   redirection.
  */
-function hostsite_show_message($msg, $type = 'status', $redirect=false) {
+function hostsite_show_message($msg, $type = 'status', $redirect = FALSE) {
   if ($redirect) {
     // If about to redirect, then save the message for later.
-    if (!isset($_SESSION['iform-messages']))
+    if (!isset($_SESSION['iform-messages'])) {
       $_SESSION['iform-messages'] = [];
-    $_SESSION['iform-messages'][] = array($msg, $type);
+    }
+    $_SESSION['iform-messages'][] = [$msg, $type];
     $_SESSION['iform-redirect-from'] = hostsite_get_current_page_path();
-  } else {
-    drupal_set_message($msg, $type);
+  }
+  else {
+    \Drupal::messenger()->addMessage($msg, $type);
   }
 }
 
 /**
  * Set a breadcrumb trail in the host site.
- * @param array $breadcrumb An associative array where keys are untranslated breadcrumb
- * terms and values are the page to go to. The home page is automatically inserted at the
- * start and the current page at the end.
+ *
+ * @param array $breadcrumb
+ *   An associative array where keys are untranslated breadcrumb terms and
+ *   values are the page to go to. The home page is automatically inserted at
+ *   the start and the current page at the end.
  *
  * function hostsite_set_breadcrumb($breadcrumb) {
  * // convert to Drupal style breadcrumb array
@@ -150,38 +189,50 @@ function hostsite_show_message($msg, $type = 'status', $redirect=false) {
  * $drupal_breadcrumb[] = drupal_get_title();
  * drupal_set_breadcrumb($drupal_breadcrumb);
  * }
- *
- * /**
+ */
+
+/**
  * Set the page title in the host site.
- * @param string $title The translated page title.
+ *
+ * @param string $title
+ *   The translated page title.
  */
 function hostsite_set_page_title($title) {
-  global $indicia_page_title;
-  $indicia_page_title = $title;
+  global $_iform_page_title;
+  $_iform_page_title = $title;
 }
 
 /**
- * Retrieves the current node page's title
- * @param $nid Node ID
+ * Retrieves the current node page's title.
+ *
+ * @param int $nid
+ *   Node ID.
+ *
  * @return string
+ *   Page title.
  */
 function hostsite_get_page_title($nid) {
-  static $indicia_page_title;
-  if (isset($indicia_page_title)) {
-    return $indicia_page_title;
+  static $_iform_page_title;
+  if (isset($_iform_page_title)) {
+    return $_iform_page_title;
   }
-  $node = \Drupal\node\Entity\Node::load($nid);
+  $node = Node::load($nid);
   return $node->getTitle();
 }
 
 /**
  * Get's a field value for the current node.
- * @param integer $nid The Node ID
- * @param string $field The field name
- * @return mixed The field value
+ *
+ * @param int $nid
+ *   The Node ID.
+ * @param string $field
+ *   The field name.
+ *
+ * @return mixed
+ *   The field value.
  */
 function hostsite_get_node_field_value($nid, $field) {
-  $node = \Drupal\node\Entity\Node::load($nid);
+  $node = Node::load($nid);
   // @todo Test, document, copy to D6 & 7
   if ($field === 'params') {
     return $node->params;
@@ -192,7 +243,7 @@ function hostsite_get_node_field_value($nid, $field) {
     }
     // @todo Do we need this test?
     if (!isset($node->$field)) {
-      drupal_set_message("Could not find $field");
+      \Drupal::messenger()->addMessage("Could not find $field");
       return FALSE;
     }
 
@@ -202,14 +253,18 @@ function hostsite_get_node_field_value($nid, $field) {
 
 /**
  * Goto a page on the host site.
- * @param string $path The page path.
- * @param array $params The params to add to the URL.
- * @param string $fragment An optional named anchor to add to the URL.
+ *
+ * @param string $path
+ *   The page path.
+ * @param array $params
+ *   The params to add to the URL.
+ * @param string $fragment
+ *   An optional named anchor to add to the URL, excluding the # character.
  */
-function hostsite_goto_page($path, $params = FALSE, $fragment=false) {
+function hostsite_goto_page($path, array $params = [], $fragment = FALSE) {
   static $iform_redirected_to;
   if ($path === $iform_redirected_to) {
-    drupal_set_message("Attempt to redirect to $path caused a redirect loop");
+    \Drupal::messenger()->addMessage("Attempt to redirect to $path caused a redirect loop");
   }
   else {
     $response = new RedirectResponse(hostsite_get_url($path, $params, $fragment));
@@ -222,7 +277,7 @@ function hostsite_goto_page($path, $params = FALSE, $fragment=false) {
  * Return from the current request with 403 access denied.
  */
 function hostsite_access_denied() {
-  throw new Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException();
+  throw new AccessDeniedHttpException();
 }
 
 /**
@@ -233,20 +288,25 @@ function hostsite_access_denied() {
  * @param array $params
  *   The params to add to the URL.
  * @param string $fragment
- *   An optional named anchor to add to the URL.
+ *   An optional named anchor to add to the URL, excluding the # character.
  * @param bool $absolute
  *   Set to TRUE for an absolute URL.
+ *
+ * @return string
+ *   Url as string.
  */
-function hostsite_get_url($path, $params = FALSE, $fragment = FALSE, $absolute = FALSE) {
-  if ($path==='<front>')
+function hostsite_get_url($path, array $params = [], $fragment = FALSE, $absolute = FALSE) {
+  if ($path === '<front>') {
     $path = '';
-  $opts = ['absolute' => $absolute];
-  if ($params)
-    $opts['query'] = $params;
-  if ($fragment) {
-    $opts['fragment']=$fragment;
   }
-  return \Drupal\Core\Url::fromUri("base:$path", $opts)->toString();
+  $opts = ['absolute' => $absolute];
+  if (!empty($params)) {
+    $opts['query'] = $params;
+  }
+  if (!empty($fragment)) {
+    $opts['fragment'] = $fragment;
+  }
+  return Url::fromUri("base:$path", $opts)->toString();
 }
 
 /**
@@ -259,21 +319,25 @@ function hostsite_get_url($path, $params = FALSE, $fragment = FALSE, $absolute =
  *   Path alias string.
  */
 function hostsite_get_alias($nid) {
-  return trim(\Drupal::service('path.alias_manager')->getAliasByPath("/node/$nid"), '/');
+  return trim(\Drupal::service('path_alias.manager')->getAliasByPath("/node/$nid"), '/');
 }
 
 /**
  * Retrieves the path for the current page.
- * @return string The current page path.
+ *
+ * @return string
+ *   The current page path.
  */
 function hostsite_get_current_page_path() {
   $path = \Drupal::service('path.current')->getPath();
-  $alias = \Drupal::service('path.alias_manager')->getAliasByPath($path);
+  $alias = \Drupal::service('path_alias.manager')->getAliasByPath($path);
   return trim($alias, '/');
 }
 
 /**
- * Retrieve a configuration value, e.g. site name or site mail, or an indicia setting.
+ * Retrieve a configuration value.
+ *
+ * For example, the site name or site mail, or an indicia setting.
  *
  * @param string $context
  *   Context of the variable, either site or iform.
@@ -281,6 +345,7 @@ function hostsite_get_current_page_path() {
  *   Name of the config value to retrieve, e.g. name or mail.
  * @param mixed $default
  *   The default value to return if the config key does not exist.
+ *
  * @return mixed
  *   The config value.
  */
@@ -291,18 +356,23 @@ function hostsite_get_config_value($context, $name, $default = FALSE) {
 }
 
 /**
- * Retrieves a path suitable for storing public files (the Drupal public file path).
- * @return string The path to the location for public file storage
+ * Retrieves the public file path.
+ *
+ * @return string
+ *   The path to the location for public file storage
  */
 function hostsite_get_public_file_path() {
   return PublicStream::basePath();
 }
 
 /**
- * Returns true if there is a form on this site for editing groups. This allows group
- * related functionality to be turned on and off as appropriate.
- * @return boolean True if group edit pages exist on this site.
- * @todo Port back to Drupal 6 and 7 and commit changes to form_helper which call this.
+ * Returns TRUE if there is a form on this site for editing groups.
+ *
+ * This allows group related functionality to be turned on and off as
+ * appropriate.
+ *
+ * @return bool
+ *   True if group edit pages exist on this site.
  */
 function hostsite_has_group_functionality() {
   $query = \Drupal::entityQuery('node')
@@ -313,21 +383,26 @@ function hostsite_has_group_functionality() {
 }
 
 /**
- * Retrieve the available pages which can be linked to a recording group and will
- * therefore be filtered to the content of that group.
- * @param integer $group_id ID of the group to load available pages for
- * @return array Array of pages titles keyed by node path.
+ * Retrieve the available pages which can be linked to a recording group.
+ *
+ * These pages will therefore be filtered to the content of that group.
+ *
+ * @param int $group_id
+ *   ID of the group to load available pages for.
+ *
+ * @return array
+ *   Array of pages titles keyed by node path.
  */
 function hostsite_get_group_compatible_pages($group_id) {
-  $r = array();
+  $r = [];
   $query = \Drupal::entityQuery('node')
     ->condition('field_available_for_groups', '1');
-  $node_storage = \Drupal::entityManager()->getStorage('node');
+  $node_storage = \Drupal::entityTypeManager()->getStorage('node');
   $nodes = $node_storage->loadMultiple($query->execute());
   foreach ($nodes as $node) {
     // some group pages are limited to a single group
-    if ($node->field_limit_to_group_id->value === null || $node->field_limit_to_group_id->value === $group_id) {
-      $alias = \Drupal::service('path.alias_manager')->getAliasByPath('/node/'.$node->id());
+    if ($node->field_limit_to_group_id->value === NULL || $node->field_limit_to_group_id->value === $group_id) {
+      $alias = \Drupal::service('path_alias.manager')->getAliasByPath('/node/' . $node->id());
       $r[trim($alias, '/')] = $node->title->value;
     }
   }
@@ -335,9 +410,13 @@ function hostsite_get_group_compatible_pages($group_id) {
 }
 
 /**
- * Returns true if a Drupal module is enabled.
+ * Returns TRUE if a Drupal module is enabled.
+ *
  * @param string $module
- * @return boolean True if enabled
+ *   Module name.
+ *
+ * @return bool
+ *   True if enabled
  */
 function hostsite_module_exists($module) {
   return \Drupal::moduleHandler()->moduleExists($module);
@@ -345,8 +424,12 @@ function hostsite_module_exists($module) {
 
 /**
  * Encodes a string for use in a mime header.
- * @param $string
+ *
+ * @param string $string
+ *   String to encode.
+ *
  * @return string
+ *   Encoded string.
  */
 function hostsite_mime_header_encode($string) {
   return Unicode::mimeHeaderEncode($string);
@@ -355,7 +438,7 @@ function hostsite_mime_header_encode($string) {
 /**
  * Returns the config options required to drive Elasticsearch driven content.
  *
- * @param integer $nid
+ * @param int $nid
  *   Optional ID of node which may override site-wide Elasticsearch settings.
  *
  * @return array
@@ -417,18 +500,20 @@ function hostsite_get_es_config($nid) {
 }
 
 /**
- *
+ * When a page is linked to an alternative warehouse, retrieves the user ID.
  */
 function _iform_get_alternative_user_id($account, $default) {
   global $_iform_warehouse_override;
   $alternatives = isset($account->field_alt_indicia_user_ids->value) ?
       $account->field_alt_indicia_user_ids->value : '{}';
-  iform_load_helpers(array('data_entry_helper'));
-  $alternatives = json_decode($alternatives, true);
-  if (array_key_exists($_iform_warehouse_override['base_url'], $alternatives))
+  iform_load_helpers(['data_entry_helper']);
+  $alternatives = json_decode($alternatives, TRUE);
+  if (array_key_exists($_iform_warehouse_override['base_url'], $alternatives)) {
     return $alternatives[$_iform_warehouse_override['base_url']];
+  }
   else {
-    // This user hasn't connected to this warehouse before. So get their user ID.
+    // This user hasn't connected to this warehouse before. So get their user
+    // ID.
     $response = easy_login_call_get_user_id($account);
     $response = json_decode($response);
     if (isset($response->userId)) {
@@ -436,7 +521,8 @@ function _iform_get_alternative_user_id($account, $default) {
       $account->field_alt_indicia_user_ids->setValue(json_encode($alternatives));
       $account->save();
       return $response->userId;
-    } else {
+    }
+    else {
       return $default;
     }
   }
@@ -447,7 +533,6 @@ function _iform_get_alternative_user_id($account, $default) {
  *
  * @return string
  *   The Drupal version value.
-
  */
 function hostsite_get_cms_version() {
   return \Drupal::VERSION;
@@ -459,11 +544,43 @@ function hostsite_get_cms_version() {
  * @param string $hook
  *   Name of the hook to invoke in each enabled Drupal module.
  * @param mixed $args
- *   Reference to an argument to be passed to the hook. This is read/write, and contents may be altered by the hook.
- * @return none
+ *   Reference to an argument to be passed to the hook. This is read/write, and
+ *   contents may be altered by the hook.
  */
 function hostsite_invoke_alter_hooks($hook, &$args) {
   $module_handler = \Drupal::moduleHandler();
   $module_handler->loadAll();
   $module_handler->alter($hook, $args);
+}
+
+/**
+ * Renders a Drupal form.
+ *
+ * @param string $formId
+ *   Form identifier.
+ * @param array $state
+ *   Form state key/value pairs.
+ *
+ * @return string
+ *   Form HTML.
+ */
+function hostsite_render_form($formId, array $state) {
+  // Auto map from D7 to D8 form IDs. Additional forms should be added as
+  // required.
+  $mappings = [
+    'user_login' => '\Drupal\user\Form\UserLoginForm',
+  ];
+  if (isset($mappings[$formId])) {
+    $formId = $mappings[$formId];
+  }
+  $form_state = new FormState();
+  // Map from D7 form state to D8 functions.
+  if (!empty($state['noredirect'])) {
+    $form_state->disableRedirect();
+    unset($state['noredirect']);
+  }
+  foreach ($state as $key => $value) {
+    $form_state->set($key, $value);
+  }
+  return \Drupal::service('renderer')->render(\Drupal::formBuilder()->buildForm($formId, $form_state));
 }

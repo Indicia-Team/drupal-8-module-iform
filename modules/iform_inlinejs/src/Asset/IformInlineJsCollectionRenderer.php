@@ -1,17 +1,14 @@
 <?php
 
-/**
- * @file
- * Contains Drupal\indiciaInlinejs\Asset\InlineJsCollectionRenderer.
- */
-
 namespace Drupal\iform_inlinejs\Asset;
-
 
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Asset\JsCollectionRenderer;
-use Drupal\Component\Utility\SafeMarkup;
+use Drupal\Component\Render\FormattableMarkup;
 
+/**
+ * A renderer for Indicia inline JS.
+ */
 class IformInlineJsCollectionRenderer extends JsCollectionRenderer {
 
   /**
@@ -21,7 +18,7 @@ class IformInlineJsCollectionRenderer extends JsCollectionRenderer {
    * inline JS with $is_header flag.
    */
   public function render(array $js_assets) {
-    $elements = array();
+    $elements = [];
     $is_header = FALSE;
 
     // A dummy query-string is added to filenames, to gain control over
@@ -35,11 +32,11 @@ class IformInlineJsCollectionRenderer extends JsCollectionRenderer {
     $embed_suffix = "\n//--><!]]>\n";
 
     // Defaults for each SCRIPT element.
-    $element_defaults = array(
+    $element_defaults = [
       '#type' => 'html_tag',
       '#tag' => 'script',
       '#value' => '',
-    );
+    ];
 
     // Loop through all JS assets.
     foreach ($js_assets as $js_asset) {
@@ -51,13 +48,13 @@ class IformInlineJsCollectionRenderer extends JsCollectionRenderer {
       switch ($js_asset['type']) {
         case 'setting':
           $is_header = TRUE;
-          $element['#attributes'] = array(
+          $element['#attributes'] = [
             // This type attribute prevents this from being parsed as an
             // inline script.
             'type' => 'application/json',
             'data-drupal-selector' => 'drupal-settings-json',
-          );
-          $element['#value'] =  Json::encode($js_asset['data']);
+          ];
+          $element['#value'] = Json::encode($js_asset['data']);
           break;
 
         case 'file':
@@ -67,7 +64,7 @@ class IformInlineJsCollectionRenderer extends JsCollectionRenderer {
           // Only add the cache-busting query string if this isn't an aggregate
           // file.
           if (!isset($js_asset['preprocessed'])) {
-            $element['#attributes']['src'] .= $query_string_separator . ($js_asset['cache'] ? $query_string : REQUEST_TIME);
+            $element['#attributes']['src'] .= $query_string_separator . ($js_asset['cache'] ? $query_string : \Drupal::time()->getRequestTime());
           }
           break;
 
@@ -88,35 +85,31 @@ class IformInlineJsCollectionRenderer extends JsCollectionRenderer {
     }
 
     if ($is_header) {
-      $this->renderInlineJs('header', $elements);
+      $this->renderInlineJs($elements, 'header');
     }
     else {
-      $this->renderInlineJs('footer', $elements);
+      $this->renderInlineJs($elements, 'footer');
     }
 
     return $elements;
   }
 
-
   /**
    * Renders inline JavaScripts.
    *
+   * @param array $elements
+   *   An array of elements which will be updated.
    * @param string $scope
    *   String scope.
-   * @param array $elements
-   *   An array of elements.
-   *
-   * @return array
-   *   An array of updated elements.
    */
-  protected function renderInlineJs($scope = 'header', &$elements) {
+  protected function renderInlineJs(array &$elements, $scope = 'header') {
     $i = 1;
     // Defaults for each SCRIPT element.
-    $element_defaults = array(
+    $element_defaults = [
       '#type' => 'html_tag',
       '#tag' => 'script',
       '#value' => '',
-    );
+    ];
     $inlinejs_assets = \Drupal::moduleHandler()->invokeAll('inlinejs_alter');
     if (isset($inlinejs_assets[$scope])) {
       $js_assets = $inlinejs_assets[$scope];
@@ -128,7 +121,7 @@ class IformInlineJsCollectionRenderer extends JsCollectionRenderer {
         if (isset($js_asset['browsers'])) {
           $element['#browsers'] = $js_asset['browsers'];
         }
-        $element['#value'] = SafeMarkup::format($js_asset['data'], array());
+        $element['#value'] = new FormattableMarkup($js_asset['data'], []);
         // Splice the inline JS before or after the other elements in this
         // region.
         if (isset($js_asset['group']) && $js_asset['group'] < JS_LIBRARY) {

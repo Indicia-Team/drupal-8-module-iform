@@ -1,0 +1,19 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_iform_ui_options
+  module:
+    - user
+id: user.user.field_iform_ui_options
+field_name: field_iform_ui_options
+entity_type: user
+bundle: user
+label: 'IForm UI Options'
+description: 'JSON holding options for this user defined by the IForm user UI options module.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string_long
