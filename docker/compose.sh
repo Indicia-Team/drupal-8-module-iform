@@ -66,12 +66,17 @@ EOF
       vendor/bin/drush en jquery_ui jquery_ui_tabs iform_inlinejs iform
     '
     echo
-    echo "Go to http://localhost:8090/admin/config/iform/settings"
+    echo "Log in with user 'admin' and password 'password' then"
+    echo "go to http://localhost:8090/admin/config/iform/settings"
     echo "to configure your warehouse settings."
   else
     echo
-    echo "Go to http://localhost:8090 to set up Drupal."
+    echo "You need to set up Drupal."
   fi
-  echo
-  echo "Login as user 'admin' with password 'password'"
 fi
+
+# Clean up
+rm -f outputfile
+
+echo
+echo "You can visit the Drupal site at http://localhost:8090"
