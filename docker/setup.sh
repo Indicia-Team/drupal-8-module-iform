@@ -65,11 +65,13 @@ EOF
       cd /var/www/drupal 
       vendor/bin/drush en jquery_ui jquery_ui_tabs iform_inlinejs iform
     '
-
+    echo
     echo "Go to http://localhost:8090/admin/config/iform/settings"
     echo "to configure your warehouse settings."
   else
+    echo
     echo "Go to http://localhost:8090 to set up Drupal."
   fi
-
+  echo
+  echo "Login as user 'admin' with password 'password'"
 fi
