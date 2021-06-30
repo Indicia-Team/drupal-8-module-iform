@@ -73,8 +73,18 @@ function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid 
   }
   $fieldname = (substr($field, 0, 6) === 'field_' ? '' : 'field_') . $field;
   if (isset($account->$fieldname)) {
-    // @todo Test what happens if a multi-value field
-    return $account->$fieldname->value;
+    if ($account->$fieldname->getFieldDefinition()->getFieldStorageDefinition()->getCardinality() !== 1) {
+      // Not a single value field, so return array or serialized list.
+      $values = [];
+      $count = count($account->$fieldname);
+      for ($i = 0; $i < $count; $i++) {
+        $values[] = $account->$fieldname[$i]->value;
+      }
+      return $array ? $values : serialize($values);
+    }
+    else {
+      return $account->$fieldname->value;
+    }
   }
   else {
     return $default;
