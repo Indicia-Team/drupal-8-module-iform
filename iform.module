@@ -354,6 +354,7 @@ function iform_node_load(array $entities) {
               'password' => $node->params['password'],
             ];
             data_entry_helper::$base_url = $node->params['base_url'];
+            iform_setup_cache_folder();
           }
         }
       }
@@ -1044,17 +1045,7 @@ function iform_load_helpers(array $files, $base_url='') {
       helper_base::$geoserver_url = preg_replace('/^http:/', 'https:', helper_base::$geoserver_url);
     }
     if (!helper_base::$cache_folder) {
-      // Path unique to the warehouse, so no problems if we switch warehouse.
-      $folder = preg_replace("/[^a-zA-Z0-9]+/", "", helper_base::$base_url);
-      // cache folder into private file path if specified as its more secure, otherwise public.
-      $filepath = PrivateStream::basePath();
-      if (!$filepath) {
-        $filepath = PublicStream::basePath();
-      }
-      helper_base::$cache_folder = "$filepath/indicia/cache/$folder/";
-      if (!is_dir(helper_base::$cache_folder)) {
-        mkdir(helper_base::$cache_folder, 0777, TRUE);
-      }
+      iform_setup_cache_folder();
     }
     // interim_image_folder
     if (!isset(helper_base::$interim_image_folder)) {
@@ -1085,6 +1076,23 @@ function iform_load_helpers(array $files, $base_url='') {
     // convert to absolute by removing the leading '.' and prepending the base URL
     global $base_url;
     helper_base::$warehouse_proxy = $base_url . substr($relative_proxy_path, 1);
+  }
+}
+
+/**
+ * Ensure the cache folder is unique per warehouse base URL.
+ */
+function iform_setup_cache_folder() {
+  // Path unique to the warehouse, so no problems if we switch warehouse.
+  $folder = preg_replace("/[^a-zA-Z0-9]+/", "", helper_base::$base_url);
+  // cache folder into private file path if specified as its more secure, otherwise public.
+  $filepath = PrivateStream::basePath();
+  if (!$filepath) {
+    $filepath = PublicStream::basePath();
+  }
+  helper_base::$cache_folder = "$filepath/indicia/cache/$folder/";
+  if (!is_dir(helper_base::$cache_folder)) {
+    mkdir(helper_base::$cache_folder, 0777, TRUE);
   }
 }
 
