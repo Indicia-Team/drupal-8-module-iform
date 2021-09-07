@@ -207,7 +207,7 @@ class IformController extends ControllerBase {
       }
       $r .= $this->showGroupPage($group, $config->get('website_id'), $auth['read']);
       return [
-        '#template' => Markup::create($r),
+        '#markup' => Markup::create($r),
       ];
     }
     else {
