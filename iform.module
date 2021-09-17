@@ -1381,8 +1381,8 @@ function iform_metatags_alter(&$metatags, $context) {
  */
 function iform_preprocess_status_messages(&$variables) {
   if (hostsite_get_user_field('training', false)) {
-     $message = t('You are in training mode. Records you add will be for '
-                 . 'training purposes only and you can only see training records.');
-     drupal_set_message($message, 'warning');
+    $message = t('You are in training mode. Records you add will be for ' .
+      'training purposes only and you can only see training records.');
+    \Drupal::messenger()->addWarning($message);
   }
 }
