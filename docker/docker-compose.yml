@@ -1,0 +1,35 @@
+services:
+    # The MySQL database container for Drupal
+    # Don't use version 8 as no stable Debian client for it yet.
+    mysql:
+        image: mysql:5
+        environment:
+            MYSQL_ROOT_PASSWORD: password
+            MYSQL_DATABASE: drupal
+            MYSQL_USER: user
+            MYSQL_PASSWORD: password
+        volumes: 
+            # Persist the database content in a volume.
+            - drupal_mysql:/var/lib/mysql
+
+    # The Drupal container.
+    # Accessible on http://localhost:8090
+    drupal:
+        build: ./drupal
+        volumes:
+            # Persist the Drupal config in volumes
+            - drupal_modules:/var/www/drupal/web/modules
+            - drupal_profiles:/var/www/drupal/web/profiles
+            - drupal_themes:/var/www/drupal/web/themes
+            - drupal_sites:/var/www/drupal/web/sites
+            # Mount the code of this project in the docker container
+            - ..:/var/www/drupal/web/modules/drupal-8-module-iform
+        ports: 
+            - "8090:80"
+
+volumes:
+    drupal_mysql:
+    drupal_modules:
+    drupal_profiles:
+    drupal_themes:
+    drupal_sites:

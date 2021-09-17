@@ -293,7 +293,7 @@ TXT;
     ];
     $form['api_keys']['os_api_key'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Ordnace Survey API Key'),
+      '#title' => $this->t('Ordnance Survey API Key'),
       '#description' => $this->t('The Ordnance Survey API key is required to allow use of OS map layers but can be left blank ' .
         'if you do not intend to use OS maps. To obtain your own key, please visit ' .
         '<a target="_blank" href="https://developer.ordnancesurvey.co.uk/os-maps-api-enterprise">OS Maps API for ' .

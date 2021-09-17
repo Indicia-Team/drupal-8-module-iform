@@ -198,8 +198,8 @@ function iform_licences_user_login(UserInterface $account) {
   if (!empty($account->field_indicia_user_id->value)) {
     iform_load_helpers(['helper_base']);
     $conn = iform_get_connection_details();
-    $readAuth = data_entry_helper::get_read_auth($conn['website_id'], $conn['password']);
-    $current = data_entry_helper::get_population_data(array(
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    $current = helper_base::get_population_data(array(
       'table' => 'users_website',
       'extraParams' => $readAuth + [
         'user_id' => $account->field_indicia_user_id->value,
