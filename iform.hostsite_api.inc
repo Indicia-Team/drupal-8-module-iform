@@ -459,6 +459,7 @@ function hostsite_get_es_config($nid) {
   $paramNames = [
     'version',
     'endpoint',
+    'alternative_endpoints',
     'auth_method',
     'scope',
     'user',
