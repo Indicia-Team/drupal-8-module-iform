@@ -638,11 +638,25 @@ function iform_handle_posted_form($node, array $args, &$response) {
           'get_validation_errors',
         ], $_POST, $args);
       }
-      // does this Drupal node have any custom validation code?
-      if (file_exists("$helperPath/prebuilt_forms/validation/validate.$nid.php")) {
-        require_once "$helperPath/prebuilt_forms/validation/validate.$nid.php";
-        $errors = array_merge($errors, iform_custom_validation($_POST));
+
+      // Does this Drupal node have any custom validation code?
+      $legacy_path = "$helperPath/prebuilt_forms/validation/validate.$nid.php";
+      // Preferred location for custom node configuration files now under
+      // Drupal files folder.
+      $filePath = hostsite_get_public_file_path();
+      $new_path = "$filePath/indicia/validation/node.$nid.php";
+      $validation_path = '';
+      if (file_exists($legacy_path)) {
+        $validation_path = $legacy_path;
       }
+      elseif (file_exists($new_path)) {
+        $validation_path = $new_path;
+      }
+      if (!empty($validation_path)) {
+        require_once $validation_path;
+        $errors = array_merge($errors, iform_custom_validation($_POST));
+      } 
+
       if (!empty($errors)) {
         $r .= data_entry_helper::dump_errors(['errors' => $errors]);
       }
