@@ -2,7 +2,7 @@ name: Indicia forms
 description: Provides the Indicia Forms content type.
 core: 8.x
 core_version_requirement: ^8 || ^9
-version: "6.10.3"
+version: "6.10.4"
 package: "Indicia"
 configure: iform.settings
 type: module
