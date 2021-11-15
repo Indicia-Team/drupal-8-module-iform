@@ -21,16 +21,18 @@ function iform_user_ui_options_form_user_form_alter(&$form, FormStateInterface $
       if (!isset($optionset['title']) || !isset($optionset['choices'])) {
         throw new exception('Incorrect structure for $file. Missing title or choices.');
       }
-      $radioOptions = array('default' => 'Use the default settings for each page');
-      foreach ($optionset['choices'] as $choiceName => $choiceSettings) {
-        $radioOptions[$choiceName] = t($choiceSettings['title']);
+      if (count($optionset['choices']) > 1) {
+        $radioOptions = array('default' => 'Use the default settings for each page');
+        foreach ($optionset['choices'] as $choiceName => $choiceSettings) {
+          $radioOptions[$choiceName] = t($choiceSettings['title']);
+        }
+        $form['Preferences']['ui_options']["iform_user_ui_$name"] = array(
+          '#type' => 'radios',
+          '#title' => t($optionset['title']),
+          '#options' => $radioOptions,
+          '#default_value' => !empty($currentOpts[$name]) ? $currentOpts[$name] : 'default'
+        );
       }
-      $form['Preferences']['ui_options']["iform_user_ui_$name"] = array(
-        '#type' => 'radios',
-        '#title' => t($optionset['title']),
-        '#options' => $radioOptions,
-        '#default_value' => !empty($currentOpts[$name]) ? $currentOpts[$name] : 'default'
-      );
     }
   }
   foreach (array_keys($form['actions']) as $action) {
