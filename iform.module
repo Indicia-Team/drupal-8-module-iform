@@ -702,7 +702,7 @@ function iform_handle_posted_form($node, array $args, &$response) {
         }
         elseif (!isset($args['message_after_save']) || $args['message_after_save'] || !array_key_exists('success', $response)) {
           // This dumps errors, and/or a success message if no redirection.
-          $r .= data_entry_helper::dump_errors($response, TRUE);
+          $r .= data_entry_helper::dump_errors($response, TRUE, !empty($_POST["$s[id]:id"]));
         }
       }
     }
