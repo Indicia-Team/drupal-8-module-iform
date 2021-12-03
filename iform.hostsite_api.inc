@@ -595,3 +595,31 @@ function hostsite_render_form($formId, array $state) {
   }
   return \Drupal::service('renderer')->render(\Drupal::formBuilder()->buildForm($formId, $form_state));
 }
+
+/**
+ * Set a non-essential cookie.
+ *
+ * Respects settings in EU Cookie Compliance module.
+ *
+ * @param string $cookie
+ *   Cookie name.
+ * @param string $value
+ *   Cookie value.
+ * @param int $expire
+ *   Optional expiry value.
+ */
+function hostsite_set_cookie($cookie, $value, $expire = NULL) {
+  // Respect the remembered_fields_optin control.
+  if (isset($_POST['cookie_optin']) && $_POST['cookie_optin'] === '0') {
+    return;
+  }
+  // Respect the EU Cookie Compliance module.
+  if (\Drupal::service('module_handler')->moduleExists('eu_cookie_compliance')) {
+    if (!isset($_COOKIE['cookie-agreed']) || $_COOKIE['cookie-agreed'] === '0') {
+      return;
+    }
+  }
+  setcookie($cookie, $value, $expire);
+  // Cookies are only set when the page is loaded. So, fudge the cookie array.
+  $_COOKIE[$cookie] = $value;
+}
