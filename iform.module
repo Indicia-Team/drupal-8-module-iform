@@ -459,7 +459,10 @@ function iform_node_view(array &$build, EntityInterface $entity, EntityViewDispl
     $iform = $entity->field_iform->value;
     if (!empty($iform)) {
       $nid = $entity->id();
-      data_entry_helper::$javascript .= "indiciaData.nid = $nid;\n";
+      data_entry_helper::$indiciaData['nid'] = $nid;
+      if (\Drupal::service('module_handler')->moduleExists('eu_cookie_compliance')) {
+        data_entry_helper::$indiciaData['cookieCompliance'] = 'eu_cookie_compliance';
+      }
       iform_load_language_files($iform, $nid);
       $language = \Drupal::languageManager()->getCurrentLanguage();
       $args = ['language' => $language->getId()];
@@ -655,7 +658,7 @@ function iform_handle_posted_form($node, array $args, &$response) {
       if (!empty($validation_path)) {
         require_once $validation_path;
         $errors = array_merge($errors, iform_custom_validation($_POST));
-      } 
+      }
 
       if (!empty($errors)) {
         $r .= data_entry_helper::dump_errors(['errors' => $errors]);
