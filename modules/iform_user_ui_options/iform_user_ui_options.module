@@ -104,28 +104,52 @@ function iform_user_ui_options_form_submit($form, FormStateInterface &$form_stat
  * @param array $params Receives the form's params array, applies options to it and returns the updated array.
  */
 function iform_user_ui_options_preprocess_iform(&$params) {
-  // use a static to hold the params, in case loading multiple nodes, e.g. when building the menu
+  // Use a static to hold the params, in case loading multiple nodes, e.g. when building the menu.
   static $paramsToApply;
   if (!isset($paramsToApply)) {
     iform_load_helpers(['data_entry_helper']);
     data_entry_helper::$data['structureControlOverrides'] = [];
     $paramsToApply = [];
     $userOpts = json_decode(hostsite_get_user_field('iform_ui_options', '{}'), TRUE);
-    if ($userOpts) {
-      $config = iform_user_ui_options_load_config();
-      foreach ($userOpts as $option => $choice) {
-        if (!empty($config[$option]) && !empty($config[$option]['choices'][$choice]) && !empty($config[$option]['choices'][$choice]['params'])) {
-          foreach ($config[$option]['choices'][$choice]['params'] as $param => $value) {
-            if (strpos($param, '|')===FALSE)
-              // an iform parameter override
-              $paramsToApply[$param] = $value;
-            else {
-              // a form structure control property override. Store it for later, will be used by dynamic.php in get_tab_content.
-              $tokens = explode('|', $param);
-              if (!isset(data_entry_helper::$data['structureControlOverrides'][$tokens[0]]))
-                data_entry_helper::$data['structureControlOverrides'][$tokens[0]] = array();
-              data_entry_helper::$data['structureControlOverrides'][$tokens[0]][$tokens[1]] = $value;
+    $config = iform_user_ui_options_load_config();
+    // Ensure that we have user options pointing to the default setting if not previously set in profile.
+    $userOpts = $userOpts === NULL ? [] : $userOpts;
+    $userOpts = array_merge(array_fill_keys(array_keys($config), 'default'), $userOpts);
+    foreach ($userOpts as $option => $choice) {
+      if (!empty($config[$option]) && !empty($config[$option]['choices'][$choice]) &&
+          !empty($config[$option]['choices'][$choice]['params'])) {
+        foreach ($config[$option]['choices'][$choice]['params'] as $param => $value) {
+          if (strpos($param, '|') === FALSE) {
+            // An iform parameter override.
+            $paramsToApply[$param] = $value;
+            if ($param == "preset_layers") {
+              // If preset_layers is set at this point, then it has been set in
+              // a JSON config file to override the layers available on all
+              // forms. Here we set a JS variable so that the map selection div
+              // can be removed from forms (where appropriate).
+              data_entry_helper::$javascript .= <<<JS
+indiciaData.basemapLayersOverride = true;
+
+JS;
             }
+            if ($param == "georefDriver") {
+              // If georefDriver is set at this point, then it has been set in
+              // a JSON config file to override the georeferencing options available on
+              // iForms. Set a JS variable so that the georeferencer selector can
+              // be disabled.
+              data_entry_helper::$javascript .= <<<JS
+indiciaData.georeferencerOverride = true;
+JS;
+            }
+          }
+          else {
+            // A form structure control property override. Store it for later,
+            // will be used by dynamic.php in get_tab_content.
+            $tokens = explode('|', $param);
+            if (!isset(data_entry_helper::$data['structureControlOverrides'][$tokens[0]])) {
+              data_entry_helper::$data['structureControlOverrides'][$tokens[0]] = [];
+            }
+            data_entry_helper::$data['structureControlOverrides'][$tokens[0]][$tokens[1]] = $value;
           }
         }
       }
@@ -134,8 +158,9 @@ function iform_user_ui_options_preprocess_iform(&$params) {
   $paramsAllowedToApply = $paramsToApply;
   if (!empty($params['locked_params'])) {
     $lockedParams = explode(',', $params['locked_params']);
-    foreach ($lockedParams as $lockedParam)
+    foreach ($lockedParams as $lockedParam) {
       unset($paramsAllowedToApply[$lockedParam]);
+    }
   }
   $params = array_merge($params, $paramsAllowedToApply);
 }
