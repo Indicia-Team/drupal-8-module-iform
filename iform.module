@@ -694,10 +694,20 @@ function iform_handle_posted_form($node, array $args, &$response) {
           // pass through $_GET parameters
           $params = array_merge($_GET, $params);
           // Merge the information about the saved record in
-          $params = array_merge(array(
-            'table' => $response['outer_table'],
-            'id' => $response['outer_id'],
-          ), $params);
+          $idKey = array_search('{id}', $params);
+          if ($idKey) {
+            $params[$idKey] = $response['outer_id'];
+          }
+          else {
+            $params = array_merge(array(
+              'table' => $response['outer_table'],
+              'id' => $response['outer_id'],
+            ), $params);
+          }
+          $replacements = preg_grep('/\{[a-z_]+\}/', $params);
+          foreach ($replacements as $key => $value) {
+            $params[$key] = $_GET[str_replace(['{', '}'], '', $value)];
+          }
           // anything left in $parts is the bookmark
           $fragment = count($parts) ? $parts[0] : false;
           return hostsite_goto_page($url, $params, $fragment);
