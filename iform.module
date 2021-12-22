@@ -52,6 +52,17 @@ function iform_preprocess_html(&$variables) {
 }
 
 /**
+ * Implements hook_preprocess_page_title().
+ *
+ * Sets H1 element if defined programmatically.
+ */
+function iform_preprocess_page_title(&$variables) {
+  global $_iform_page_title;
+  if (isset($_iform_page_title)) {
+    $variables['title'] = $_iform_page_title;
+  }
+}
+/**
  * Implements hook_preprocess_node().
  *
  * Allows iform code to override the page title.
