@@ -185,21 +185,18 @@ function hostsite_show_message($msg, $type = 'status', $redirect = FALSE) {
  * Set a breadcrumb trail in the host site.
  *
  * @param array $breadcrumb
- *   An associative array where keys are untranslated breadcrumb terms and
- *   values are the page to go to. The home page is automatically inserted at
- *   the start and the current page at the end.
- *
- * function hostsite_set_breadcrumb($breadcrumb) {
- * // convert to Drupal style breadcrumb array
- * $drupal_breadcrumb = array(l(lang::get('Home'),'<front>'));
- * foreach ($breadcrumb as $label => $path) {
- * $drupal_breadcrumb[] = l(lang::get($label), $path);
- * }
- * // add current page
- * $drupal_breadcrumb[] = drupal_get_title();
- * drupal_set_breadcrumb($drupal_breadcrumb);
- * }
+ *   An associative array where keys are page paths and values are untranslated
+ *   breadcrumb terms. The home page is automatically inserted at the start and
+ *   the current page at the end.
  */
+function hostsite_set_breadcrumb(array $breadcrumb, $includeCurrentPage = TRUE) {
+  if ($includeCurrentPage) {
+    // CurrentPageTitle will be replaced later in case it gets updated by
+    // code.
+    $breadcrumb['<none>'] = '#currentPageTitle#';
+  }
+  helper_base::$breadcrumb = $breadcrumb;
+}
 
 /**
  * Set the page title in the host site.
@@ -222,7 +219,7 @@ function hostsite_set_page_title($title) {
  *   Page title.
  */
 function hostsite_get_page_title($nid) {
-  static $_iform_page_title;
+  global $_iform_page_title;
   if (isset($_iform_page_title)) {
     return $_iform_page_title;
   }
