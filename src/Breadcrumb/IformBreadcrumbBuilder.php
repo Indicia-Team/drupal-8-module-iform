@@ -12,6 +12,7 @@ use Drupal\Core\Url;
  * Breadcrumb builder for calls to hostsite_set_breadcrumb().
  */
 class IformBreadcrumbBuilder implements BreadcrumbBuilderInterface {
+  use \Drupal\Core\StringTranslation\StringTranslationTrait;
 
   /**
    * {@inheritdoc}
@@ -44,6 +45,9 @@ class IformBreadcrumbBuilder implements BreadcrumbBuilderInterface {
             $nid = $node->id();
           }
           $caption = hostsite_get_page_title($nid);
+        }
+        else {
+          $caption = $this->t($caption);
         }
         if (substr($path, 0, 1) === '/') {
           foreach ($_GET as $key => $value) {
