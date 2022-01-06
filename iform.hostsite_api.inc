@@ -410,8 +410,8 @@ function hostsite_get_group_compatible_pages($group_id) {
   $node_storage = \Drupal::entityTypeManager()->getStorage('node');
   $nodes = $node_storage->loadMultiple($query->execute());
   foreach ($nodes as $node) {
-    // some group pages are limited to a single group
-    if ($node->field_limit_to_group_id->value === NULL || $node->field_limit_to_group_id->value === $group_id) {
+    // Some group pages are limited to a single group.
+    if (!isset($node->field_limit_to_group_id) || $node->field_limit_to_group_id->value === NULL || $node->field_limit_to_group_id->value === $group_id) {
       $alias = \Drupal::service('path_alias.manager')->getAliasByPath('/node/' . $node->id());
       $r[trim($alias, '/')] = $node->title->value;
     }
