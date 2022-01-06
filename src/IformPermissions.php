@@ -18,10 +18,12 @@ class IformPermissions {
     $permissions = [];
     $helpersLoaded = FALSE;
     // Get list of iform nodes.
-    $query = \Drupal::entityQuery('node')->condition('type', 'iform_page');
+    $query = \Drupal::database()->select('node', 'n');
+    $query->fields('n', ['nid']);
+    $query->condition('type', "iform_page", "=");
     $nids = $query->execute();
-    foreach ($nids as $nid) {
-      $node = \Drupal\node\Entity\Node::load($nid);
+    foreach ($nids as $row) {
+      $node = \Drupal\node\Entity\Node::load($row->nid);
       if ($node->field_iform->value) {
         if (!$helpersLoaded) {
           iform_load_helpers(['data_entry_helper']);
