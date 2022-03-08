@@ -185,21 +185,18 @@ function hostsite_show_message($msg, $type = 'status', $redirect = FALSE) {
  * Set a breadcrumb trail in the host site.
  *
  * @param array $breadcrumb
- *   An associative array where keys are untranslated breadcrumb terms and
- *   values are the page to go to. The home page is automatically inserted at
- *   the start and the current page at the end.
- *
- * function hostsite_set_breadcrumb($breadcrumb) {
- * // convert to Drupal style breadcrumb array
- * $drupal_breadcrumb = array(l(lang::get('Home'),'<front>'));
- * foreach ($breadcrumb as $label => $path) {
- * $drupal_breadcrumb[] = l(lang::get($label), $path);
- * }
- * // add current page
- * $drupal_breadcrumb[] = drupal_get_title();
- * drupal_set_breadcrumb($drupal_breadcrumb);
- * }
+ *   An associative array where keys are page paths and values are untranslated
+ *   breadcrumb terms. The home page is automatically inserted at the start and
+ *   the current page at the end.
  */
+function hostsite_set_breadcrumb(array $breadcrumb, $includeCurrentPage = TRUE) {
+  if ($includeCurrentPage) {
+    // CurrentPageTitle will be replaced later in case it gets updated by
+    // code.
+    $breadcrumb['<none>'] = '#currentPageTitle#';
+  }
+  helper_base::$breadcrumb = $breadcrumb;
+}
 
 /**
  * Set the page title in the host site.
@@ -222,7 +219,7 @@ function hostsite_set_page_title($title) {
  *   Page title.
  */
 function hostsite_get_page_title($nid) {
-  static $_iform_page_title;
+  global $_iform_page_title;
   if (isset($_iform_page_title)) {
     return $_iform_page_title;
   }
@@ -594,4 +591,32 @@ function hostsite_render_form($formId, array $state) {
     $form_state->set($key, $value);
   }
   return \Drupal::service('renderer')->render(\Drupal::formBuilder()->buildForm($formId, $form_state));
+}
+
+/**
+ * Set a non-essential cookie.
+ *
+ * Respects settings in EU Cookie Compliance module.
+ *
+ * @param string $cookie
+ *   Cookie name.
+ * @param string $value
+ *   Cookie value.
+ * @param int $expire
+ *   Optional expiry value.
+ */
+function hostsite_set_cookie($cookie, $value, $expire = NULL) {
+  // Respect the remembered_fields_optin control.
+  if (isset($_POST['cookie_optin']) && $_POST['cookie_optin'] === '0') {
+    return;
+  }
+  // Respect the EU Cookie Compliance module.
+  if (\Drupal::service('module_handler')->moduleExists('eu_cookie_compliance')) {
+    if (!isset($_COOKIE['cookie-agreed']) || $_COOKIE['cookie-agreed'] === '0') {
+      return;
+    }
+  }
+  setcookie($cookie, $value, $expire);
+  // Cookies are only set when the page is loaded. So, fudge the cookie array.
+  $_COOKIE[$cookie] = $value;
 }

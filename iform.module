@@ -52,6 +52,17 @@ function iform_preprocess_html(&$variables) {
 }
 
 /**
+ * Implements hook_preprocess_page_title().
+ *
+ * Sets H1 element if defined programmatically.
+ */
+function iform_preprocess_page_title(&$variables) {
+  global $_iform_page_title;
+  if (isset($_iform_page_title)) {
+    $variables['title'] = $_iform_page_title;
+  }
+}
+/**
  * Implements hook_preprocess_node().
  *
  * Allows iform code to override the page title.
@@ -459,7 +470,10 @@ function iform_node_view(array &$build, EntityInterface $entity, EntityViewDispl
     $iform = $entity->field_iform->value;
     if (!empty($iform)) {
       $nid = $entity->id();
-      data_entry_helper::$javascript .= "indiciaData.nid = $nid;\n";
+      data_entry_helper::$indiciaData['nid'] = $nid;
+      if (\Drupal::service('module_handler')->moduleExists('eu_cookie_compliance')) {
+        data_entry_helper::$indiciaData['cookieCompliance'] = 'eu_cookie_compliance';
+      }
       iform_load_language_files($iform, $nid);
       $language = \Drupal::languageManager()->getCurrentLanguage();
       $args = ['language' => $language->getId()];
@@ -655,7 +669,7 @@ function iform_handle_posted_form($node, array $args, &$response) {
       if (!empty($validation_path)) {
         require_once $validation_path;
         $errors = array_merge($errors, iform_custom_validation($_POST));
-      } 
+      }
 
       if (!empty($errors)) {
         $r .= data_entry_helper::dump_errors(['errors' => $errors]);
@@ -691,11 +705,20 @@ function iform_handle_posted_form($node, array $args, &$response) {
           // pass through $_GET parameters
           $params = array_merge($_GET, $params);
           // Merge the information about the saved record in
-          $params = array_merge(array(
-            'table' => $response['outer_table'],
-            'id' => $response['outer_id']
-          ), $params);
-          $options = array('query' => $params);
+          $idKey = array_search('{id}', $params);
+          if ($idKey) {
+            $params[$idKey] = $response['outer_id'];
+          }
+          else {
+            $params = array_merge(array(
+              'table' => $response['outer_table'],
+              'id' => $response['outer_id'],
+            ), $params);
+          }
+          $replacements = preg_grep('/\{[a-z_]+\}/', $params);
+          foreach ($replacements as $key => $value) {
+            $params[$key] = $_GET[str_replace(['{', '}'], '', $value)];
+          }
           // anything left in $parts is the bookmark
           $fragment = count($parts) ? $parts[0] : false;
           return hostsite_goto_page($url, $params, $fragment);
