@@ -302,6 +302,18 @@ class Iform_ajaxproxyController extends ControllerBase {
           $Model = \submission_builder::wrap($_POST, 'attribute_sets_survey');
           break;
 
+        case "orca_effort":
+          $Model = \submission_builder::wrap($_POST, 'orca_effort');
+          break;
+
+        case "orca_sighting":
+          $Model = \submission_builder::wrap($_POST, 'orca_sighting');
+          break;
+
+        case "orca_incidental":
+          $Model = \submission_builder::wrap($_POST, 'orca_incidental');
+          break;
+
         default:
           return new Response("{error:\"iform_ajaxproxy Error: Current defined methods are: sample, location, loc-sample, loc-smp-occ, smp-occ, '.
               'media, occurrence, occ-comment, smp-comment, determination, notification, user-trust, person_attribute_value\"}");
