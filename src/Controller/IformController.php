@@ -198,7 +198,7 @@ class IformController extends ControllerBase {
         // Membership exists but is pending.
         $this->messenger->addMessage($this->t('Your application to join @group is still waiting for a group administrator to approve it.', ['@group' => $this->readableGroupTitle($group)]));
       }
-      elseif (!isset($_GET['confirmed'])) {
+      elseif (empty(\Drupal::request()->query->get('confirmed'))) {
         $r .= $this->groupConfirmForm($group);
       }
       elseif (!$this->joinPublicGroup($group, $auth['write_tokens'], $indiciaUserId)) {
@@ -215,7 +215,7 @@ class IformController extends ControllerBase {
       // know which group.
       hostsite_goto_page('user', [
         'group_id' => $group['id'],
-        'destination' => $_GET['q'],
+        'destination' => \Drupal::request()->query->get('q'),
       ]);
     }
   }
