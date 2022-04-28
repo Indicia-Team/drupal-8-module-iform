@@ -8,6 +8,7 @@ use Drupal\node\Entity\Node;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpFoundation\Request;
 
 class IformController extends ControllerBase {
 
@@ -140,7 +141,7 @@ class IformController extends ControllerBase {
    * @param string $parentTitle
    *   Optional URL formatted name of the parent group.
    */
-  public function joinGroupCallback($title, $parentTitle = NULL) {
+  public function joinGroupCallback($title, $parentTitle = NULL, Request $request) {
     iform_load_helpers(['report_helper', 'data_entry_helper']);
     $config = \Drupal::config('iform.settings');
     $auth = \report_helper::get_read_write_auth($config->get('website_id'), $config->get('password'));
@@ -198,7 +199,7 @@ class IformController extends ControllerBase {
         // Membership exists but is pending.
         $this->messenger->addMessage($this->t('Your application to join @group is still waiting for a group administrator to approve it.', ['@group' => $this->readableGroupTitle($group)]));
       }
-      elseif (empty(\Drupal::request()->query->get('confirmed'))) {
+      elseif (empty($request->query->get('confirmed'))) {
         $r .= $this->groupConfirmForm($group);
       }
       elseif (!$this->joinPublicGroup($group, $auth['write_tokens'], $indiciaUserId)) {
