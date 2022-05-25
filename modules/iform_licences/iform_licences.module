@@ -12,6 +12,8 @@ use Drupal\user\UserInterface;
  */
 function iform_licences_form_iform_settings_form_alter(&$form, FormStateInterface $form_state, $form_id) {
   $config = \Drupal::configFactory()->get('iform_licences.settings');
+  $default = $config->get('licences_mode');
+  $default = $default ? $default : 'media';
   $form['iform_licences_mode'] = [
     '#type' => 'details',
     '#title' => t('Indicia licence choices'),
@@ -22,7 +24,7 @@ function iform_licences_form_iform_settings_form_alter(&$form, FormStateInterfac
       'media' => t('User can select licence for media (photos etc) only'),
       'records+media' => t('User can select licence for records and media separately'),
     ),
-    '#default_value' => $config->get('licences_mode', 'media'),
+    '#default_value' => $default,
     '#weight' => 49,
   ];
   $form['#submit'][] = 'iform_licences_iform_settings_form_submit';
@@ -55,7 +57,9 @@ function iform_licences_form_alter(&$form, FormStateInterface $form_state, $form
       'extraParams' => $readAuth,
       'cachePerUser' => FALSE,
     ]);
-    $licencesApplyTo = explode('+', $config->get('licences_mode', 'media'));
+    $licencesMode = $config->get('licences_mode');
+    $licencesMode = $licencesMode ? $licencesMode : 'media';
+    $licencesApplyTo = explode('+', $licencesMode);
     if (count($licences)) {
       $indiciaUserId = hostsite_get_user_field('indicia_user_id');
       $currentLicenceId = NULL;
