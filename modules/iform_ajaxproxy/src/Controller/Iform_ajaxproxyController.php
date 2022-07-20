@@ -29,7 +29,7 @@ class Iform_ajaxproxyController extends ControllerBase {
         }
         else {
           $node = \Drupal\node\Entity\Node::load($nid);
-          if (isset($node->params['base_url']) && $node->params['base_url']!==$config->get('base_url')) {
+          if (isset($node->params['base_url']) && $node->params['base_url']!==$config->get('base_url') && $config->get('allow_connection_override')) {
             global $_iform_warehouse_override;
             $_iform_warehouse_override = array(
               'base_url' => $node->params['base_url'],
