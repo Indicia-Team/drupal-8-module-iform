@@ -74,7 +74,7 @@ class IformController extends ControllerBase {
     }
     $website_id = $node->params['website_id'];
     $password = $node->params['password'];
-    if (isset($node->params['base_url']) && $node->params['base_url'] !== $config->get('base_url')) {
+    if (isset($node->params['base_url']) && $node->params['base_url'] !== $config->get('base_url') && $config->get('allow_connection_override')) {
       global $_iform_warehouse_override;
       $_iform_warehouse_override = [
         'base_url' => $node->params['base_url'],
