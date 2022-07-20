@@ -512,7 +512,7 @@ function hostsite_get_es_config($nid) {
  */
 function _iform_get_alternative_user_id($account, $default) {
   global $_iform_warehouse_override;
-  $alternatives = isset($account->field_alt_indicia_user_ids->value) ?
+  $alternatives = isset($account->field_alt_indicia_user_ids) && isset($account->field_alt_indicia_user_ids->value) ?
       $account->field_alt_indicia_user_ids->value : '{}';
   iform_load_helpers(['data_entry_helper']);
   $alternatives = json_decode($alternatives, TRUE);
@@ -525,9 +525,11 @@ function _iform_get_alternative_user_id($account, $default) {
     $response = easy_login_call_get_user_id($account);
     $response = json_decode($response);
     if (isset($response->userId)) {
-      $alternatives[$_iform_warehouse_override['base_url']] = $response->userId;
-      $account->field_alt_indicia_user_ids->setValue(json_encode($alternatives));
-      $account->save();
+      if ($account->field_alt_indicia_user_ids) {
+        $alternatives[$_iform_warehouse_override['base_url']] = $response->userId;
+        $account->field_alt_indicia_user_ids->setValue(json_encode($alternatives));
+        $account->save();
+      }
       return $response->userId;
     }
     else {
