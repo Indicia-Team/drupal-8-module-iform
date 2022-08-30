@@ -22,7 +22,7 @@ function hook_iform_after_submit(array $submission, $op, $response, &$msg) {
   // Tell the user the ID of the data saved.
   \Drupal::messenger()->addMessage(t('Record %id saved for entity %entity.', [
     '%id' => $response['outer_id'],
-    '%entity' => $response['outer_id'],
+    '%entity' => $response['outer_table'],
   ]));
   $msg = t('Thanks!');
 }
