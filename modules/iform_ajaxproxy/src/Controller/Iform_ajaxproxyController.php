@@ -73,7 +73,7 @@ class Iform_ajaxproxyController extends ControllerBase {
     else {
       switch ($index) {
         case "sample":
-          $Model = \submission_builder::wrap_with_images($_POST, 'sample');
+          $s = \submission_builder::wrap_with_images($_POST, 'sample');
           break;
         case "location":
           $structure = array(
@@ -83,7 +83,7 @@ class Iform_ajaxproxyController extends ControllerBase {
           if (array_key_exists('locations_website:website_id', $_POST)){
             $structure['subModels']['locations_website'] = array('fk' => 'location_id');
           }
-          $Model = \submission_builder::build_submission($_POST, $structure);
+          $s = \submission_builder::build_submission($_POST, $structure);
           break;
         case "loc-sample":
           $structure = array(
@@ -95,7 +95,7 @@ class Iform_ajaxproxyController extends ControllerBase {
           if (array_key_exists('locations_website:website_id', $_POST)){
             $structure['subModels']['locations_website'] = array('fk' => 'location_id');
           }
-          $Model = \submission_builder::build_submission($_POST, $structure);
+          $s = \submission_builder::build_submission($_POST, $structure);
           break;
         case "loc-smp-occ":
           $structure = array(
@@ -107,18 +107,18 @@ class Iform_ajaxproxyController extends ControllerBase {
               'location' => array('fk' => 'location_id')
             )
           );
-          $Model = \submission_builder::build_submission($_POST, $structure);
+          $s = \submission_builder::build_submission($_POST, $structure);
           if (array_key_exists('locations_website:website_id', $_POST)){
-            if (isset($Model['superModels'][0]['model']['subModels']))
-              $Model['superModels'][0]['model']['subModels'] = array();
-            $Model['superModels'][0]['model']['subModels'][] = array(
+            if (isset($s['superModels'][0]['model']['subModels']))
+              $s['superModels'][0]['model']['subModels'] = array();
+            $s['superModels'][0]['model']['subModels'][] = array(
               'fkId' => 'location_id',
               'model' => array('id' => 'locations_website',
                 'fields' => array('website_id' => array('value' => $_POST['locations_website:website_id']))));
           }
           foreach($_POST as $key=>$value){
             if (substr($key,0,14) == 'determination:'){
-              $Model['subModels'][0]['model']['subModels'][] = array(
+              $s['subModels'][0]['model']['subModels'][] = array(
                 'fkId' => 'occurrence_id',
                 'model' => \submission_builder::wrap($_POST, 'determination', 'determination')
               );
@@ -133,7 +133,7 @@ class Iform_ajaxproxyController extends ControllerBase {
               'occurrence' => array('fk' => 'sample_id')
             )
           );
-          $Model = \submission_builder::build_submission($_POST, $structure);
+          $s = \submission_builder::build_submission($_POST, $structure);
           break;
         case "media":
           // media handled differently. Submission is handled by the handle_media function.
@@ -209,109 +209,109 @@ class Iform_ajaxproxyController extends ControllerBase {
               break;
             }
           }
-          $Model = \submission_builder::build_submission($_POST, $structure);
+          $s = \submission_builder::build_submission($_POST, $structure);
           break;
 
         case "occ-comment":
-          $Model = \submission_builder::wrap($_POST, 'occurrence_comment');
+          $s = \submission_builder::wrap($_POST, 'occurrence_comment');
           break;
 
         case "smp-comment":
-          $Model = \submission_builder::wrap($_POST, 'sample_comment');
+          $s = \submission_builder::wrap($_POST, 'sample_comment');
           break;
 
         case "determination":
-          $Model = \submission_builder::wrap($_POST, 'determination');
+          $s = \submission_builder::wrap($_POST, 'determination');
           break;
 
         case "notification":
-          $Model = \submission_builder::wrap($_POST, 'notification');
+          $s = \submission_builder::wrap($_POST, 'notification');
           break;
 
         case "user-trust":
           $structure = array('model' => 'user_trust');
-          $Model = \submission_builder::build_submission($_POST, $structure);
+          $s = \submission_builder::build_submission($_POST, $structure);
           break;
 
         case "person_attribute_value":
-          $Model = \submission_builder::wrap($_POST, 'person_attribute_value');
+          $s = \submission_builder::wrap($_POST, 'person_attribute_value');
           break;
 
         case "filter":
-          $Model = \submission_builder::wrap($_POST, 'filter');
+          $s = \submission_builder::wrap($_POST, 'filter');
           break;
         case "filter_and_user":
           $structure = array('model' => 'filter', 'subModels' => array('filters_user' => array('fk' => 'filter_id')));
-          $Model = \submission_builder::build_submission($_POST, $structure);
+          $s = \submission_builder::build_submission($_POST, $structure);
           break;
 
         case "groups_location":
-          $Model = \submission_builder::wrap($_POST, 'groups_location');
+          $s = \submission_builder::wrap($_POST, 'groups_location');
           break;
 
         case "groups_user":
-          $Model = \submission_builder::wrap($_POST, 'groups_user');
+          $s = \submission_builder::wrap($_POST, 'groups_user');
           break;
 
         case "scratchpad_list":
-          $Model = \submission_builder::wrap($_POST, 'scratchpad_list');
+          $s = \submission_builder::wrap($_POST, 'scratchpad_list');
           break;
 
         case "comment_quick_reply_page_auth":
-          $Model = \submission_builder::wrap($_POST, 'comment_quick_reply_page_auth');
+          $s = \submission_builder::wrap($_POST, 'comment_quick_reply_page_auth');
           break;
 
         case "taxa_taxon_list":
           $structure = array('model' => 'taxa_taxon_list', 'superModels' => array('taxon' => array('fk' => 'taxon_id'), 'taxon_meaning' => array('fk' => 'taxon_meaning_id')));
-          $Model = \submission_builder::build_submission($_POST, $structure);
+          $s = \submission_builder::build_submission($_POST, $structure);
           break;
 
         case "taxa_taxon_list_attribute":
-          $Model = \submission_builder::wrap($_POST, 'taxa_taxon_list_attribute');
+          $s = \submission_builder::wrap($_POST, 'taxa_taxon_list_attribute');
           break;
 
         case "taxa_taxon_list_attribute_value":
-          $Model = \submission_builder::wrap($_POST, 'taxa_taxon_list_attribute_value');
+          $s = \submission_builder::wrap($_POST, 'taxa_taxon_list_attribute_value');
           break;
 
         case "occurrence_attribute_website":
-          $Model = \submission_builder::wrap($_POST, 'occurrence_attribute_website');
+          $s = \submission_builder::wrap($_POST, 'occurrence_attribute_website');
           break;
 
         case "taxon_lists_taxa_taxon_list_attribute":
-          $Model = \submission_builder::wrap($_POST, 'taxon_lists_taxa_taxon_list_attribute');
+          $s = \submission_builder::wrap($_POST, 'taxon_lists_taxa_taxon_list_attribute');
           break;
 
         case "attribute_set":
-          $Model = \submission_builder::wrap($_POST, 'attribute_set');
+          $s = \submission_builder::wrap($_POST, 'attribute_set');
           break;
 
         case "attribute_sets_taxa_taxon_list_attribute":
-          $Model = \submission_builder::wrap($_POST, 'attribute_sets_taxa_taxon_list_attribute');
+          $s = \submission_builder::wrap($_POST, 'attribute_sets_taxa_taxon_list_attribute');
           break;
 
         case "occurrence_attributes_taxa_taxon_list_attribute":
-          $Model = \submission_builder::wrap($_POST, 'occurrence_attributes_taxa_taxon_list_attribute');
+          $s = \submission_builder::wrap($_POST, 'occurrence_attributes_taxa_taxon_list_attribute');
           break;
 
         case "attribute_sets_taxon_restriction":
-          $Model = \submission_builder::wrap($_POST, 'attribute_sets_taxon_restriction');
+          $s = \submission_builder::wrap($_POST, 'attribute_sets_taxon_restriction');
           break;
 
         case "attribute_sets_survey":
-          $Model = \submission_builder::wrap($_POST, 'attribute_sets_survey');
+          $s = \submission_builder::wrap($_POST, 'attribute_sets_survey');
           break;
 
         case "orca_effort":
-          $Model = \submission_builder::wrap($_POST, 'orca_effort');
+          $s = \submission_builder::wrap($_POST, 'orca_effort');
           break;
 
         case "orca_sighting":
-          $Model = \submission_builder::wrap($_POST, 'orca_sighting');
+          $s = \submission_builder::wrap($_POST, 'orca_sighting');
           break;
 
         case "orca_incidental":
-          $Model = \submission_builder::wrap($_POST, 'orca_incidental');
+          $s = \submission_builder::wrap($_POST, 'orca_incidental');
           break;
 
         default:
@@ -323,7 +323,23 @@ class Iform_ajaxproxyController extends ControllerBase {
       // pass through the user ID as this can then be used to set created_by and updated_by_ids
       if (isset($_REQUEST['user_id'])) $writeTokens['user_id'] = $_REQUEST['user_id'];
       if (isset($_REQUEST['sharing'])) $writeTokens['sharing'] = $_REQUEST['sharing'];
-      $response = \data_entry_helper::forward_post_to('save', $Model, $writeTokens);
+      $response = \data_entry_helper::forward_post_to('save', $s, $writeTokens);
+
+      // Invoke submission hooks.
+      if (!empty($_POST["$s[id]:id"])) {
+        $op = 'U';
+      }
+      else {
+        $op = 'C';
+      }
+      $msg = 'foo';
+      \Drupal::moduleHandler()->invokeAll('iform_after_submit', [
+        $s,
+        $op,
+        $response,
+        &$msg,
+      ]);
+
       // if it is not json format, assume error text, and json encode that.
       //if (!json_decode($output, true))
       //    $response = "{error:\"".$output."\"}";
