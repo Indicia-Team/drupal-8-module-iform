@@ -220,6 +220,10 @@ class Iform_ajaxproxyController extends ControllerBase {
           $s = \submission_builder::wrap($_POST, 'sample_comment');
           break;
 
+        case "loc-comment":
+          $s = \submission_builder::wrap($_POST, 'location_comment');
+          break;
+
         case "determination":
           $s = \submission_builder::wrap($_POST, 'determination');
           break;
