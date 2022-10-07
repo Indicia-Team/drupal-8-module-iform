@@ -1417,10 +1417,12 @@ function iform_metatags_alter(&$metatags, $context) {
   global $iform_page_metadata;
   $supportedTags = array('title', 'description', 'image', 'latitude', 'longitude');
   foreach ($supportedTags as $tag) {
-    if (!empty($iform_page_metadata[$tag]))
+    if (!empty($iform_page_metadata[$tag])) {
       $metatags["og_$tag"] = $iform_page_metadata[$tag];
-    if ($tag === 'title')
-      $metatags['title'] = $iform_page_metadata[$tag];
+      if ($tag === 'title') {
+        $metatags['title'] = $iform_page_metadata[$tag];
+      }
+    }
   }
   // Declare page type as place if we have lat long metadata.
   if (!empty($iform_page_metadata['latitude']) && !empty($iform_page_metadata['longitude'])) {
