@@ -260,6 +260,10 @@ function hostsite_get_node_field_value($nid, $field) {
 
 /**
  * Goto a page on the host site.
+ * 
+ * Do not call this from within a hook because it can prevent other hooks
+ * from executing with unpredictable results. 
+ * See https://www.hashbangcode.com/article/drupal-9-correct-way-redirect-page
  *
  * @param string $path
  *   The page path.
