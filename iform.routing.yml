@@ -47,7 +47,7 @@ iform.dynamicattrsproxy:
 iform.joingroup:
   path: '/join/{title}'
   defaults:
-    _controller: '\Drupal\iform\Controller\IformController::joinGroupCallback'
+    _controller: '\Drupal\iform\Controller\IformController::joinGroupCallbackWithTitle'
   requirements:
     _permission: 'access content'
   options:
@@ -55,7 +55,7 @@ iform.joingroup:
 iform.joinchildgroup:
   path: '/join/{title}/{parent}'
   defaults:
-    _controller: '\Drupal\iform\Controller\IformController::joinGroupCallback'
+    _controller: '\Drupal\iform\Controller\IformController::joinGroupCallbackWithParentAndTitle'
   requirements:
     _permission: 'access content'
   options:
