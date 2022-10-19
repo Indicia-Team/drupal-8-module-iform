@@ -139,9 +139,11 @@ class IformController extends ControllerBase {
    * @param string $title
    *   URL formatted name of the group.
    * @param string $parentTitle
-   *   Optional URL formatted name of the parent group.
+   *   URL formatted name of the parent group, or NULL if no parent.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   Request object.
    */
-  public function joinGroupCallback($title, $parentTitle = NULL, Request $request) {
+  private function joinGroupCallback($title, $parentTitle, Request $request) {
     iform_load_helpers(['report_helper', 'data_entry_helper']);
     $config = \Drupal::config('iform.settings');
     $auth = \report_helper::get_read_write_auth($config->get('website_id'), $config->get('password'));
@@ -219,6 +221,33 @@ class IformController extends ControllerBase {
         'destination' => \Drupal::request()->query->get('q'),
       ]);
     }
+  }
+
+  /**
+   * Callback for shared group join links with title.
+   *
+   * @param string $title
+   *   URL formatted name of the group.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   Request object.
+   */
+  public function joinGroupCallbackWithTitle($title, Request $request) {
+    return $this->joinGroupCallback($title, NULL, $request);
+
+  }
+
+  /**
+   * Callback for shared group join links with title and parent title.
+   *
+   * @param string $title
+   *   URL formatted name of the group.
+   * @param string $parentTitle
+   *   URL formatted name of the parent group.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   Request object.
+   */
+  public function joinGroupCallbackWithParentAndTitle($title, $parentTitle, Request $request) {
+    return $this->joinGroupCallback($title, $parentTitle, $request);
   }
 
   /**

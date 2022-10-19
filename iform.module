@@ -608,10 +608,6 @@ function iform_handle_posted_form($node, array $args, &$response) {
     $nid = $node->id();
     if (!empty($_POST['delete-button'])) {
       $_POST['deleted'] = 't';
-      $msg = lang::get('The record has been deleted.');
-    }
-    else {
-      $msg = lang::get('Thank you. Your records have been saved to the database.');
     }
     // Ask the form to submit itself.
     try {
@@ -681,13 +677,31 @@ function iform_handle_posted_form($node, array $args, &$response) {
         $response = data_entry_helper::forward_post_to('save', $s);
         // Clear the Drupal cache tag so user record based reports refresh.
         Cache::invalidateTags(['user_records:' . hostsite_get_user_field('indicia_user_id')]);
+        if (is_array($response) && array_key_exists('success', $response)) {
+          if (!empty($_POST['delete-button'])) {
+            $op = 'D';
+          }
+          elseif (!empty($_POST["$s[id]:id"])) {
+            $op = 'U';
+          }
+          else {
+            $op = 'C';
+          }
+          $msg = data_entry_helper::getSuccessMessage($response, $op);
+          \Drupal::moduleHandler()->invokeAll('iform_after_submit', [
+            $s,
+            $op,
+            $response,
+            &$msg,
+          ]);
+          if (!isset($args['message_after_save']) || $args['message_after_save']) {
+            \Drupal::messenger()->addMessage($msg);
+          }
+        }
         // Does the form redirect after success?
         if (is_array($response) && array_key_exists('success', $response) &&
           array_key_exists('redirect_on_success', $args) && $args['redirect_on_success']
         ) {
-          if (!isset($args['message_after_save']) || $args['message_after_save']) {
-            \Drupal::messenger()->addMessage($msg);
-          }
           $parts = explode('?', $args['redirect_on_success'], 2);
           // First item removed from array.
           $url = array_shift($parts);
@@ -726,7 +740,7 @@ function iform_handle_posted_form($node, array $args, &$response) {
           $fragment = count($parts) ? $parts[0] : false;
           return hostsite_goto_page($url, $params, $fragment);
         }
-        elseif (!isset($args['message_after_save']) || $args['message_after_save'] || !array_key_exists('success', $response)) {
+        elseif (!array_key_exists('success', $response)) {
           // This dumps errors, and/or a success message if no redirection.
           $r .= data_entry_helper::dump_errors($response, TRUE, !empty($_POST["$s[id]:id"]));
         }
@@ -1403,10 +1417,12 @@ function iform_metatags_alter(&$metatags, $context) {
   global $iform_page_metadata;
   $supportedTags = array('title', 'description', 'image', 'latitude', 'longitude');
   foreach ($supportedTags as $tag) {
-    if (!empty($iform_page_metadata[$tag]))
+    if (!empty($iform_page_metadata[$tag])) {
       $metatags["og_$tag"] = $iform_page_metadata[$tag];
-    if ($tag === 'title')
-      $metatags['title'] = $iform_page_metadata[$tag];
+      if ($tag === 'title') {
+        $metatags['title'] = $iform_page_metadata[$tag];
+      }
+    }
   }
   // Declare page type as place if we have lat long metadata.
   if (!empty($iform_page_metadata['latitude']) && !empty($iform_page_metadata['longitude'])) {

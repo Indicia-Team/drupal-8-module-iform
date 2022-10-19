@@ -261,6 +261,19 @@ function hostsite_get_node_field_value($nid, $field) {
 /**
  * Goto a page on the host site.
  *
+ * Do not call this from within a hook because it can prevent other hooks
+ * from executing with unpredictable results.
+ *
+ * A seemingly safe way to redirect in all cases is to set the 'destination'
+ * request parameter. E.g.
+ *     $url = hostsite_get_url($path, $params, $fragment);
+ *     $request = \Drupal::request();
+ *     $request->query->set('destination', $url);
+ *
+ * I have not implemented the above here because it requires a restructure of
+ * iform/src/Controller/IformController.php::joinGroupCallback() so that the
+ * function returns a value even when there is a redirect.
+ *
  * @param string $path
  *   The page path.
  * @param array $params
