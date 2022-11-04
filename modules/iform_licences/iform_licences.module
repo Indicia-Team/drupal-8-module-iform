@@ -47,7 +47,7 @@ function iform_licences_iform_settings_form_submit($form, FormStateInterface &$f
  * forms.
  */
 function iform_licences_form_alter(&$form, FormStateInterface $form_state, $form_id) {
-  if (($form_id === 'user_form' || $form_id === 'user_register_form')) {
+  if ($form_id === 'user_form') {
     $config = \Drupal::configFactory()->getEditable('iform_licences.settings');
     iform_load_helpers(['helper_base']);
     $conn = iform_get_connection_details();
