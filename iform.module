@@ -948,6 +948,10 @@ function iform_preprocess_page(&$variables) {
  * we require.
  */
 function iform_page_attachments(array &$attachments) {
+  if (hostsite_get_user_field('training', false)) {
+    $message = t('You are in training mode. Records you add will be for training purposes only and you can only see training records.');
+    \Drupal::messenger()->addWarning($message);
+  }
   if (class_exists('helper_base')) {
     global $_iform_base_resources;
     $attachments['#attached']['library'][] = 'iform/base';
@@ -1426,18 +1430,5 @@ function iform_metatags_alter(&$metatags, $context) {
   // Declare page type as place if we have lat long metadata.
   if (!empty($iform_page_metadata['latitude']) && !empty($iform_page_metadata['longitude'])) {
     $metatags['og_type'] = 'place';
-  }
-}
-
-/**
- * Implement preprocess_status_messages.
- * Displays message to screen when user has training mode engaged.
- * @param $variables
- */
-function iform_preprocess_status_messages(&$variables) {
-  if (hostsite_get_user_field('training', false)) {
-    $message = t('You are in training mode. Records you add will be for ' .
-      'training purposes only and you can only see training records.');
-    \Drupal::messenger()->addWarning($message);
   }
 }
