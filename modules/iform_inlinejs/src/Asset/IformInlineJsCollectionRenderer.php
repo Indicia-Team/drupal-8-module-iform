@@ -28,9 +28,6 @@ class IformInlineJsCollectionRenderer extends JsCollectionRenderer {
     // query-string instead, to enforce reload on every page request.
     $default_query_string = $this->state->get('system.css_js_query_string') ?: '0';
 
-    $embed_prefix = "\n<!--//--><![CDATA[//><!--\n";
-    $embed_suffix = "\n//--><!]]>\n";
-
     // Defaults for each SCRIPT element.
     $element_defaults = [
       '#type' => 'html_tag',
@@ -103,7 +100,6 @@ class IformInlineJsCollectionRenderer extends JsCollectionRenderer {
    *   String scope.
    */
   protected function renderInlineJs(array &$elements, $scope = 'header') {
-    $i = 1;
     // Defaults for each SCRIPT element.
     $element_defaults = [
       '#type' => 'html_tag',
