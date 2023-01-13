@@ -948,7 +948,10 @@ function iform_preprocess_page(&$variables) {
  * we require.
  */
 function iform_page_attachments(array &$attachments) {
-  \Drupal::logger('iform', 'In iform_page_attachments');
+  if (hostsite_get_user_field('training', false)) {
+    $message = t('You are in training mode. Records you add will be for training purposes only and you can only see training records.');
+    \Drupal::messenger()->addWarning($message);
+  }
   if (class_exists('helper_base')) {
     global $_iform_base_resources;
     $attachments['#attached']['library'][] = 'iform/base';
@@ -972,27 +975,23 @@ function iform_page_attachments(array &$attachments) {
 }
 
 function iform_inlinejs_alter() {
-  $js_asset = [];
+  $assets = [];
   if (class_exists('helper_base')) {
     helper_base::setup_jquery_validation_js();
     $script = helper_base::getIndiciaData();
-    $script .= helper_base::get_scripts(helper_base::$javascript, helper_base::$late_javascript,
-      helper_base::$onload_javascript, FALSE, TRUE);
+    $script .= helper_base::get_scripts(
+      helper_base::$javascript,
+      helper_base::$late_javascript,
+      helper_base::$onload_javascript,
+      FALSE, TRUE
+    );
     if (!empty($script)) {
-      $js_asset['header'][] = array(
+      $assets[] = array(
         'data' => $script,
-        'group' => JS_LIBRARY + 1,
       );
-      /*
-       * Don't do the following, as this gets called more than once for some reason
-       * @todo Investigate why hook called several times
-       */
-      //helper_base::$javascript = '';
-      //helper_base::$late_javascript = '';
-      //helper_base::$onload_javascript = '';
     }
-    return $js_asset;
   }
+  return $assets;
 }
 
 /**
@@ -1427,18 +1426,5 @@ function iform_metatags_alter(&$metatags, $context) {
   // Declare page type as place if we have lat long metadata.
   if (!empty($iform_page_metadata['latitude']) && !empty($iform_page_metadata['longitude'])) {
     $metatags['og_type'] = 'place';
-  }
-}
-
-/**
- * Implement preprocess_status_messages.
- * Displays message to screen when user has training mode engaged.
- * @param $variables
- */
-function iform_preprocess_status_messages(&$variables) {
-  if (hostsite_get_user_field('training', false)) {
-    $message = t('You are in training mode. Records you add will be for ' .
-      'training purposes only and you can only see training records.');
-    \Drupal::messenger()->addWarning($message);
   }
 }

@@ -306,6 +306,10 @@ class Iform_ajaxproxyController extends ControllerBase {
           $s = \submission_builder::wrap($_POST, 'attribute_sets_survey');
           break;
 
+        case "verification_template":
+          $s = \submission_builder::wrap($_POST, 'verification_template');
+          break;
+
         case "orca_effort":
           $s = \submission_builder::wrap($_POST, 'orca_effort');
           break;

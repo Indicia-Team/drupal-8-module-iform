@@ -52,13 +52,7 @@ function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid 
   $uid = ($uid === FALSE) ? $account->id() : $uid;
   $account = User::load($uid);
   if ($_iform_warehouse_override && $field === 'indicia_user_id') {
-    if ($account->id() == 0) {
-      // Anonymous user.
-      return $default;
-    }
-    // If switched to a different warehouse, the default stored indicia User ID
-    // will be wrong.
-    return _iform_get_alternative_user_id($account, $default);
+    return $default;
   }
   // Only load the account's language if inspecting another user, else use the
   // UI language.
@@ -527,37 +521,6 @@ function hostsite_get_es_config($nid) {
     'es' => $esParams,
     'indicia' => $indiciaParams,
   ];
-}
-
-/**
- * When a page is linked to an alternative warehouse, retrieves the user ID.
- */
-function _iform_get_alternative_user_id($account, $default) {
-  global $_iform_warehouse_override;
-  $alternatives = isset($account->field_alt_indicia_user_ids) && isset($account->field_alt_indicia_user_ids->value) ?
-      $account->field_alt_indicia_user_ids->value : '{}';
-  iform_load_helpers(['data_entry_helper']);
-  $alternatives = json_decode($alternatives, TRUE);
-  if (array_key_exists($_iform_warehouse_override['base_url'], $alternatives)) {
-    return $alternatives[$_iform_warehouse_override['base_url']];
-  }
-  else {
-    // This user hasn't connected to this warehouse before. So get their user
-    // ID.
-    $response = easy_login_call_get_user_id($account);
-    $response = json_decode($response);
-    if (isset($response->userId)) {
-      if ($account->field_alt_indicia_user_ids) {
-        $alternatives[$_iform_warehouse_override['base_url']] = $response->userId;
-        $account->field_alt_indicia_user_ids->setValue(json_encode($alternatives));
-        $account->save();
-      }
-      return $response->userId;
-    }
-    else {
-      return $default;
-    }
-  }
 }
 
 /**
