@@ -72,6 +72,9 @@ class Iform_ajaxproxyController extends ControllerBase {
       case 'single_verify_sample':
         return $this->postVerification($writeTokens, 'single_verify_sample');
 
+      case 'list_redet':
+        return $this->postVerification($writeTokens, 'list_redet');
+
       case "sample":
         $s = \submission_builder::wrap_with_images($_POST, 'sample');
         break;
@@ -416,7 +419,7 @@ class Iform_ajaxproxyController extends ControllerBase {
   /**
    * Verify method handler.
    *
-   * Special case handler for the single_verify, list_verify and
+   * Special case handler for the single_verify, list_verify, list_redet and
    * single_sample_verify methods, since this goes to the data_utils service
    * for performance reasons.
    */
