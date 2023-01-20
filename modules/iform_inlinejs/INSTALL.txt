@@ -16,13 +16,22 @@ services:
  * Implements hook_inlinejs_alter().
  */
 function MODULENAME_inlinejs_alter() {
-  $assets = [];
-  $assets[] = array(
-    'data' => 'alert("script");',
+  $js_asset['header'][] = array(
+    'data' => 'alert("header before");',
+    'group' => JS_LIBRARY - 1,
   );
-  $assets[] = array(
-    'data' => 'alert("another script");',
+  $js_asset['header'][] = array(
+    'data' => 'alert("header after");',
+    'group' => JS_LIBRARY + 1,
   );
-  return $assets;
+  $js_asset['footer'][] = array(
+    'data' => 'alert("footer before");',
+    'group' => JS_LIBRARY - 1,
+  );
+  $js_asset['footer'][] = array(
+    'data' => 'alert("footer after");',
+    'group' => JS_LIBRARY + 1,
+  );
+  return $js_asset;
 }
 
