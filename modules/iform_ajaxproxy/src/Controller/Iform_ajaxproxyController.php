@@ -61,19 +61,24 @@ class Iform_ajaxproxyController extends ControllerBase {
     if ($error) {
       return new Response("{error:\"iform_ajaxproxy Error: $error\"}", 400);
     }
-    $writeTokens = ['nonce' => $nonce, 'auth_token' => sha1($nonce . ":" . $conn['password'])];
+    // Get auth, with evidence of logged in user if possible.
+    $authUserId = hostsite_get_user_field('indicia_user_id');
+    $writeTokens = [
+      'nonce' => $nonce,
+      'auth_token' => $authUserId ? sha1("$nonce:$conn[password]:$authUserId") . ":$authUserId" : sha1("$nonce:$conn[password]"),
+    ];
     switch ($index) {
       case 'single_verify':
-        return $this->postVerification($writeTokens);
+        return $this->postListToDataUtils($writeTokens);
 
       case 'list_verify':
-        return $this->postVerification($writeTokens, 'list_verify');
+        return $this->postListToDataUtils($writeTokens, 'list_verify');
 
       case 'single_verify_sample':
-        return $this->postVerification($writeTokens, 'single_verify_sample');
+        return $this->postListToDataUtils($writeTokens, 'single_verify_sample');
 
       case 'list_redet':
-        return $this->postVerification($writeTokens, 'list_redet');
+        return $this->postListToDataUtils($writeTokens, 'list_redet');
 
       case "sample":
         $s = \submission_builder::wrap_with_images($_POST, 'sample');
@@ -419,23 +424,16 @@ class Iform_ajaxproxyController extends ControllerBase {
   /**
    * Verify method handler.
    *
-   * Special case handler for the single_verify, list_verify, list_redet and
-   * single_sample_verify methods, since this goes to the data_utils service
-   * for performance reasons.
+   * Special case handler for the operations which pass a list of records to
+   * the data_utils service. These include single_verify, list_verify,
+   * list_redet and single_sample_verify.
    */
-  private function postVerification($writeTokens, $method = 'single_verify') {
+  private function postListToDataUtils($writeTokens, $method = 'single_verify') {
     $request = \data_entry_helper::$base_url . "index.php/services/data_utils/$method";
     $postargs = \data_entry_helper::array_to_query_string(array_merge($_POST, $writeTokens), TRUE);
-    $response = \data_entry_helper::http_post($request, $postargs);
+    $response = \data_entry_helper::http_post($request, $postargs, FALSE);
     // The response should be in JSON if it worked.
-    $output = json_decode($response['output'], TRUE);
-    // If this is not JSON, it is an error, so just return it as is.
-    if (!$output) {
-      $r = new Response($response['output']);
-    }
-    else {
-      $r = new Response(print_r($response, TRUE));
-    }
+    $r = new Response($response['output']);
     $r->headers->set('Content-Type', 'text/plain');
     return $r;
   }
