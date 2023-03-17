@@ -592,7 +592,7 @@ function hostsite_render_form($formId, array $state) {
  * @param int $expire
  *   Optional expiry value.
  */
-function hostsite_set_cookie($cookie, $value, $expire = NULL) {
+function hostsite_set_cookie($cookie, $value, $expire = 0) {
   // Respect the remembered_fields_optin control.
   if (isset($_POST['cookie_optin']) && $_POST['cookie_optin'] === '0') {
     return;
