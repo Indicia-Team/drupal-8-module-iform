@@ -100,7 +100,7 @@ function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid 
  */
 function hostsite_find_cms_user_by_field_value($field, $value) {
   $fieldname = (substr($field, 0, 6) === 'field_' ? '' : 'field_') . $field;
-  $query = \Drupal::entityQuery('user');
+  $query = \Drupal::entityQuery('user')->accessCheck(FALSE);
   $query->condition($fieldname, $value);
   return array_keys($query->execute());
 }
@@ -400,7 +400,8 @@ function hostsite_get_public_file_path() {
 function hostsite_has_group_functionality() {
   $query = \Drupal::entityQuery('node')
     ->condition('type', 'iform_page')
-    ->condition('field_iform', 'group_edit');
+    ->condition('field_iform', 'group_edit')
+    ->accessCheck(FALSE);
   $nids = $query->execute();
   return count($nids) > 0;
 }
@@ -419,7 +420,8 @@ function hostsite_has_group_functionality() {
 function hostsite_get_group_compatible_pages($group_id) {
   $r = [];
   $query = \Drupal::entityQuery('node')
-    ->condition('field_available_for_groups', '1');
+    ->condition('field_available_for_groups', '1')
+    ->accessCheck(FALSE);
   $node_storage = \Drupal::entityTypeManager()->getStorage('node');
   $nodes = $node_storage->loadMultiple($query->execute());
   foreach ($nodes as $node) {
