@@ -1163,7 +1163,7 @@ function iform_media_folder_path() {
     return $_iform_media_folder_path;
   }
   else {
-    $r = drupal_get_path('module', 'iform') . '/media/';
+    $r = \Drupal::service('extension.path.resolver')->getPath('module', 'iform') . '/media/';
     if (!is_dir($r)) {
       $r = str_replace('modules', 'libraries', $r);
     }
@@ -1182,7 +1182,7 @@ function iform_client_helpers_path() {
     return $_iform_client_helpers_path;
   }
   else {
-    $path = drupal_get_path('module', 'iform') . '/client_helpers/';
+    $path = \Drupal::service('extension.path.resolver')->getPath('module', 'iform') . '/client_helpers/';
     // if not in subfolder of the module, then it has been moved to libraries
     if (!is_dir($path)) {
       $path = str_replace('/modules/', '/libraries/', $path);

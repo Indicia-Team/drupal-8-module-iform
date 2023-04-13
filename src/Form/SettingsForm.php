@@ -497,7 +497,7 @@ TXT;
   private function loadWarehouseArray() {
     global $_iform_warehouses;
     $_iform_warehouses = [];
-    foreach (glob(drupal_get_path('module', 'iform') . '/warehouses/*.inc') as $warehouse_file) {
+    foreach (glob(\Drupal::service('extension.path.resolver')->getPath('module', 'iform') . '/warehouses/*.inc') as $warehouse_file) {
       require $warehouse_file;
     }
   }
