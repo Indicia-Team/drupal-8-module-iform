@@ -182,14 +182,22 @@ function hostsite_show_message($msg, $type = 'status', $redirect = FALSE) {
  *   An associative array where keys are page paths and values are untranslated
  *   breadcrumb terms. The home page is automatically inserted at the start and
  *   the current page at the end.
+ * @param bool $includeCurrentPage
+ *   Set to false to prevent addition of the current page as a label at the end
+ *   of the breadcrumb.
+ * @param bool $force
+ *   By default, breadcrumbs are only set on iform node pages. If using a block
+ *   or some form of node list (e.g. a view) then hostsite_set_breadcrumb will
+ *   do nothing unless the $force parameter is set to true.
  */
-function hostsite_set_breadcrumb(array $breadcrumb, $includeCurrentPage = TRUE) {
+function hostsite_set_breadcrumb(array $breadcrumb, $includeCurrentPage = TRUE, $force = FALSE) {
   if ($includeCurrentPage) {
     // CurrentPageTitle will be replaced later in case it gets updated by
     // code.
     $breadcrumb['<none>'] = '#currentPageTitle#';
   }
   helper_base::$breadcrumb = $breadcrumb;
+  helper_base::$force_breadcrumb = $force;
 }
 
 /**
