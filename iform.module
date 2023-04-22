@@ -566,7 +566,9 @@ function iform_node_view(array &$build, EntityInterface $entity, EntityViewDispl
         \Drupal::logger('iform')->notice($e->getTraceAsString());
         $r .= $e->getMessage();
       }
-      ob_end_clean();
+      if(ob_get_length() > 0) {
+        ob_end_clean();
+      }
       $build['iform'] = [
         '#markup' => Markup::create($r),
         '#weight' => 1,
@@ -741,8 +743,7 @@ function iform_handle_posted_form($node, array $args, &$response) {
           return hostsite_goto_page($url, $params, $fragment);
         }
         elseif (!array_key_exists('success', $response)) {
-          // This dumps errors, and/or a success message if no redirection.
-          $r .= data_entry_helper::dump_errors($response, TRUE, !empty($_POST["$s[id]:id"]));
+          $r .= data_entry_helper::dump_errors($response, TRUE);
         }
       }
     }

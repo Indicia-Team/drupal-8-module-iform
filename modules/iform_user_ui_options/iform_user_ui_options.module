@@ -110,7 +110,7 @@ function iform_user_ui_options_preprocess_iform(&$params) {
     iform_load_helpers(['data_entry_helper']);
     data_entry_helper::$data['structureControlOverrides'] = [];
     $paramsToApply = [];
-    $userOpts = json_decode(hostsite_get_user_field('iform_ui_options', '{}'), TRUE);
+    $userOpts = json_decode(hostsite_get_user_field('iform_ui_options', '{}') ?? '{}', TRUE) ?? [];
     $config = iform_user_ui_options_load_config();
     // Ensure that we have user options pointing to the default setting if not previously set in profile.
     $userOpts = $userOpts === NULL ? [] : $userOpts;
