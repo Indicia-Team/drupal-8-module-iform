@@ -292,15 +292,7 @@ function hostsite_goto_page($path, array $params = [], $fragment = FALSE) {
     // See https://www.drupal.org/node/2023537 for
     // Redirecting when not in context of a controller.
     $response = new RedirectResponse(hostsite_get_url($path, $params, $fragment));
-    $request = \Drupal::request();
-    // Save the session data.
-    $request->getSession()->save();
-    $response->prepare($request);
-    // Make sure to trigger kernel events.
-    \Drupal::service('kernel')->terminate($request, $response);
-    $response->send();
-    // Do not call exit() otherwise Drupal does not end correctly, e.g.forms
-    // may not be saved.
+    \Drupal::service('http_middleware.iform_redirect')->setRedirectResponse($response);
   }
 }
 
