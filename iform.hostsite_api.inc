@@ -100,7 +100,7 @@ function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid 
  */
 function hostsite_find_cms_user_by_field_value($field, $value) {
   $fieldname = (substr($field, 0, 6) === 'field_' ? '' : 'field_') . $field;
-  $query = \Drupal::entityQuery('user');
+  $query = \Drupal::entityQuery('user')->accessCheck(FALSE);
   $query->condition($fieldname, $value);
   return array_keys($query->execute());
 }
@@ -182,14 +182,22 @@ function hostsite_show_message($msg, $type = 'status', $redirect = FALSE) {
  *   An associative array where keys are page paths and values are untranslated
  *   breadcrumb terms. The home page is automatically inserted at the start and
  *   the current page at the end.
+ * @param bool $includeCurrentPage
+ *   Set to false to prevent addition of the current page as a label at the end
+ *   of the breadcrumb.
+ * @param bool $force
+ *   By default, breadcrumbs are only set on iform node pages. If using a block
+ *   or some form of node list (e.g. a view) then hostsite_set_breadcrumb will
+ *   do nothing unless the $force parameter is set to true.
  */
-function hostsite_set_breadcrumb(array $breadcrumb, $includeCurrentPage = TRUE) {
+function hostsite_set_breadcrumb(array $breadcrumb, $includeCurrentPage = TRUE, $force = FALSE) {
   if ($includeCurrentPage) {
     // CurrentPageTitle will be replaced later in case it gets updated by
     // code.
     $breadcrumb['<none>'] = '#currentPageTitle#';
   }
   helper_base::$breadcrumb = $breadcrumb;
+  helper_base::$force_breadcrumb = $force;
 }
 
 /**
@@ -400,7 +408,8 @@ function hostsite_get_public_file_path() {
 function hostsite_has_group_functionality() {
   $query = \Drupal::entityQuery('node')
     ->condition('type', 'iform_page')
-    ->condition('field_iform', 'group_edit');
+    ->condition('field_iform', 'group_edit')
+    ->accessCheck(FALSE);
   $nids = $query->execute();
   return count($nids) > 0;
 }
@@ -419,7 +428,8 @@ function hostsite_has_group_functionality() {
 function hostsite_get_group_compatible_pages($group_id) {
   $r = [];
   $query = \Drupal::entityQuery('node')
-    ->condition('field_available_for_groups', '1');
+    ->condition('field_available_for_groups', '1')
+    ->accessCheck(FALSE);
   $node_storage = \Drupal::entityTypeManager()->getStorage('node');
   $nodes = $node_storage->loadMultiple($query->execute());
   foreach ($nodes as $node) {
