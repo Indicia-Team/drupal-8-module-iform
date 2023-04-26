@@ -22,7 +22,7 @@ class Redirect implements HttpKernelInterface {
    *
    * @var array
    */
-  protected array $messages = [];
+  protected array $messages;
 
   public function __construct(HttpKernelInterface $http_kernel) {
     $this->httpKernel = $http_kernel;
@@ -30,15 +30,17 @@ class Redirect implements HttpKernelInterface {
 
   public function handle(Request $request, $type = self::MAIN_REQUEST, $catch = TRUE): Response {
     $response = $this->httpKernel->handle($request, $type, $catch);
-    // Reset Drupal messenger messages that have been lost.
-    foreach ($this->messages['status'] as $message) {
-      \Drupal::messenger()->addStatus($message);
-    }
-    foreach ($this->messages['warning'] as $message) {
-      \Drupal::messenger()->addWarning($message);
-    }
-    foreach ($this->messages['error'] as $message) {
-      \Drupal::messenger()->addError($message);
+    if (isset($this->messages)) {
+      // Reset Drupal messenger messages that have been lost.
+      foreach ($this->messages['status'] as $message) {
+        \Drupal::messenger()->addStatus($message);
+      }
+      foreach ($this->messages['warning'] as $message) {
+        \Drupal::messenger()->addWarning($message);
+      }
+      foreach ($this->messages['error'] as $message) {
+        \Drupal::messenger()->addError($message);
+      }
     }
     return $this->redirectResponse ?: $response;
   }
