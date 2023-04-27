@@ -31,7 +31,10 @@ class CacheForm extends FormBase {
           'on your website for several hours. Clear the cache to ensure that the latest copy of all data ' .
           'is loaded.') . '</p>'
     ];
-    $query = \Drupal::entityQuery('node')->condition('type', 'iform_page')->range(0, 1);
+    $query = \Drupal::entityQuery('node')
+      ->condition('type', 'iform_page')
+      ->accessCheck(FALSE)
+      ->range(0, 1);
     $nids = $query->execute();
     if (count($nids)) {
       $nid = array_pop($nids);

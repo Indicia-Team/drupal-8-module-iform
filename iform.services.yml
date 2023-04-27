@@ -6,3 +6,7 @@ services:
     # Priority determines the order in which Breadcrumb services run.
     tags:
     - { name: breadcrumb_builder, priority: 100 }
+  http_middleware.iform_redirect:
+    class: Drupal\iform\Middleware\Redirect
+    tags:
+      - { name: http_middleware }

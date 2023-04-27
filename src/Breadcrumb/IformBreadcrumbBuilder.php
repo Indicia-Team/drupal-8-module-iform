@@ -21,7 +21,7 @@ class IformBreadcrumbBuilder implements BreadcrumbBuilderInterface {
     // Determine if the current page is a node page with iform code that called
     // hostsite_set_breadcrumb.
     $node = $route_match->getParameter('node');
-    if ($node && class_exists('helper_base') && !empty(\helper_base::$breadcrumb)) {
+    if (class_exists('helper_base') && ($node || \helper_base::$force_breadcrumb) && !empty(\helper_base::$breadcrumb)) {
       return TRUE;
     }
     return FALSE;
