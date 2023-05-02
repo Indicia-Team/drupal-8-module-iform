@@ -480,7 +480,16 @@ function iform_node_view(array &$build, EntityInterface $entity, EntityViewDispl
       iform_load_language_files($iform, $nid);
       $language = \Drupal::languageManager()->getCurrentLanguage();
       $args = ['language' => $language->getId()];
-      require_once "$helperPath/prebuilt_forms/$iform.php";
+
+      // Require the file containing the code for the $iform.
+      if (\Drupal::moduleHandler()->moduleExists('iform_custom_forms')) {
+        // Enable autoloader for classes in iform_custom_forms module.
+        $iformCustomFormsList = \Drupal::service('iform_custom_forms.list');
+      }
+      if (!class_exists("iform_$iform")) {
+        require_once "$helperPath/prebuilt_forms/$iform.php";
+      }
+
       ob_start();
       // Also force the theme path to be local.
       global $indicia_theme_path;
@@ -545,6 +554,18 @@ function iform_node_view(array &$build, EntityInterface $entity, EntityViewDispl
       }
       if (file_exists("$filePath/indicia/templates/node.$nid.php")) {
         require "$filePath/indicia/templates/node.$nid.php";
+      }
+      // Templates may also come from the iform_custom_forms module.
+      if (isset($iformCustomFormsList)){
+        $searchTemplates = ['global.php', "$iform.php", "node.$nid.php"];
+        $customTemplates = $iformCustomFormsList->getCustomisations()['templates'];
+        foreach ($searchTemplates  as $searchTemplate) {
+          if (array_key_exists($searchTemplate, $customTemplates)){
+            require $iformCustomFormsList->getAbsoluteModulePath() .
+                    '/' . $customTemplates[$searchTemplate] .
+                    '/' . $searchTemplate;
+          }
+        }
       }
       // Link in custom additional template files.
       if (!empty($args['additional_templates'])) {
@@ -1031,8 +1052,29 @@ function iform_load_language_files($iform, $nid) {
   $nodeLangFileName = 'node.' . $nid . '.' . $languageId . '.php';
   $formFallbackFileName = $iform . '.en.php';
   $nodeFallbackFileName = 'node.' . $nid . '.en.php';
+
+  // Look for files provided by iform_custom_forms module.
+  $langFiles = [];
+  if (\Drupal::moduleHandler()->moduleExists('iform_custom_forms')) {
+    $iformCustomFormsPath = \Drupal::service('extension.list.module')->getPath('iform_custom_forms');
+    $iformCustomFormsList = \Drupal::service('iform_custom_forms.list');
+    $customLangFiles = $iformCustomFormsList->getCustomisations()['lang'];
+    if (array_key_exists($nodeLangFileName, $customLangFiles)) {
+      // Found a node file
+      $langFiles[] = $iformCustomFormsPath . 
+                      '/' . $customLangFiles[$nodeLangFileName] . 
+                      '/' . $nodeLangFileName;
+    }
+    if (array_key_exists($formLangFileName, $customLangFiles)) {
+      // Found a form file
+      $langFiles[] = $iformCustomFormsPath . 
+                      '/' . $customLangFiles[$formLangFileName] . 
+                      '/' . $formLangFileName;
+    }
+  }
+  
   // Define a priority ordered list of file names that could contain the custom terms list.
-  $langFiles = array(
+  $langFiles = array_merge($langFiles, [
     $filesLangFilePath . $nodeLangFileName,
     $filesLangFilePath . $formLangFileName,
     $filesLangFilePath . $nodeFallbackFileName,
@@ -1042,7 +1084,8 @@ function iform_load_language_files($iform, $nid) {
     $moduleLangFilePath . $formLangFileName,
     $moduleLangFilePath . $nodeFallbackFileName,
     $moduleLangFilePath . $formFallbackFileName
-  );
+  ]);
+
   $custom_terms = []; // this is an array of key value pairs
   $custom_term_overrides = []; // this is an array with each item a subarray of key value pairs.
   // start at the highest priority possible language file name and loop through until we find one that defines the set of custom terms.

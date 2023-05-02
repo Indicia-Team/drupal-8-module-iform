@@ -609,3 +609,52 @@ function hostsite_set_cookie($cookie, $value, $expire = 0) {
   // Cookies are only set when the page is loaded. So, fudge the cookie array.
   $_COOKIE[$cookie] = $value;
 }
+
+/**
+ * Returns a list of custom prebuilt forms.
+ *
+ * The forms can be provided by the iform_custom_forms module.
+ *
+ * @return array
+ *   An array of file names.
+ */
+function hostsite_get_iform_custom_forms() {
+  $forms = [];
+  if (\Drupal::moduleHandler()->moduleExists('iform_custom_forms')) {
+    $iformCustomFormsList = \Drupal::service('iform_custom_forms.list');
+    $customForms = $iformCustomFormsList->getCustomisations()['.'];
+
+    foreach ($customForms as $fileName => $relPath) {
+      $forms[] = $fileName;
+    }
+  }
+  return $forms;
+}
+
+/**
+ * Returns the ajax path to call to obtain parameters of a form.
+ */
+function hostsite_get_iform_custom_forms_ajax_path() {
+  if (\Drupal::moduleHandler()->moduleExists('iform_custom_forms')) {
+    // Use the handler provided by the iform_custom_forms module.
+    $path = Url::fromRoute('iform_custom_forms.ajaxParams')->toString();
+  }
+  else {
+    // Use the handler provided by the iform module. Because this doesn't
+    // come in the Drupal front door there is no Drupal context available
+    // when building the response.
+    $path = '/' . iform_client_helpers_path() . 'prebuilt_forms_ajax.php';
+  }
+  return $path;
+}
+
+/**
+ * Enable autoloading of custom prebuilt forms.
+ *
+ * The forms can be provided by the iform_custom_forms module.
+ */
+function hostsite_autoload_iform_custom_forms() {
+  if (\Drupal::moduleHandler()->moduleExists('iform_custom_forms')) {
+    $iformCustomFormsList = \Drupal::service('iform_custom_forms.list');
+  }
+}
