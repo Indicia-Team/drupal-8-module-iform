@@ -609,3 +609,21 @@ function hostsite_set_cookie($cookie, $value, $expire = 0) {
   // Cookies are only set when the page is loaded. So, fudge the cookie array.
   $_COOKIE[$cookie] = $value;
 }
+
+/**
+ * Gets a non-essential cookie.
+ *
+ * Adds optional character string prefix to cookie name.
+ *
+ * @param string $cookie
+ *   Cookie name.
+ * @param string $value
+ *   Cookie value.
+ * @param int $expire
+ *   Optional expiry value.
+ */
+function hostsite_get_cookie($cookie, $default = FALSE) {
+  $config = \Drupal::config('iform.settings');
+  $cookie = $config->get('cookie_prefix', '') . $cookie;
+  return (isset($_COOKIE[$cookie]) ? $_COOKIE[$cookie] : $default);
+}
