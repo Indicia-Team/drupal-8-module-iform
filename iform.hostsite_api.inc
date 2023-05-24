@@ -636,13 +636,16 @@ function hostsite_get_iform_custom_forms() {
  */
 function hostsite_get_iform_custom_forms_ajax_path() {
   if (\Drupal::moduleHandler()->moduleExists('iform_custom_forms')) {
-    // Use the handler provided by the iform_custom_forms module.
+    // Use the handler provided by the iform_custom_forms module. This does
+    // come in the Drupal front door so we can call the services of the
+    // module to obtain details of the forms it offers for inclusion in the
+    // Ajax response.
     $path = Url::fromRoute('iform_custom_forms.ajaxParams')->toString();
   }
   else {
     // Use the handler provided by the iform module. Because this doesn't
     // come in the Drupal front door there is no Drupal context available
-    // when building the response.
+    // when building the Ajax response.
     $path = '/' . iform_client_helpers_path() . 'prebuilt_forms_ajax.php';
   }
   return $path;
