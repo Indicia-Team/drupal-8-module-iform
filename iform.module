@@ -1078,14 +1078,14 @@ function iform_load_language_files($iform, $nid) {
     $customLangFiles = $iformCustomFormsList->getCustomisations()['lang'];
     if (array_key_exists($nodeLangFileName, $customLangFiles)) {
       // Found a node file
-      $langFiles[] = $iformCustomFormsPath . 
-                      '/' . $customLangFiles[$nodeLangFileName] . 
+      $langFiles[] = $iformCustomFormsPath .
+                      '/' . $customLangFiles[$nodeLangFileName] .
                       '/' . $nodeLangFileName;
     }
     if (array_key_exists($formLangFileName, $customLangFiles)) {
       // Found a form file
-      $langFiles[] = $iformCustomFormsPath . 
-                      '/' . $customLangFiles[$formLangFileName] . 
+      $langFiles[] = $iformCustomFormsPath .
+                      '/' . $customLangFiles[$formLangFileName] .
                       '/' . $formLangFileName;
     }
   }
