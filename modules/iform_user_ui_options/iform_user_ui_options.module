@@ -10,7 +10,7 @@ use Drupal\Core\Form\FormStateInterface;
  * choices.
  */
 function iform_user_ui_options_form_user_form_alter(&$form, FormStateInterface $form_state, $form_id) {
-  $currentOpts = json_decode(hostsite_get_user_field('iform_ui_options', '{}'), TRUE);
+  $currentOpts = json_decode(hostsite_get_user_field('iform_ui_options', '{}') ?? '{}', TRUE);
   $config = iform_user_ui_options_load_config();
   if (count($config)>0) {
     $form['Preferences']['ui_options'] = array(
