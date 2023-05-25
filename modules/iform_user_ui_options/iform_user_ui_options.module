@@ -75,7 +75,7 @@ function iform_user_ui_options_load_config() {
  */
 function iform_user_ui_options_form_submit($form, FormStateInterface &$form_state) {
   $options = [];
-  $currentOpts = json_decode(hostsite_get_user_field('iform_ui_options', '{}'), TRUE);
+  $currentOpts = json_decode(hostsite_get_user_field('iform_ui_options', '{}') ?? '{}', TRUE);
   foreach ($form_state->getValues() as $key => $value) {
     if (preg_match('/^iform_user_ui_(?P<key>.+)/', $key, $matches)) {
       $options[$matches['key']] = $value;
