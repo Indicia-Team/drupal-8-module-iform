@@ -354,7 +354,7 @@ TXT;
       '4326' => $this->t('GPS Latitude and Longitude (WGS84)'),
       'guernsey' => $this->t('Guernsey Grid'),
       'jersey' => $this->t('Jersey Grid'),
-      'utm30ed50' => $this->t('UTM 30N (ED50)'),
+      'utm30ed50' => $this->t('Channel Islands Grid (UTM ED50)'),
       'utm30wgs84' => $this->t('UTM 30N (WGS84)'),
       '2169' => $this->t('LUREF Luxembourg'),
       '3006' => $this->t('SWEREF99 TM / Swedish Transverse Mercator'),
