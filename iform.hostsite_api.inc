@@ -664,7 +664,7 @@ function hostsite_get_iform_custom_forms_ajax_path() {
     // Use the handler provided by the iform module. Because this doesn't
     // come in the Drupal front door there is no Drupal context available
     // when building the Ajax response.
-    $path = Url::fromRoute('<front>', [], ['absolute' => FALSE])->toString() . iform_client_helpers_path() . 'prebuilt_forms_ajax.php';
+    $path = Url::fromRoute('<front>')->toString() . iform_client_helpers_path() . 'prebuilt_forms_ajax.php';
   }
   return $path;
 }
