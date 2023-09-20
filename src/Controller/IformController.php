@@ -60,7 +60,16 @@ class IformController extends ControllerBase {
     }
     $class = "\iform_$form";
     $method = "ajax_$method";
-    require_once \iform_client_helpers_path() . 'prebuilt_forms/' . $form . '.php';
+
+    // Require the file containing the code for the $iform.
+    if (\Drupal::moduleHandler()->moduleExists('iform_custom_forms')) {
+      // Enable autoloader for classes in iform_custom_forms module.
+      \Drupal::service('iform_custom_forms.list');
+    }
+    if (!class_exists($class)) {
+      require_once \iform_client_helpers_path() . 'prebuilt_forms/' . $form . '.php';
+    }
+
     $config = \Drupal::config('iform.settings');
     $node = Node::load($nid);
     if ($node->field_iform->value !== $form) {

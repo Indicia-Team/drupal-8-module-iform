@@ -95,6 +95,10 @@ class Iform_ajaxproxyController extends ControllerBase {
         $s = \submission_builder::build_submission($_POST, $structure);
         break;
 
+      case "location_attribute_value":
+        $s = \submission_builder::wrap($_POST, 'location_attribute_value');
+        break;
+
       case "loc-sample":
         $structure = [
           'model' => 'location',
@@ -386,6 +390,18 @@ class Iform_ajaxproxyController extends ControllerBase {
         $s = \submission_builder::wrap($_POST, 'orca_incidental');
         break;
 
+      case "smp_attribute_value":
+        $s = \submission_builder::wrap($_POST, 'sample_attribute_value');
+        break;
+
+      case "occ_attribute_value":
+        $s = \submission_builder::wrap($_POST, 'occurrence_attribute_value');
+        break;
+
+      case "termlists_term_attribute_value":
+        $s = \submission_builder::wrap($_POST, 'termlists_term_attribute_value');
+        break;
+
       case "termlists_term":
         $structure = array(
           'model' => 'termlists_term',
@@ -399,7 +415,8 @@ class Iform_ajaxproxyController extends ControllerBase {
 
       default:
         return new Response("{error:\"iform_ajaxproxy Error: Current defined methods are: sample, location, loc-sample, loc-smp-occ, smp-occ, '.
-            'media, occurrence, occ-comment, smp-comment, determination, notification, user-trust, person_attribute_value\"}");
+            'media, occurrence, occ-comment, smp-comment, determination, notification, user-trust, person_attribute_value, '.
+            'termlists_term, smp_attribute_value, occ_attribute_value, location_attribute_value, termlists_term_attribute_value\"}");
 
       // @todo Invoke optional method in relevant iform prebuilt form to
       // handle non standard indexes.

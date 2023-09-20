@@ -17,6 +17,12 @@ class IformPermissions {
   public function permissions() {
     $permissions = [];
     $helpersLoaded = FALSE;
+
+    if (\Drupal::moduleHandler()->moduleExists('iform_custom_forms')) {
+      // Enable autoloader for classes in iform_custom_forms module.
+      \Drupal::service('iform_custom_forms.list');
+    }
+
     // Get list of iform nodes.
     $query = \Drupal::database()->select('node', 'n');
     $query->fields('n', ['nid']);
@@ -29,7 +35,9 @@ class IformPermissions {
           iform_load_helpers(['data_entry_helper']);
           $helpersLoaded = TRUE;
         }
-        require_once iform_client_helpers_path() . 'prebuilt_forms/' . $node->field_iform->value . '.php';
+        if (!class_exists('iform_' . $node->field_iform->value)) {
+          require_once iform_client_helpers_path() . 'prebuilt_forms/' . $node->field_iform->value . '.php';
+        }
         if (method_exists('iform_' . $node->field_iform->value, 'get_perms')) {
           $perms = call_user_func(
             ['iform_' . $node->field_iform->value, 'get_perms'], 

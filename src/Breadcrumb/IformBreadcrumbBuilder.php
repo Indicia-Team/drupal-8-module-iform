@@ -51,8 +51,10 @@ class IformBreadcrumbBuilder implements BreadcrumbBuilderInterface {
         }
         if (substr($path, 0, 1) === '/') {
           foreach ($_GET as $key => $value) {
-            // GET parameters can be used as replacements.
-            $path = str_replace("#$key#", $value, $path);
+            if (is_string($value)) {
+              // GET parameters can be used as replacements.
+              $path = str_replace("#$key#", $value, $path);
+            }
           }
           $breadcrumb->addLink(Link::fromTextAndUrl($caption, Url::fromUserInput($path)));
         }
