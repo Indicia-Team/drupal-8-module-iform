@@ -43,23 +43,31 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
  */
 function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid = FALSE) {
   global $_iform_warehouse_override;
-  $account = \Drupal::currentUser();
-  if ($field === 'uid' || $field === 'id') {
-    return $uid === FALSE ? $account->id() : $uid;
-  }
-  // Do we need to load a different user account, e.g. if viewing another
-  // user's details?
-  $uid = ($uid === FALSE) ? $account->id() : $uid;
-  $account = User::load($uid);
   if ($_iform_warehouse_override && $field === 'indicia_user_id') {
     return $default;
   }
+  if ($uid && $field !== 'id' && $field !== 'uid') {
+    // Load another user's account - not necessary if just requesting the ID.
+    $account = User::load($uid);
+    // Only load the account's language if inspecting another user.
+    if ($field === 'language') {
+      return $account->getPreferredLangcode();
+    }
+  }
+  elseif (!$uid) {
+    $account = \Drupal::currentUser();
+    $uid = $account->id();
+    if ($field === 'language') {
+      // For current user, use the UIs language.
+      return \Drupal::languageManager()->getCurrentLanguage()->getId();
+    }
+  }
+  if ($field === 'uid' || $field === 'id') {
+    return $uid;
+  }
   // Only load the account's language if inspecting another user, else use the
   // UI language.
-  if ($field === 'language') {
-    return \Drupal::languageManager()->getCurrentLanguage()->getId();
-  }
-  elseif ($field === 'name') {
+  if ($field === 'name') {
     return $account->getDisplayName();
   }
   elseif ($field === 'mail') {
