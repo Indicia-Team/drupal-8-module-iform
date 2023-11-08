@@ -73,19 +73,21 @@ function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid 
   elseif ($field === 'mail') {
     return $account->getEmail();
   }
+  // Need fully loaded user account to access fields.
+  $user = User::load($account->id());
   $fieldname = (substr($field, 0, 6) === 'field_' ? '' : 'field_') . $field;
-  if (isset($account->$fieldname)) {
-    if ($account->$fieldname->getFieldDefinition()->getFieldStorageDefinition()->getCardinality() !== 1) {
+  if (isset($user->$fieldname)) {
+    if ($user->$fieldname->getFieldDefinition()->getFieldStorageDefinition()->getCardinality() !== 1) {
       // Not a single value field, so return array or serialized list.
       $values = [];
-      $count = count($account->$fieldname);
+      $count = count($user->$fieldname);
       for ($i = 0; $i < $count; $i++) {
-        $values[] = $account->$fieldname[$i]->value;
+        $values[] = $user->$fieldname[$i]->value;
       }
       return $array ? $values : serialize($values);
     }
     else {
-      return $account->$fieldname->value;
+      return $user->$fieldname->value;
     }
   }
   else {
