@@ -43,41 +43,51 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
  */
 function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid = FALSE) {
   global $_iform_warehouse_override;
-  $account = \Drupal::currentUser();
-  if ($field === 'uid' || $field === 'id') {
-    return $uid === FALSE ? $account->id() : $uid;
-  }
-  // Do we need to load a different user account, e.g. if viewing another
-  // user's details?
-  $uid = ($uid === FALSE) ? $account->id() : $uid;
-  $account = User::load($uid);
   if ($_iform_warehouse_override && $field === 'indicia_user_id') {
     return $default;
   }
+  if ($uid && $field !== 'id' && $field !== 'uid') {
+    // Load another user's account - not necessary if just requesting the ID.
+    $account = User::load($uid);
+    // Only load the account's language if inspecting another user.
+    if ($field === 'language') {
+      return $account->getPreferredLangcode();
+    }
+  }
+  elseif (!$uid) {
+    $account = \Drupal::currentUser();
+    $uid = $account->id();
+    if ($field === 'language') {
+      // For current user, use the UIs language.
+      return \Drupal::languageManager()->getCurrentLanguage()->getId();
+    }
+  }
+  if ($field === 'uid' || $field === 'id') {
+    return $uid;
+  }
   // Only load the account's language if inspecting another user, else use the
   // UI language.
-  if ($field === 'language') {
-    return \Drupal::languageManager()->getCurrentLanguage()->getId();
-  }
-  elseif ($field === 'name') {
+  if ($field === 'name') {
     return $account->getDisplayName();
   }
   elseif ($field === 'mail') {
     return $account->getEmail();
   }
+  // Need fully loaded user account to access fields.
+  $user = User::load($account->id());
   $fieldname = (substr($field, 0, 6) === 'field_' ? '' : 'field_') . $field;
-  if (isset($account->$fieldname)) {
-    if ($account->$fieldname->getFieldDefinition()->getFieldStorageDefinition()->getCardinality() !== 1) {
+  if (isset($user->$fieldname)) {
+    if ($user->$fieldname->getFieldDefinition()->getFieldStorageDefinition()->getCardinality() !== 1) {
       // Not a single value field, so return array or serialized list.
       $values = [];
-      $count = count($account->$fieldname);
+      $count = count($user->$fieldname);
       for ($i = 0; $i < $count; $i++) {
-        $values[] = $account->$fieldname[$i]->value;
+        $values[] = $user->$fieldname[$i]->value;
       }
       return $array ? $values : serialize($values);
     }
     else {
-      return $account->$fieldname->value;
+      return $user->$fieldname->value;
     }
   }
   else {
