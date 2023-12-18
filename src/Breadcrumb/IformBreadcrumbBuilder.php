@@ -64,7 +64,7 @@ class IformBreadcrumbBuilder implements BreadcrumbBuilderInterface {
         }
       }
     }
-    $breadcrumb->addCacheContexts(['route']);
+    $breadcrumb->addCacheContexts(['url.query_args']);
     // Return object of type breadcrumb.
     return $breadcrumb;
   }
