@@ -6,6 +6,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Render\Markup;
 use Drupal\node\Entity\Node;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\Request;
@@ -51,12 +52,12 @@ class IformController extends ControllerBase {
    *   Node ID, used to get correct website and password. If not passed, then
    *   looks to use the globally set website Id and password.
    *
-   * @return \Symfony\Component\HttpFoundation\Response
+   * @return \Symfony\Component\HttpFoundation\Response|\Symfony\Component\HttpFoundation\JsonResponse
    *   Ajax response.
    */
   public function ajaxCallback($form, $method, $nid) {
     if ($form === NULL || $method === NULL || $nid === NULL) {
-      return $this->t('Incorrect AJAX call');
+      return new JsonResponse(['msg' => $this->t('Incorrect AJAX call'), 400]);
     }
     $class = "\iform_$form";
     $method = "ajax_$method";
@@ -100,9 +101,13 @@ class IformController extends ControllerBase {
       $website_id = $config->get('website_id');
       $password = $config->get('password');
     }
-    call_user_func([$class, $method], $website_id, $password, $nid);
-    // @todo How does the echoed response actually get to the client?
-    return new Response('');
+    $response = call_user_func([$class, $method], $website_id, $password, $nid);
+    if (is_array($response)) {
+      return new JsonResponse($response);
+    }
+    else {
+      return new Response($response);
+    }
   }
 
   /**
@@ -119,12 +124,12 @@ class IformController extends ControllerBase {
   public function esproxyCallback($method, $nid = NULL) {
     require_once \iform_client_helpers_path() . 'ElasticsearchProxyHelper.php';
     try {
-      \ElasticSearchProxyHelper::callMethod($method, $nid);
+      $response = \ElasticSearchProxyHelper::callMethod($method, $nid);
+      return new JsonResponse($response, 200, [], is_string($response));
     }
-    catch (ElasticSearchProxyAbort $e) {
-      // Nothing to do.
+    catch (\ElasticSearchProxyAbort $e) {
+      return new JsonResponse(['msg' => $e->getMessage()], $e->getCode());
     }
-    return new Response('', http_response_code(), ['Content-type' => 'application/json']);
   }
 
   /**
