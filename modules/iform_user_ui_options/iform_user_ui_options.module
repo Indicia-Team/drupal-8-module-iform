@@ -13,9 +13,10 @@ function iform_user_ui_options_form_user_form_alter(&$form, FormStateInterface $
   $currentOpts = json_decode(hostsite_get_user_field('iform_ui_options', '{}') ?? '{}', TRUE);
   $config = iform_user_ui_options_load_config();
   if (count($config)>0) {
-    $form['Preferences']['ui_options'] = array(
+    $form['ui_options'] = array(
       '#type' => 'fieldset',
       '#title' => t('User Interface Options'),
+      '#weight' => 50,
     );
     foreach ($config as $name => $optionset) {
       if (!isset($optionset['title']) || !isset($optionset['choices'])) {
@@ -26,7 +27,7 @@ function iform_user_ui_options_form_user_form_alter(&$form, FormStateInterface $
         foreach ($optionset['choices'] as $choiceName => $choiceSettings) {
           $radioOptions[$choiceName] = t($choiceSettings['title']);
         }
-        $form['Preferences']['ui_options']["iform_user_ui_$name"] = array(
+        $form['ui_options']["iform_user_ui_$name"] = array(
           '#type' => 'radios',
           '#title' => t($optionset['title']),
           '#options' => $radioOptions,

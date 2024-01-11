@@ -976,7 +976,6 @@ function iform_preprocess_page(&$variables) {
     foreach ($_SESSION['iform-messages'] as $message) {
       \Drupal::messenger()->addMessage($message[0]);
     }
-    \Drupal::logger('iform')->notice('cleared');
     unset($_SESSION['iform-messages']);
   }
 }
@@ -1089,7 +1088,7 @@ function iform_load_language_files($iform, $nid) {
                       '/' . $formLangFileName;
     }
   }
-  
+
   // Define a priority ordered list of file names that could contain the custom terms list.
   $langFiles = array_merge($langFiles, [
     $filesLangFilePath . $nodeLangFileName,
