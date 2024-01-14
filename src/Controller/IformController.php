@@ -143,8 +143,13 @@ class IformController extends ControllerBase {
    */
   public function dynamicattrsproxyCallback($method) {
     require_once \iform_client_helpers_path() . 'DynamicAttrsProxyHelper.php';
-    \DynamicAttrsProxyHelper::callMethod($method);
-    return new Response('', http_response_code());
+    try {
+      $r = \DynamicAttrsProxyHelper::callMethod($method);
+      return new JsonResponse($r);
+    }
+    catch (\Exception $e) {
+      return new JsonResponse(['msg' => $e->getMessage()], $e->getCode());
+    }
   }
 
   /**
