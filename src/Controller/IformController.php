@@ -185,7 +185,7 @@ class IformController extends ControllerBase {
       $this->messenger->addWarning($this->t('An error occurred when trying to access the group.'));
       \Drupal::logger('iform')->notice('Groups page load error: ' . var_export($groups, TRUE));
       hostsite_goto_page('<front>');
-      return;
+      return [];
     }
     if (!count($groups)) {
       $this->messenger->addWarning($this->t('The group you are trying to join does not appear to exist.'));
@@ -194,7 +194,7 @@ class IformController extends ControllerBase {
     if (count($groups) > 1) {
       $this->messenger->addWarning($this->t('The group you are trying to join has a duplicate name with another group so cannot be joined in this way.'));
       hostsite_goto_page('<front>');
-      return;
+      return [];
     }
     $group = $groups[0];
     if ($group['member'] === 't') {
@@ -206,7 +206,7 @@ class IformController extends ControllerBase {
     elseif ($group['joining_method_raw'] === 'I') {
       $this->messenger->addWarning($this->t('The group you are trying to join is private.'));
       hostsite_goto_page('<front>');
-      return;
+      return [];
     }
     if ($uid) {
       $r = '';
@@ -214,7 +214,7 @@ class IformController extends ControllerBase {
       if (!$indiciaUserId) {
         $this->messenger->addMessage($this->t('Before joining @group, please set your surname on your user account profile.', ['@group' => $this->readableGroupTitle($group)]));
         hostsite_goto_page('<front>');
-        return;
+        return [];
       }
       elseif ($group['pending'] === 't' && $group['joining_method'] !== 'P') {
         // Membership exists but is pending.
@@ -225,7 +225,7 @@ class IformController extends ControllerBase {
       }
       elseif (!$this->joinPublicGroup($group, $auth['write_tokens'], $indiciaUserId)) {
         hostsite_goto_page('<front>');
-        return;
+        return [];
       }
       $r .= $this->showGroupPage($group, $config->get('website_id'), $auth['read']);
       return [
@@ -239,6 +239,7 @@ class IformController extends ControllerBase {
         'group_id' => $group['id'],
         'destination' => \Drupal::request()->query->get('q'),
       ]);
+      return [];
     }
   }
 
