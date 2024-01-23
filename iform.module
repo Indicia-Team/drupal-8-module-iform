@@ -587,9 +587,7 @@ function iform_node_view(array &$build, EntityInterface $entity, EntityViewDispl
         \Drupal::logger('iform')->notice($e->getTraceAsString());
         $r .= $e->getMessage();
       }
-      if(ob_get_length() > 0) {
-        ob_end_clean();
-      }
+      ob_end_clean();
       $build['iform'] = [
         '#markup' => Markup::create($r),
         '#weight' => 1,
