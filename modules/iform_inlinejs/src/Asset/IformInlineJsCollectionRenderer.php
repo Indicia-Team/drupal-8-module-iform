@@ -2,9 +2,9 @@
 
 namespace Drupal\iform_inlinejs\Asset;
 
+use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Asset\JsCollectionRenderer;
-use Drupal\Component\Render\FormattableMarkup;
 
 /**
  * A renderer for Indicia inline JS.
@@ -26,7 +26,13 @@ class IformInlineJsCollectionRenderer extends JsCollectionRenderer {
     // flush, forcing browsers to load a new copy of the files, as the
     // URL changed. Files that should not be cached get REQUEST_TIME as
     // query-string instead, to enforce reload on every page request.
-    $default_query_string = $this->assetQueryString->get();
+    // For now, support D10 and D9.
+    if (property_exists($this, 'assetQueryString')) {
+      $default_query_string = $this->assetQueryString->get();
+    }
+    else {
+      $default_query_string = $this->state->get('system.css_js_query_string') ?: '0';
+    }
 
     // Defaults for each SCRIPT element.
     $element_defaults = [
@@ -59,7 +65,7 @@ class IformInlineJsCollectionRenderer extends JsCollectionRenderer {
           // Only add the cache-busting query string if this isn't an aggregate
           // file.
           if (!isset($js_asset['preprocessed'])) {
-            $element['#attributes']['src'] .= $query_string_separator . ($js_asset['cache'] ? $query_string : REQUEST_TIME);
+            $element['#attributes']['src'] .= $query_string_separator . ($js_asset['cache'] ? $query_string : \Drupal::time()->getRequestTime());
           }
           break;
 
