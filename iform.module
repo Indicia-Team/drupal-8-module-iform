@@ -24,7 +24,6 @@ global $_iform_base_resources;
 $_iform_base_resources = [
   'jquery',
   'jquery_ui',
-  'jquery_form',
   'indiciaFns',
 ];
 
