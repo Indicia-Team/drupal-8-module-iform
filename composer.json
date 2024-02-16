@@ -4,16 +4,16 @@
     "type": "drupal-custom-module",
     "repositories": [
         {
-            "type": "github",
+            "type": "vcs",
             "url": "https://github.com/Indicia-Team/client_helpers.git"
         },
         {
-            "type": "github",
+            "type": "vcs",
             "url": "https://github.com/Indicia-Team/media.git"
-        }	
+        }
 	],
     "require": {
         "drupal/client_helpers": "*",
         "drupal/media": "*"
-    }	
+    }
 }
