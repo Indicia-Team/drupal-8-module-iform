@@ -13,7 +13,7 @@
         }
 	],
     "require": {
-        "drupal/client_helpers": "*",
-        "drupal/media": "*"
+        "drupal/client_helpers": ">8.24.7",
+        "drupal/media": ">8.24.4"
     }
 }
