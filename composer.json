@@ -15,5 +15,10 @@
     "require": {
         "drupal/client_helpers": "*",
         "drupal/media": "*"
+    },
+    "extra": {
+        "installer-paths": {
+            "modules/custom/iform/{$name}": ["type:drupal-custom-module"]
+        }
     }
 }
