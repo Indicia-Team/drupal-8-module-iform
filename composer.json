@@ -13,8 +13,8 @@
         }
 	],
     "require": {
-        "drupal/client_helpers": "*",
-        "drupal/media": "*"
+        "indicia/client_helpers": "*",
+        "indicia/media": "*"
     },
     "extra": {
         "installer-paths": {
