@@ -13,7 +13,12 @@
         }
 	],
     "require": {
-        "drupal/client_helpers": ">8.24.7",
-        "drupal/media": ">8.24.4"
+        "indicia/client_helpers": ">8.24.7",
+        "indicia/media": ">8.24.4"
+    },
+    "extra": {
+        "installer-paths": {
+            "modules/custom/iform/{$name}": ["type:drupal-custom-module"]
+        }
     }
 }
