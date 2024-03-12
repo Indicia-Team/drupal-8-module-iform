@@ -18,7 +18,7 @@
     },
     "extra": {
         "installer-paths": {
-            "modules/custom/iform/{$name}": ["type:drupal-custom-module"]
+            "web/modules/custom/iform/{$name}": ["type:drupal-custom-module"]
         }
     }
 }
