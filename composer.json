@@ -13,8 +13,8 @@
         }
 	],
     "require": {
-        "indicia/client_helpers": "*",
-        "indicia/media": "*"
+        "indicia/client_helpers": ">8.24.7",
+        "indicia/media": ">8.24.4"
     },
     "extra": {
         "installer-paths": {

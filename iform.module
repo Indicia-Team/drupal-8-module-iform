@@ -586,9 +586,7 @@ function iform_node_view(array &$build, EntityInterface $entity, EntityViewDispl
         \Drupal::logger('iform')->notice($e->getTraceAsString());
         $r .= $e->getMessage();
       }
-      if(ob_get_length() > 0) {
-        ob_end_clean();
-      }
+      ob_end_clean();
       $build['iform'] = [
         '#markup' => Markup::create($r),
         '#weight' => 1,
@@ -1019,9 +1017,8 @@ function iform_inlinejs_alter() {
     $script .= helper_base::get_scripts(helper_base::$javascript, helper_base::$late_javascript,
       helper_base::$onload_javascript, FALSE, TRUE);
     if (!empty($script)) {
-      $js_asset['header'][] = array(
+      $js_asset[] = array(
         'data' => $script,
-        'group' => JS_LIBRARY + 1,
       );
       /*
        * Don't do the following, as this gets called once for the header and
