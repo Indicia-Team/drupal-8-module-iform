@@ -185,7 +185,7 @@ When authentication as a client, the warehouse administrator must configure the 
 that should be entered into the configuration below. Authentication as a website is automatic as long as the
 Elasticsearch endpoint specified has been configured in the REST API's configuration. When authenticating as a user
 using Java Web Tokens, you must generate an RSA public/private key pair, add the public key to the warehouse's
-configuration for your website and save the private key in a file called rsa_private.pem in the Drupal private files
+configuration for your website and save the private key in a file called private.key in the Drupal private files
 directory. The REST API must also be configured to provide access to Elasticsearch for the jwtUser authentication
 method.
 TXT;
