@@ -8,12 +8,12 @@
  * content management system, in this case Drupal 8.
  */
 
-use Drupal\Core\StreamWrapper\PublicStream;
-use Drupal\Core\Url;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Form\FormState;
-use Drupal\user\Entity\User;
+use Drupal\Core\StreamWrapper\PublicStream;
+use Drupal\Core\Url;
 use Drupal\node\Entity\Node;
+use Drupal\user\Entity\User;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
@@ -385,7 +385,7 @@ function hostsite_get_current_page_path() {
 function hostsite_get_config_value($context, $name, $default = FALSE) {
   $configName = $context === 'site' ? 'system.site' : 'iform.settings';
   $r = \Drupal::config($configName)->get($name);
-  return $r === NULL ? $default : $r;
+  return $r ?? $default;
 }
 
 /**
@@ -523,10 +523,10 @@ function hostsite_get_es_config($nid) {
   ];
   $indiciaParams = [];
   foreach ($paramNames as $name) {
-    $indiciaParams[$name] = $config->get($name, '');
+    $indiciaParams[$name] = $config->get($name);
     // Allow page level override.
-    if ($nid && empty($indiciaParams[$name]) || $config->get('allow_connection_override', FALSE)) {
-      $indiciaParams[$name] = isset($nodeParams[$name]) ? $nodeParams[$name] : $indiciaParams[$name];
+    if ($nid && empty($indiciaParams[$name]) || $config->get('allow_connection_override')) {
+      $indiciaParams[$name] = $nodeParams[$name] ?? $indiciaParams[$name];
     }
   }
   return [
@@ -627,10 +627,11 @@ function hostsite_set_cookie($cookie, $value, $expire = 0) {
  *
  * @param string $cookie
  *   Cookie name.
- * @param string $value
+ * @param string $default
+ *   Default to return if not available.
+ *
+ * @return string
  *   Cookie value.
- * @param int $expire
- *   Optional expiry value.
  */
 function hostsite_get_cookie($cookie, $default = FALSE) {
   $config = \Drupal::config('iform.settings');
