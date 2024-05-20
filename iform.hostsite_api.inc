@@ -690,3 +690,62 @@ function hostsite_autoload_iform_custom_forms() {
     $iformCustomFormsList = \Drupal::service('iform_custom_forms.list');
   }
 }
+
+/**
+ * Send an email.
+ *
+ * Either uses PHP mail(), or if the Drupal Symfony Mailer module is installed,
+ * defers mail sending to that module. Ensure that a Mail Policy is set up for
+ * the 'Iform emails' type at /admin/config/system/mailer.
+ *
+ * @param string $to
+ *   Email address to send to.
+ * @param [type] $subject
+ *   Email subject.
+ * @param [type] $body
+ *   Email body (can include HTML).
+ * @param array $options
+ *   Additional options. Currently supports
+ *   * from (defaults to the site email)
+ *   * fromName (defaults to the site name)
+ *   * replyTo (defaults to the user's email).
+ *
+ * @return bool
+ *   TRUE if the email was accepted for sending (this does not mean that the
+ *   email actually sent).
+ */
+function hostsite_send_email($to, $subject, $body, array $options = []) {
+  if (\Drupal::hasService('email_factory')) {
+    $email_factory = Drupal::service('email_factory');
+    $email = $email_factory->newTypedEmail('iform_basic_email', 'empty', $to, $subject, $body, $options);
+    if (!$email->send()) {
+      $error = $email->getError();
+      \Drupal::logger('iform')->error('Error sending email: ' . $error);
+      return FALSE;
+    }
+    return TRUE;
+  }
+  else {
+    // Revert to PHP mail().
+    $siteName = hostsite_get_config_value('site', 'name', '');
+    $siteEmail = hostsite_get_config_value('site', 'mail', '');
+    $options = array_merge([
+      'from' => $siteEmail,
+      'fromName' => $siteName,
+      'replyTo' => hostsite_get_user_field('mail'),
+    ], $options);
+    $headers = [
+      'MIME-Version: 1.0',
+      'Content-type: text/html; charset=UTF-8;',
+      "From: \"$options[siteName]\" <$options[siteEmail]",
+      "Reply-To: \"$options[replyTo]\" <$options[replyTo]>",
+      'Date: ' . date(DateTime::RFC2822),
+      'Message-ID: <' . time() . '-' . md5($options['fromName'] . $_POST['to']) . '@' . $_SERVER['SERVER_NAME'] . '>',
+    ];
+    $r = mail($to, $subject, $body, $headers) ? TRUE : FALSE;
+    if (!$r) {
+      \Drupal::logger('iform')->error('Attempt to send email using PHP mail() failed');
+    }
+    return $r;
+  }
+}
