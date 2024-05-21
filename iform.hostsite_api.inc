@@ -742,7 +742,15 @@ function hostsite_send_email($to, $subject, $body, array $options = []) {
       'Date: ' . date(DateTime::RFC2822),
       'Message-ID: <' . time() . '-' . md5($options['fromName'] . $_POST['to']) . '@' . $_SERVER['SERVER_NAME'] . '>',
     ];
-    $r = mail($to, $subject, $body, $headers) ? TRUE : FALSE;
+    // Wrap HTML in full document helps with spam scores.
+    $htmlBody = <<<HTML
+      <html>
+        <body>
+          $body
+        </body>
+      </html>
+HTML;
+    $r = mail($to, $subject, $htmlBody, $headers) ? TRUE : FALSE;
     if (!$r) {
       \Drupal::logger('iform')->error('Attempt to send email using PHP mail() failed');
     }
