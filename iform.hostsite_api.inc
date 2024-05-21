@@ -737,7 +737,7 @@ function hostsite_send_email($to, $subject, $body, array $options = []) {
     $headers = [
       'MIME-Version: 1.0',
       'Content-type: text/html; charset=UTF-8;',
-      "From: \"$options[siteName]\" <$options[siteEmail]",
+      "From: \"$options[fromName]\" <$options[from]",
       "Reply-To: \"$options[replyTo]\" <$options[replyTo]>",
       'Date: ' . date(DateTime::RFC2822),
       'Message-ID: <' . time() . '-' . md5($options['fromName'] . $_POST['to']) . '@' . $_SERVER['SERVER_NAME'] . '>',
