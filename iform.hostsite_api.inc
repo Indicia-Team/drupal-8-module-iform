@@ -740,7 +740,7 @@ function hostsite_send_email($to, $subject, $body, array $options = []) {
       "From: \"$options[fromName]\" <$options[from]",
       "Reply-To: \"$options[replyTo]\" <$options[replyTo]>",
       'Date: ' . date(DateTime::RFC2822),
-      'Message-ID: <' . time() . '-' . md5($options['fromName'] . $_POST['to']) . '@' . $_SERVER['SERVER_NAME'] . '>',
+      'Message-ID: <' . time() . '-' . md5($options['fromName'] . $to) . '@' . $_SERVER['SERVER_NAME'] . '>',
     ];
     // Wrap HTML in full document helps with spam scores.
     $htmlBody = <<<HTML
