@@ -10,3 +10,9 @@ services:
     class: Drupal\iform\Middleware\Redirect
     tags:
       - { name: http_middleware }
+  cache.iform:
+    class: Drupal\Core\Cache\CacheBackendInterface
+    tags:
+      - { name: cache.bin }
+    factory: ['@cache_factory', 'get']
+    arguments: [iform]

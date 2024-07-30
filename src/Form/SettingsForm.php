@@ -411,7 +411,7 @@ TXT;
       \data_entry_helper::$base_url = $urls['base_url'];
       // Clear the cache if the linked warehouse changes.
       if ($config->get('base_url') !== $urls['base_url']) {
-        \data_entry_helper::clear_cache();
+        hostsite_cache_clear();
       }
       try {
         $read_auth = \data_entry_helper::get_read_auth($values['website_id'], $values['password']);
