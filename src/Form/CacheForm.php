@@ -69,7 +69,7 @@ class CacheForm extends FormBase {
    */
   public function submitForm(array &$form, \Drupal\Core\Form\FormStateInterface $form_state) {
     iform_load_helpers(['helper_base']);
-    \helper_base::clear_cache();
+    hostsite_cache_clear();
     $this->messenger()->addMessage(t('The Indicia cache has been cleared.'), 'status');
   }
 

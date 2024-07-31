@@ -1488,3 +1488,22 @@ function iform_metatags_alter(&$metatags, $context) {
     $metatags['og_type'] = 'place';
   }
 }
+
+/**
+ * Implements hook_cron().
+ *
+ * Cleans up old temporary files.
+ */
+function iform_cron() {
+  // Cache folder (note, not used if delegating to Drupal caching).
+  $cacheFolder = helper_base::$cache_folder ? helper_base::$cache_folder : helper_base::relative_client_helper_path() . 'cache/';
+  if (file_exists($cacheFolder)) {
+    helper_base::purgeFiles($cacheFolder, helper_base::$cache_timeout * 5, helper_base::$cache_allowed_file_count);
+  }
+  // Interim images.
+  helper_base::purgeFiles(helper_base::getInterimImageFolder(), helper_base::$interim_image_expiry);
+  // Data files created for report calendar summary downloads.
+  if (file_exists(hostsite_get_public_file_path() . '/reportsDownloads/')) {
+    helper_base::purgeFiles(hostsite_get_public_file_path() . '/reportsDownloads/', helper_base::$interim_image_expiry);
+  }
+}

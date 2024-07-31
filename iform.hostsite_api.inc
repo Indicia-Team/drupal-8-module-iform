@@ -757,3 +757,83 @@ HTML;
     return $r;
   }
 }
+
+/**
+ * Save data into the Drupal cache.
+ *
+ * @param string $key
+ *   Cache entry's unique key.
+ * @param mixed $data
+ *   Data to be cached.
+ * @param array $tags
+ *   Request options that will be saved with the cache entry and later used to
+ *   double check the cache entry is for the correct request.
+ * @param int $expireAfter
+ *   Number of seconds after which the cache entry should be invalidated.
+ */
+function hostsite_cache_set($key, $data, array $tags, $expireAfter) {
+  // Randomise cache expiry so that multiple entries don't all expire together
+  // causing an occasional slow page load.
+  $expireAfter = rand($expireAfter * 0.8, $expireAfter);
+  \Drupal::cache('iform')->set($key, [
+    'tags' => $tags,
+    'data' => $data,
+  ], time() + $expireAfter);
+}
+
+/**
+ * Retrieve an entry from the Drupal cache.
+ *
+ * @param string $key
+ *   Cache entry's unique key.
+ * @param array $tags
+ *   Request options that will be used to double check the cache entry is for
+ *   the correct request.
+ *
+ * @return array|bool
+ *   Cached data, or FALSE if not found.
+ */
+function hostsite_cache_get($key, array $tags) {
+  $cached = \Drupal::cache('iform')->get($key, TRUE);
+  if ($cached !== FALSE) {
+    // Check for probabilistic early expiration to avoid cache stampede, see
+    // https://en.wikipedia.org/wiki/Cache_stampede#Probabilistic_early_expiration.
+    if (time() - 10 * log(mt_rand() / mt_getrandmax()) >= $cached->expire) {
+      return FALSE;
+    }
+    // A final check on the options used to retrieve the cache data, in case
+    // there is an md5 value clash.
+    if (http_build_query($cached->data['tags']) === http_build_query($tags)) {
+      return [
+        'output' => $cached->data['data'],
+      ];
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Clear the cache bin we created in the Drupal cache.
+ */
+function hostsite_cache_clear() {
+  \Drupal::cache('iform')->deleteAll();
+}
+
+/**
+ * Purge expired entries from the cache.
+ *
+ * Nothing to do here as we just let Drupal garbage collection do it's thing.
+ */
+function hostsite_cache_purge() {
+  // \Drupal::cache('iform')->garbageCollection();
+}
+
+/**
+ * Expire a single cache entry.
+ *
+ * @param string $key
+ *   Cache entry's unique key.
+ */
+function hostsite_cache_expire_entry($key) {
+  \Drupal::cache('iform')->delete($key);
+}
