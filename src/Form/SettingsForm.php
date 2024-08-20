@@ -195,7 +195,7 @@ TXT;
       '#description' => $this->t('Authentication approach used to connect to the Elasticsearch warehouse proxy.'),
       '#options' => [
         'directClient' => 'Authenticate as a client configured in the Warehouse REST API',
-        'directWebsite' => 'Authenticate as a website configured in the Warehouse REST API',
+        'directWebsite' => 'Authenticate as a website registered on the warehouse',
         'jwtUser' => 'Authenticate as the logged in user using Java Web Tokens',
       ],
       '#required' => TRUE,
