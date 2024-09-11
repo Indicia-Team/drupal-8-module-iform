@@ -1496,8 +1496,7 @@ function iform_metatags_alter(&$metatags, $context) {
  */
 function iform_cron() {
   // Ensure helper_base is loaded.
-  $path = iform_client_helpers_path();
-  require_once $path . 'helper_base.php';
+  iform_load_helpers(['helper_base']);
   
   // Cache folder (note, not used if delegating to Drupal caching).
   $cacheFolder = helper_base::$cache_folder ? helper_base::$cache_folder : helper_base::relative_client_helper_path() . 'cache/';
