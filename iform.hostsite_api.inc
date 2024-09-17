@@ -14,6 +14,7 @@ use Drupal\Core\StreamWrapper\PublicStream;
 use Drupal\Core\Url;
 use Drupal\node\Entity\Node;
 use Drupal\user\Entity\User;
+use IForm\prebuilt_forms\PageType;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
@@ -423,20 +424,40 @@ function hostsite_has_group_functionality() {
  *
  * @param int $group_id
  *   ID of the group to load available pages for.
+ * @param IForm\prebuilt_forms\PageType $pageType
+ *   Restrict to a particular page type, e.g. PageType::Report or
+ *   PageType::DataEntry.
  *
  * @return array
  *   Array of pages titles keyed by node path.
  */
-function hostsite_get_group_compatible_pages($group_id) {
+function hostsite_get_group_compatible_pages($group_id, $pageType = NULL) {
   $r = [];
   $query = \Drupal::entityQuery('node')
     ->condition('field_available_for_groups', '1')
     ->accessCheck(FALSE);
   $node_storage = \Drupal::entityTypeManager()->getStorage('node');
   $nodes = $node_storage->loadMultiple($query->execute());
+  $helperPath = realpath(iform_client_helpers_path());
   foreach ($nodes as $node) {
     // Some group pages are limited to a single group.
     if (!isset($node->field_limit_to_group_id) || $node->field_limit_to_group_id->value === NULL || $node->field_limit_to_group_id->value === $group_id) {
+      // If limiting to one page type.
+      if ($pageType) {
+        if (isset($node->field_iform)) {
+          // Check node's class pageType.
+          $iform = $node->field_iform->value;
+          $class = "iform_$iform";
+          require_once "$helperPath/prebuilt_forms/$iform.php";
+          if ($class::getPageType() !== $pageType) {
+            continue;
+          }
+        }
+        elseif (($node->bundle() === 'iform_layout_builder_form' && $pageType !== PageType::DataEntry) || ($node->bundle() === 'iform_layout_builder_report' && $pageType !== PageType::Report)) {
+          // Check iform layout builder bundle matches the requested page type.
+          continue;
+        }
+      }
       $alias = \Drupal::service('path_alias.manager')->getAliasByPath('/node/' . $node->id());
       $r[trim($alias, '/')] = $node->title->value;
     }
