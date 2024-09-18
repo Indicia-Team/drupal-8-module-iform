@@ -1495,6 +1495,8 @@ function iform_metatags_alter(&$metatags, $context) {
  * Cleans up old temporary files.
  */
 function iform_cron() {
+  // Ensure helper_base is loaded.
+  iform_load_helpers(['helper_base']);
   // Cache folder (note, not used if delegating to Drupal caching).
   $cacheFolder = helper_base::$cache_folder ? helper_base::$cache_folder : helper_base::relative_client_helper_path() . 'cache/';
   if (file_exists($cacheFolder)) {
