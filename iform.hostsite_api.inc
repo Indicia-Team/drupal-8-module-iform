@@ -9,6 +9,7 @@
  */
 
 use Drupal\Component\Utility\Unicode;
+use Drupal\Core\Cache\Cache;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\StreamWrapper\PublicStream;
 use Drupal\Core\Url;
@@ -857,4 +858,14 @@ function hostsite_cache_purge() {
  */
 function hostsite_cache_expire_entry($key) {
   \Drupal::cache('iform')->delete($key);
+}
+
+/**
+ * Clears cache entries tagged with the provided tag.
+ *
+ * @param string $tag
+ *   Cache tag to clear.
+ */
+function hostsite_cache_clear_tag($tag) {
+  Cache::invalidateTags([$tag]);
 }
