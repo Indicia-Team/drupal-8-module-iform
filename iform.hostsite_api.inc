@@ -450,7 +450,7 @@ function hostsite_get_group_compatible_pages($group_id, $pageType = NULL) {
           $iform = $node->field_iform->value;
           $class = "iform_$iform";
           require_once "$helperPath/prebuilt_forms/$iform.php";
-          if ($class::getPageType() !== $pageType) {
+          if (is_a($class, 'IForm\prebuilt_forms\PrebuiltFormInterface', TRUE) && $class::getPageType() !== $pageType) {
             continue;
           }
         }
