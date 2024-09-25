@@ -1131,6 +1131,7 @@ function iform_load_helpers(array $files, $base_url='') {
     throw new exception('Call to iform_load_helpers must pass an array of helper file names');
   }
   $path = iform_client_helpers_path();
+  require_once $path . 'autoload.php';
   require_once $path . 'helper_base.php';
   // If using a specified theme, load the theme specific PHP file which could, for example, override templates etc.
   $baseTheme = $config->get('base_theme');
