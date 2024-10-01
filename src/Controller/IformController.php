@@ -125,7 +125,7 @@ class IformController extends ControllerBase {
     require_once \iform_client_helpers_path() . 'ElasticsearchProxyHelper.php';
     try {
       $response = \ElasticSearchProxyHelper::callMethod($method, $nid);
-      return new JsonResponse($response, 200, [], is_string($response));
+      return new JsonResponse($response, $response['code'] ?? 200, [], is_string($response));
     }
     catch (\ElasticSearchProxyAbort $e) {
       return new JsonResponse(['msg' => $e->getMessage()], $e->getCode());
