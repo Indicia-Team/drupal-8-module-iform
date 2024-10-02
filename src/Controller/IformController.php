@@ -2,6 +2,8 @@
 
 namespace Drupal\iform\Controller;
 
+use Drupal\Core\Cache\CacheableJsonResponse;
+use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Render\Markup;
 use Drupal\node\Entity\Node;
@@ -125,6 +127,11 @@ class IformController extends ControllerBase {
     require_once \iform_client_helpers_path() . 'ElasticsearchProxyHelper.php';
     try {
       $response = \ElasticSearchProxyHelper::callMethod($method, $nid);
+      if (is_array($response) && isset($response['#cache'])) {
+        $cachedResponse = new CacheableJsonResponse($response);
+        $cachedResponse->addCacheableDependency(CacheableMetadata::createFromRenderArray($response));
+        return $cachedResponse;
+      }
       return new JsonResponse($response, $response['code'] ?? 200, [], is_string($response));
     }
     catch (\ElasticSearchProxyAbort $e) {
