@@ -59,6 +59,7 @@ class IformController extends ControllerBase {
     if ($form === NULL || $method === NULL || $nid === NULL) {
       return new JsonResponse(['msg' => $this->t('Incorrect AJAX call'), 400]);
     }
+    require_once \iform_client_helpers_path() . 'autoload.php';
     $class = "\iform_$form";
     $method = "ajax_$method";
 
