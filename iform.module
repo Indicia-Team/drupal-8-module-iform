@@ -231,7 +231,7 @@ function iform_form_node_form_alter(&$form, FormStateInterface $form_state, $for
     ];
     if ($iform) {
       $form['form-params'] = [
-        '#markup' => Markup::create(form_helper::prebuilt_form_params_form([
+        '#markup' => Markup::create(form_helper::prebuiltFormParamsForm([
           'form' => $iform,
           // @todo Load params properly from node
           'currentSettings' => $node->params,
@@ -271,7 +271,9 @@ function get_custom_param_values($node) {
   if (isset($_POST['iform']) && $_POST['iform'] != -1) {
     iform_load_helpers(['form_helper']);
     ob_start();
-    $params = form_helper::get_form_parameters($_POST['iform']);
+    $connection = iform_get_connection_details($node);
+    $readAuth = form_helper::get_read_auth($connection['website_id'], $connection['password']);
+    $params = form_helper::getFormParameters($_POST['iform'], $readAuth);
     ob_end_clean();
     $values = [];
     // Always want the website id and password.
@@ -494,6 +496,7 @@ function iform_node_view(array &$build, EntityInterface $entity, EntityViewDispl
       global $indicia_theme_path;
       $indicia_theme_path = iform_media_folder_path() . 'themes/';
       $connection = iform_get_connection_details($entity);
+      $readAuth = form_helper::get_read_auth($connection['website_id'], $connection['password']);
       $args['base_url'] = $connection['base_url'];
       $args['website_id'] = $connection['website_id'];
       $args['password'] = $connection['password'];
@@ -503,7 +506,7 @@ function iform_node_view(array &$build, EntityInterface $entity, EntityViewDispl
       }
       // We need to grab each requested parameter from the node to pass to the
       // form.
-      $params = form_helper::get_form_parameters($iform);
+      $params = form_helper::getFormParameters($iform, $readAuth);
 
       foreach ($params as $param) {
         if (isset($entity->params[$param['fieldname']])) {
@@ -1250,12 +1253,21 @@ function iform_client_helpers_path() {
 }
 
 /**
- * Returns a list of website IDs that this website is allowed use data for. This is defined by the agreement between the
- * 2 websites and depends on the exact task being performed.
- * @param array $readAuth Read authorisation tokens
- * @param string $purpose One of reporting, peer_review, verification, data_flow, moderation. Default is 'reporting'. If the
- * agreement defines that the other website provides data to this website for this purpose, then the other website is included.
- * @return array List of website IDs that accesss is allowed for.
+ * Returns a list of website IDs that this website is allowed use data for.
+ *
+ * This is defined by the agreement between the 2 websites and depends on the
+ * exact task being performed.
+ *
+ * @param array $readAuth
+ *   Read authorisation tokens.
+ * @param string $purpose
+ *   One of reporting, peer_review, verification, data_flow, moderation.
+ *   Default is 'reporting'. If the agreement defines that the other website
+ *   provides data to this website for this purpose, then the other website is
+ *   included.
+ *
+ * @return array
+ *   List of website IDs that accesss is allowed for.
  */
 function iform_get_allowed_website_ids($readAuth, $purpose = 'reporting') {
   $websites = data_entry_helper::get_population_data(array(
