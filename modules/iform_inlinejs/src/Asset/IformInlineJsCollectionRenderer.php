@@ -21,7 +21,7 @@ class IformInlineJsCollectionRenderer extends JsCollectionRenderer {
 
     $outputInlineJs = FALSE;
     foreach ($js_assets as $asset) {
-      if ($asset['scope'] === 'footer') {
+      if (isset($asset['scope']) && $asset['scope'] === 'footer') {
         $outputInlineJs = TRUE;
         break;
       }
