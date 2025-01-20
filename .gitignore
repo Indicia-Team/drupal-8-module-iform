@@ -1,1 +1,7 @@
 .DS_Store
+/vendor/
+/web/
+/.vscode
+/.editorconfig
+/.gitattributes
+/composer.lock
