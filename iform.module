@@ -838,11 +838,11 @@ function iform_build_client_helper_libraries(&$libraries) {
       }
     }
     if (!empty($def['deps'])) {
-      $libraries[$name]['dependencies'] = [];
+      $libraries[$name]['dependencies'] = ['iform/base'];
       foreach ($def['deps'] as $dependency) {
-        if (in_array($dependency, $_iform_base_resources))
-          continue;
-        $libraries[$name]['dependencies'][] = "iform/$dependency";
+        if (!in_array($dependency, $_iform_base_resources)) {
+          $libraries[$name]['dependencies'][] = "iform/$dependency";
+        }
       }
     }
   }
