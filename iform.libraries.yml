@@ -10,6 +10,7 @@ base:
     - core/jquery
     - core/jquery.ui.dialog
     - jquery_ui_tabs/tabs
+    - jquery_ui_draggable/draggable
 admin:
   version: VERSION
   js:

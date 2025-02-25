@@ -828,9 +828,7 @@ function iform_build_client_helper_libraries(&$libraries) {
     if (!empty($def['javascript'])) {
       $libraries[$name]['js'] = [];
       foreach ($def['javascript'] as $js) {
-        // skip IE specific scripts (which only applied to IE < 9) since D8 does not support IE<=8.
-        if (substr($js, 0, 4)!=='[IE]')
-          $libraries[$name]['js'][str_replace($fullPaths, $shortPaths, $js)] = [];
+        $libraries[$name]['js'][str_replace($fullPaths, $shortPaths, $js)] = [];
       }
     }
     if (!empty($def['stylesheets'])) {
@@ -840,11 +838,11 @@ function iform_build_client_helper_libraries(&$libraries) {
       }
     }
     if (!empty($def['deps'])) {
-      $libraries[$name]['dependencies'] = [];
+      $libraries[$name]['dependencies'] = ['iform/base'];
       foreach ($def['deps'] as $dependency) {
-        if (in_array($dependency, $_iform_base_resources))
-          continue;
-        $libraries[$name]['dependencies'][] = "iform/$dependency";
+        if (!in_array($dependency, $_iform_base_resources)) {
+          $libraries[$name]['dependencies'][] = "iform/$dependency";
+        }
       }
     }
   }
