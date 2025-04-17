@@ -167,10 +167,10 @@ TXT;
       '#description' => $this->t('Elasticsearch major version number.'),
       '#options' => [
         '6' => '6.x',
-        '7' => '7.x',
+        '7' => '7.x or 8.x',
       ],
       '#required' => TRUE,
-      '#default_value' => $esVersion ? $esVersion : '6',
+      '#default_value' => $esVersion ? $esVersion : '7',
     ];
     $form['esproxy']['elasticsearch_endpoint'] = [
       '#type' => 'textfield',
