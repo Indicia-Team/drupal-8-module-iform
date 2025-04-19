@@ -194,12 +194,12 @@ TXT;
       '#title' => $this->t('Elasticsearch authentication method'),
       '#description' => $this->t('Authentication approach used to connect to the Elasticsearch warehouse proxy.'),
       '#options' => [
-        'directClient' => 'Authenticate as a client configured in the Warehouse REST API',
         'directWebsite' => 'Authenticate as a website registered on the warehouse',
+        'directClient' => 'Authenticate as a client configured in the Warehouse REST API',
         'jwtUser' => 'Authenticate as the logged in user using Java Web Tokens',
       ],
       '#required' => TRUE,
-      '#default_value' => $authMethod ? $authMethod : 'directClient',
+      '#default_value' => $authMethod ? $authMethod : 'directWebsite',
       '#desctription' => $this->t($description),
     ];
     $form['esproxy']['elasticsearch_user'] = [
