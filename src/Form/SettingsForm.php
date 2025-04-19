@@ -140,6 +140,7 @@ class SettingsForm extends ConfigFormBase {
       '#options' => [
         'generic' => 'Generic theme output',
         'bootstrap-3' => 'Bootstrap 3 optimised output',
+        'bootstrap-5' => 'Bootstrap 5 optimised output',
       ],
     ];
 
