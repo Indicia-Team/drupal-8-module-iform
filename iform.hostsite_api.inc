@@ -112,8 +112,11 @@ function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid 
  */
 function hostsite_find_cms_user_by_field_value($field, $value) {
   $fieldname = (substr($field, 0, 6) === 'field_' ? '' : 'field_') . $field;
-  $query = \Drupal::entityQuery('user')->accessCheck(FALSE);
-  $query->condition($fieldname, $value);
+  $query = \Drupal::entityQuery('user')
+    ->accessCheck(FALSE)
+    ->condition($fieldname, $value)
+    // Most recent first in case there are multiple (which shouldn't happen).
+    ->sort('created', 'DESC');
   return array_keys($query->execute());
 }
 
