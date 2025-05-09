@@ -1,5 +1,6 @@
 # drupal-8
-Drupal 8 modules for Indicia
+Drupal 10 modules which integrate Indicia online wildlife recording functionality into the Drupal
+content management system.
 
 # Development
 
