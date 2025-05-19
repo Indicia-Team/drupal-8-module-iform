@@ -803,7 +803,7 @@ function hostsite_cache_set($key, $data, array $tags, $expireAfter) {
   \Drupal::cache('iform')->set($key, [
     'tags' => $tags,
     'data' => $data,
-  ], time() + $expireAfter);
+  ], \Drupal::time()->getRequestTime() + $expireAfter);
 }
 
 /**
