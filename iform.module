@@ -1171,9 +1171,6 @@ function iform_load_helpers(array $files, $base_url='') {
         mkdir(helper_base::$interim_image_folder, 0777, true);
       }
     }
-    // final_image_folder
-    // indicia_upload_path
-    // max_upload_size
     helper_base::$google_api_key = $config->get('google_api_key');
     helper_base::$google_maps_api_key = $config->get('google_maps_api_key');
     helper_base::$os_api_key = helper_base::$os_api_key = $config->get('os_api_key');
