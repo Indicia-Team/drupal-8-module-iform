@@ -26,7 +26,6 @@ class SettingsForm extends ConfigFormBase {
       'warehouse',
       'base_url',
       'geoserver_url',
-      'private_warehouse',
       'allow_connection_override',
       'website_id',
       'password',
@@ -93,13 +92,6 @@ class SettingsForm extends ConfigFormBase {
       '#maxlength' => 255,
       '#required' => FALSE,
       '#default_value' => $config->get('geoserver_url'),
-    ];
-    $form['private_warehouse'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Warehouse is private'),
-      '#description' => $this->t("If your warehouse is not publicly visible (e.g. behind a firewall) then as long as it accepts requests from the IP address of the Drupal website's server you can tick this box to send requests to the warehouse via a proxy on the Drupal server."),
-      '#required' => FALSE,
-      '#default_value' => $config->get('private_warehouse'),
     ];
     $form['allow_connection_override'] = [
       '#type' => 'checkbox',
@@ -454,7 +446,6 @@ TXT;
     $urls = $this->getWarehouseUrls($values);
     $config->set('base_url', $urls['base_url']);
     $config->set('geoserver_url', $urls['geoserver_url']);
-    $config->set('private_warehouse', $values['private_warehouse']);
     $config->set('allow_connection_override', $values['allow_connection_override']);
     $config->set('website_id', $values['website_id']);
     if (!empty($values['password'])) {
