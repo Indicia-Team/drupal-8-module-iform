@@ -2,4 +2,4 @@ name: IForm Inline JS
 type: module
 description: Allows to add inline JavaScripts snippets to the page. Variation on the unsupported inlinejs Drupal project.
 core: 8.x
-core_version_requirement: ^8 || ^9 || ^10
+core_version_requirement: ^10 || ^11

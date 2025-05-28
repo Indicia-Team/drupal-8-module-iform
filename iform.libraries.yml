@@ -15,6 +15,9 @@ admin:
   version: VERSION
   js:
     iform.admin.js: {}
+  dependencies:
+    - iform/base
+    - iform/indiciaMapPanel
 theme.generic:
   version: VERSION
   css:

@@ -30,6 +30,7 @@ class IformInlineJsCollectionRenderer extends JsCollectionRenderer {
     if ($outputInlineJs) {
       $this->renderInlineJs($elements);
     }
+
     return $elements;
   }
 
@@ -47,7 +48,7 @@ class IformInlineJsCollectionRenderer extends JsCollectionRenderer {
       // Put the script below other loaded JS files, especially jQuery.
       '#weight' => 10000,
     ];
-    $inlinejs_assets = \Drupal::moduleHandler()->invokeAll('inlinejs_alter');
+    $inlinejs_assets = \Drupal::moduleHandler()->invokeAll('inlinescript_alter');
     // Loop through all JS assets.
     foreach ($inlinejs_assets as $js_asset) {
       // Element properties that do not depend on JS asset type.
