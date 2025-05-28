@@ -2,7 +2,6 @@ base_url: ''
 warehouse: ''
 allow_connection_override: false
 geoserver_url: ''
-private_warehouse: false
 google_api_key: ''
 bing_api_key: ''
 os_api_key: ''
