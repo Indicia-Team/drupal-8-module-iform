@@ -132,6 +132,7 @@ class SettingsForm extends ConfigFormBase {
       '#options' => [
         'generic' => 'Generic theme output',
         'bootstrap-3' => 'Bootstrap 3 optimised output',
+        'bootstrap-5' => 'Bootstrap 5 optimised output',
       ],
     ];
 
@@ -159,10 +160,10 @@ TXT;
       '#description' => $this->t('Elasticsearch major version number.'),
       '#options' => [
         '6' => '6.x',
-        '7' => '7.x',
+        '7' => '7.x or 8.x',
       ],
       '#required' => TRUE,
-      '#default_value' => $esVersion ? $esVersion : '6',
+      '#default_value' => $esVersion ? $esVersion : '7',
     ];
     $form['esproxy']['elasticsearch_endpoint'] = [
       '#type' => 'textfield',
@@ -186,12 +187,12 @@ TXT;
       '#title' => $this->t('Elasticsearch authentication method'),
       '#description' => $this->t('Authentication approach used to connect to the Elasticsearch warehouse proxy.'),
       '#options' => [
-        'directClient' => 'Authenticate as a client configured in the Warehouse REST API',
         'directWebsite' => 'Authenticate as a website registered on the warehouse',
+        'directClient' => 'Authenticate as a client configured in the Warehouse REST API',
         'jwtUser' => 'Authenticate as the logged in user using Java Web Tokens',
       ],
       '#required' => TRUE,
-      '#default_value' => $authMethod ? $authMethod : 'directClient',
+      '#default_value' => $authMethod ? $authMethod : 'directWebsite',
       '#desctription' => $this->t($description),
     ];
     $form['esproxy']['elasticsearch_user'] = [

@@ -1,4 +1,4 @@
 services:
   asset.js.collection_renderer:
     class: Drupal\iform_inlinejs\Asset\IformInlineJsCollectionRenderer
-    arguments: [ '@state', '@file_url_generator' ]
+    arguments: [ '@asset.query_string','@file_url_generator', '@datetime.time' ]

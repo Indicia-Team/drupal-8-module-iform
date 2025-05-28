@@ -112,8 +112,11 @@ function hostsite_get_user_field($field, $default = FALSE, $array = FALSE, $uid 
  */
 function hostsite_find_cms_user_by_field_value($field, $value) {
   $fieldname = (substr($field, 0, 6) === 'field_' ? '' : 'field_') . $field;
-  $query = \Drupal::entityQuery('user')->accessCheck(FALSE);
-  $query->condition($fieldname, $value);
+  $query = \Drupal::entityQuery('user')
+    ->accessCheck(FALSE)
+    ->condition($fieldname, $value)
+    // Most recent first in case there are multiple (which shouldn't happen).
+    ->sort('created', 'DESC');
   return array_keys($query->execute());
 }
 
@@ -757,12 +760,12 @@ function hostsite_send_email($to, $subject, $body, array $options = []) {
       'replyTo' => hostsite_get_user_field('mail'),
     ], $options);
     $headers = [
-      'MIME-Version: 1.0',
-      'Content-type: text/html; charset=UTF-8;',
-      "From: \"$options[fromName]\" <$options[from]",
-      "Reply-To: \"$options[replyTo]\" <$options[replyTo]>",
-      'Date: ' . date(DateTime::RFC2822),
-      'Message-ID: <' . time() . '-' . md5($options['fromName'] . $to) . '@' . $_SERVER['SERVER_NAME'] . '>',
+      'MIME-Version' => '1.0',
+      'Content-type' => 'text/html; charset=UTF-8;',
+      'From' => "\"$options[fromName]\" <$options[from]>",
+      'Reply-To' => "\"$options[replyTo]\" <$options[replyTo]>",
+      'Date' => date(DateTime::RFC2822),
+      'Message-ID' => '<' . time() . '-' . md5($options['fromName'] . $to) . '@' . $_SERVER['SERVER_NAME'] . '>',
     ];
     // Wrap HTML in full document helps with spam scores.
     $htmlBody = <<<HTML
@@ -800,7 +803,7 @@ function hostsite_cache_set($key, $data, array $tags, $expireAfter) {
   \Drupal::cache('iform')->set($key, [
     'tags' => $tags,
     'data' => $data,
-  ], time() + $expireAfter);
+  ], \Drupal::time()->getRequestTime() + $expireAfter);
 }
 
 /**
@@ -811,16 +814,29 @@ function hostsite_cache_set($key, $data, array $tags, $expireAfter) {
  * @param array $tags
  *   Request options that will be used to double check the cache entry is for
  *   the correct request.
+ * @param int $expireEarlyIfLoggedIn
+ *   Number of seconds earlier a cached item is treated as expired if the user
+ *   is logged in. This is useful for reducing the load on the server on pages
+ *   that are hit by a high volume of anonymous users where you want the data
+ *   to be more recent for logged in users. I.e. set a large number of seconds
+ *   in the $expireAfter parameter for the hostsite_cache_set function, but
+ *   reduce the time for logged in users by specifying a smaller value here.
  *
  * @return array|bool
  *   Cached data, or FALSE if not found.
  */
-function hostsite_cache_get($key, array $tags) {
+function hostsite_cache_get($key, array $tags, int $expireEarlyIfLoggedIn = NULL) {
+  // Check for a cache entry. Allow invalid set to TRUE as we manage our own
+  // expiry.
   $cached = \Drupal::cache('iform')->get($key, TRUE);
   if ($cached !== FALSE) {
+    $expiry = $cached->expire;
+    if (!empty($expireEarlyIfLoggedIn) && hostsite_get_user_field('id') > 0) {
+      $expiry -= $expireEarlyIfLoggedIn;
+    }
     // Check for probabilistic early expiration to avoid cache stampede, see
     // https://en.wikipedia.org/wiki/Cache_stampede#Probabilistic_early_expiration.
-    if (time() - 10 * log(mt_rand() / mt_getrandmax()) >= $cached->expire) {
+    if (time() - 10 * log(mt_rand() / mt_getrandmax()) >= $expiry) {
       return FALSE;
     }
     // A final check on the options used to retrieve the cache data, in case
