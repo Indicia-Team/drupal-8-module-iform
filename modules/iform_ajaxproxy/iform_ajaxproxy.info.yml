@@ -1,9 +1,8 @@
 name: Indicia AJAX Proxy
 description: A module required to proxy of AJAX calls to Indicia services.
-core: 8.x
 core_version_requirement: ^10 || ^11
-version: "8.x-1.0"
-package: Indicia
+version: "9.11.0"
+package: "Indicia"
 type: module
 dependencies:
   - iform
