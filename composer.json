@@ -13,8 +13,9 @@
         }
 	],
     "require": {
-        "indicia/client_helpers": ">8.24.7",
-        "indicia/media": ">8.24.4",
+		"drupal/core": "^11",
+        "indicia/client_helpers": "^9",
+        "indicia/media": "^9",
         "drupal/jquery_ui": "^1.7",
         "drupal/jquery_ui_tabs": "^2.1"
     },
