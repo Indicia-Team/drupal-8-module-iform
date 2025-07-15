@@ -15,6 +15,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Markup;
+use IForm\ValidationException;
 
 require_once 'iform.hostsite_api.inc';
 
@@ -647,8 +648,15 @@ function iform_handle_posted_form($node, array $args, &$response) {
     } catch (Exception $e) {
       \Drupal::logger('iform')
         ->notice('Exception occurred during build of form submission: ' . $e->getMessage());
-      \Drupal::messenger()->addMessage(t('An error occurred whilst saving the new site details.'));
-      unset($s);
+      $msg = t('An error occurred whilst saving the information.');
+      if ($e instanceof ValidationException) {
+        $msg .= lang::get($e->getMessage());
+      }
+      return data_entry_helper::dump_errors([
+        'errors' => [$e->fieldname => $msg],
+        // Server validation code.
+        'code' => 2003,
+      ]);
     }
     // And allow the form or calling URL to dynamically set the destination
     // after post.

@@ -163,7 +163,7 @@ class Iform_ajaxproxyController extends ControllerBase {
       case "media":
         // Media handled differently. Submission is handled by the
         // handle_media function.
-        // Hardcode the auth into the $_Post array.
+        // Hardcode the auth into the $_POST array.
         $_POST['auth_token'] = sha1("$nonce:$conn[password]");
         $_POST['nonce'] = $nonce;
         $media_id = 'upload_file';
@@ -183,6 +183,14 @@ class Iform_ajaxproxyController extends ControllerBase {
             $fext = array_pop($parts);
             // Generate a file id to store the image as.
             $destination = time() . str_pad((string) rand(0, 999), 3, '0', STR_PAD_LEFT) . ".$fext";
+            if (!\helper_base::checkUploadFileType($name) ||
+                !\helper_base::checkUploadMimeType($fname)) {
+              // Attempt to upload an invalid file type.
+              $return['error'] = 'The selected file type is not allowed.';
+              $return['errors'][$media_id] = $return['error'];
+              $return['success'] = FALSE;
+              return new Response(json_encode($return));
+            }
             if (move_uploaded_file($fname, $uploadpath . $destination)) {
               // Successfully stored locally - send to the warehouse.
               // We've done the time etc thing, so server doesn't need to.
