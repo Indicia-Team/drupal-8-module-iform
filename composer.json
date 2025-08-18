@@ -3,13 +3,13 @@
     "description": "IForm module for Drupal integration with Indicia.",
     "type": "drupal-custom-module",
     "repositories": [
-        {
+		{
             "type": "vcs",
-            "url": "https://github.com/Indicia-Team/client_helpers.git"
+            "url": "git@github.com:Indicia-Team/client_helpers.git"
         },
         {
             "type": "vcs",
-            "url": "https://github.com/Indicia-Team/media.git"
+            "url": "git@github.com:Indicia-Team/media.git"
         }
 	],
     "require": {
