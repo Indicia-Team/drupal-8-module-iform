@@ -1,6 +1,6 @@
 (function ($) {
   $(document).ready(function() {
-    $('input[name="warehouse"]').change(function(evt) {
+    $('input[name="warehouse"]').on('change', function(evt) {
       if (evt.target.value=='other') {
         $('#warehouse_details').attr('open', true);
       } else {
