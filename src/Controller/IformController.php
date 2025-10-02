@@ -108,8 +108,8 @@ class IformController extends ControllerBase {
       $response = call_user_func([$class, $method], $website_id, $password, $nid);
     }
     catch (\Exception $e) {
-      \Drupal::logger('iform')->error($e->getMessage());
-      return new JsonResponse(['msg' => $e->getMessage()], 500);
+      $code = $e->getCode();
+      return new JsonResponse(['msg' => $e->getMessage()], $code === 0 ? 500 : $code);
     }
 
     if (is_array($response)) {
