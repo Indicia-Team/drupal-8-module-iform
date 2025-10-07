@@ -98,8 +98,8 @@ class IformController extends ControllerBase {
       require_once $path . 'helper_base.php';
       \helper_base::$base_url = $node->params['base_url'];
     }
-    // If node not supplied, or does not have its own website Id and password, use the
-    // global drupal vars from the settings form.
+    // If node not supplied, or does not have its own website Id and password,
+    // use the global drupal vars from the settings form.
     if (empty($website_id) || empty($password)) {
       $website_id = $config->get('website_id');
       $password = $config->get('password');
@@ -108,8 +108,8 @@ class IformController extends ControllerBase {
       $response = call_user_func([$class, $method], $website_id, $password, $nid);
     }
     catch (\Exception $e) {
-      \Drupal::logger('iform')->error($e->getMessage());
-      return new JsonResponse(['msg' => $e->getMessage()], 500);
+      $code = $e->getCode();
+      return new JsonResponse(['msg' => $e->getMessage()], $code === 0 ? 500 : $code);
     }
 
     if (is_array($response)) {
@@ -298,7 +298,7 @@ class IformController extends ControllerBase {
    * @return string
    *   Group title.
    */
-  function readableGroupTitle($group) {
+  private function readableGroupTitle($group) {
     $r = $group['title'];
     if (!preg_match('/ ' . t('group') . '$/', $r)) {
       $r .= ' ' . $this->t('group');
@@ -321,7 +321,7 @@ class IformController extends ControllerBase {
    * @return string
    *   Group description HTML.
    */
-  function showGroupPage(array $group, $websiteId, array $readAuth) {
+  private function showGroupPage(array $group, $websiteId, array $readAuth) {
     $path = \data_entry_helper::get_uploaded_image_folder();
     $img = empty($group['logo_path']) ? '' : "<img style=\"width: 20%; float: left; padding-right: 5%\" alt=\"Logo\" src=\"$path$group[logo_path]\"/>";
     $r = '<div class="clearfix">' . $img . '<div style="float: left; width: 70%;">' .
@@ -339,14 +339,14 @@ class IformController extends ControllerBase {
     }
 
     // Load the available pages.
-    $pages = \data_entry_helper::get_population_data(array(
+    $pages = \data_entry_helper::get_population_data([
       'table' => 'group_page',
       'extraParams' => $readAuth + [
         'group_id' => $group['id'],
         'website_id' => $websiteId,
         'query' => json_encode(['in' => ['administrator' => $adminFlags]]),
-      ]
-    ));
+      ],
+    ]);
     if (count($pages)) {
       $pageList = [];
       foreach ($pages as $page) {
@@ -399,7 +399,7 @@ class IformController extends ControllerBase {
    * @return bool
    *   True if joining was successful.
    */
-  function joinPublicGroup(&$group, $writeAuth, $indiciaUserId) {
+  private function joinPublicGroup(&$group, $writeAuth, $indiciaUserId) {
     $conn = iform_get_connection_details();
     $userName = hostsite_get_user_field('name');
     $values = [

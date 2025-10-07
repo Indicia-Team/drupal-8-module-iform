@@ -28,3 +28,8 @@ theme.bootstrap-3:
   css:
     component:
       media/css/theme-bootstrap-3.css: {}
+theme.bootstrap-5:
+  version: VERSION
+  css:
+    component:
+      media/css/theme-bootstrap-5.css: {}

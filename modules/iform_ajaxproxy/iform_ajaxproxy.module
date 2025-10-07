@@ -4,24 +4,32 @@ use Drupal\Core\Url;
 
 /* -----------------------------------------------------------------
 
- Public API
+Public API
 
 ------------------------------------------------------------------ */
 
 /**
  * Provide a URL to be used for AJAX requests.
  *
- * @param integer $nid Node ID
- * @param integer|string $index Array index used to define how to process the post into an indicia format.
+ * @param ?int $nid
+ *   Node ID.
+ * @param int|string $index
+ *   Array index used to define how to process the post into an indicia format.
+ *
  * @return string
  *   A ready to be used url.
  *
  * @see iform_proxy_redirect()
  */
 function iform_ajaxproxy_url($nid, $index) {
-  return Url::fromRoute('iform_ajaxproxy.callback', array(),
-    array('absolute' => TRUE, 'query' => array(
-      'node' => empty($nid) ? '' : $nid, 'index' => $index
-    )))->toString();
+  return Url::fromRoute(
+    'iform_ajaxproxy.callback',
+    [],
+    [
+      'absolute' => TRUE,
+      'query' => [
+        'node' => empty($nid) ? '' : $nid,
+        'index' => $index,
+      ],
+    ])->toString();
 }
-
