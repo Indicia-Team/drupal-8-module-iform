@@ -845,8 +845,8 @@ function iform_build_client_helper_libraries(&$libraries) {
         $libraries[$name]['css']['component'][str_replace($fullPaths, $shortPaths, $css)] = [];
       }
     }
+    $libraries[$name]['dependencies'] = ['iform/base'];
     if (!empty($def['deps'])) {
-      $libraries[$name]['dependencies'] = ['iform/base'];
       foreach ($def['deps'] as $dependency) {
         if (!in_array($dependency, $_iform_base_resources)) {
           $libraries[$name]['dependencies'][] = "iform/$dependency";
