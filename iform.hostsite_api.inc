@@ -164,6 +164,24 @@ function hostsite_user_has_permission($task, $uid = FALSE) {
 }
 
 /**
+ * Returns true if user allowed to view a node.
+ *
+ * @param int $nid
+ *   Node ID.
+ * @param int|false $uid
+ *   User ID. Default false, if false, current user is used.
+ *
+ * @return bool
+ *   True if allowed.
+ */
+function hostsite_user_has_node_view_permission($nid, $uid = FALSE) {
+  $node = Node::load($nid);
+  $account = $uid ? User::load($uid) : \Drupal::currentUser();
+  $access = $node->access('view', $account, TRUE);
+  return $access->isAllowed();
+}
+
+/**
  * Display a message in a way that can be unhooked from Drupal.
  *
  * @param string $msg
