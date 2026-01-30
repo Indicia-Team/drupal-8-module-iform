@@ -324,8 +324,6 @@ class IformController extends ControllerBase {
   private function showGroupPage(array $group, $websiteId, array $readAuth) {
     $path = \data_entry_helper::get_uploaded_image_folder();
     $img = empty($group['logo_path']) ? '' : "<img style=\"width: 20%; float: left; padding-right: 5%\" alt=\"Logo\" src=\"$path$group[logo_path]\"/>";
-    $r = '<div class="clearfix">' . $img . '<div style="float: left; width: 70%;">' .
-        "<h3>$group[title]</h3><p class=\"group-description\">$group[description]</p>";
     $nonMembers = '';
     $adminFlags = [''];
     if (empty($group['member']) || $group['member'] === 'f') {
@@ -347,24 +345,44 @@ class IformController extends ControllerBase {
         'query' => json_encode(['in' => ['administrator' => $adminFlags]]),
       ],
     ]);
+    $pageListHtml = '';
     if (count($pages)) {
+      global $indicia_templates;
       $pageList = [];
       foreach ($pages as $page) {
-        $class = strtolower(preg_replace('[^a-zA-Z0-9]', '-', $page['path']));
-        $pageList[] = "<li><a class=\"button $class\" href=\"" .
-          hostsite_get_url($page['path'], [
-            'group_id' => $group['id'],
-            'implicit' => $group['implicit_record_inclusion'],
-          ]) .
-          "\">$page[caption]</a></li>";
+        $class = strtolower(preg_replace('/[^a-zA-Z0-9]/', '-', $page['path']));
+        $pageUrl = hostsite_get_url($page['path'], [
+          'group_id' => $group['id'],
+          'implicit' => $group['implicit_record_inclusion'],
+        ]);
+        $pageList[] = <<<HTML
+          <li class="$class-cntr"><a class="$indicia_templates[buttonDefaultClass] $class" href="$pageUrl">$page[caption]</a></li>
+        HTML;
       }
-      $pageHtml = '<ul>' . implode('', $pageList) . '</ul>';
-      $r .= "<fieldset><legend>Pages</legend><p>" .
-          $this->t("The following links are available for$nonMembers the @group:",
-            ['@group' => $this->readableGroupTitle($group)]) . "</p>$pageHtml</fieldset>";
+      $pageListLiHtml = implode('', $pageList);
+      $pageHtml = '<ul class="group-page-list">' . $pageListLiHtml . '</ul>';
+      $listIntro = $this->t("The following links are available for$nonMembers the @group:",
+              ['@group' => $this->readableGroupTitle($group)]);
+      $pageListHtml .= <<<HTML
+        <div>
+          <h4>Pages</h4>
+          <p>
+            $listIntro
+          </p>
+          $pageHtml
+        </div>
+      HTML;
     }
-    $r .= '</div></div>';
-    return $r;
+    return <<<HTML
+      <div class="clearfix">
+        $img
+        <div style="float: left; width: 70%;">
+          <h3>$group[title]</h3>
+          <p class="group-description">$group[description]</p>
+          $pageListHtml
+        </div>
+      </div>
+    HTML;
   }
 
   private function groupConfirmForm($group) {
