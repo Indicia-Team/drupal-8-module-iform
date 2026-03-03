@@ -8,7 +8,6 @@
  * content management system, in this case Drupal 8.
  */
 
-use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\StreamWrapper\PublicStream;
@@ -18,6 +17,7 @@ use Drupal\user\Entity\User;
 use IForm\prebuilt_forms\PageType;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\Mime\Header\UnstructuredHeader;
 
 /**
  * Retrieve a user field value.
@@ -463,12 +463,12 @@ function hostsite_get_group_compatible_pages($group_id, $pageType = NULL) {
   $helperPath = realpath(iform_client_helpers_path());
   foreach ($nodes as $node) {
     // Some group pages are limited to a single group.
-    if (!isset($node->field_limit_to_group_id) || $node->field_limit_to_group_id->value === NULL || $node->field_limit_to_group_id->value === $group_id) {
+    if (!$node->hasField('field_limit_to_group_id') || $node->get('field_limit_to_group_id')->isEmpty() || $node->get('field_limit_to_group_id')->value === $group_id) {
       // If limiting to one page type.
       if ($pageType) {
-        if (isset($node->field_iform)) {
+        if ($node->hasField('field_iform') && !$node->get('field_iform')->isEmpty()) {
           // Check node's class pageType.
-          $iform = $node->field_iform->value;
+          $iform = $node->get('field_iform')->value;
           $class = "iform_$iform";
           require_once "$helperPath/prebuilt_forms/$iform.php";
           if (is_a($class, 'IForm\prebuilt_forms\PrebuiltFormInterface', TRUE) && $class::getPageType() !== $pageType) {
@@ -481,7 +481,7 @@ function hostsite_get_group_compatible_pages($group_id, $pageType = NULL) {
         }
       }
       $alias = \Drupal::service('path_alias.manager')->getAliasByPath('/node/' . $node->id());
-      $r[trim($alias, '/')] = $node->title->value;
+      $r[trim($alias, '/')] = $node->getTitle();
     }
   }
   return $r;
@@ -510,7 +510,7 @@ function hostsite_module_exists($module) {
  *   Encoded string.
  */
 function hostsite_mime_header_encode($string) {
-  return Unicode::mimeHeaderEncode($string);
+  return (new UnstructuredHeader('subject', $string))->getBodyAsString();
 }
 
 /**
@@ -678,7 +678,7 @@ function hostsite_set_cookie($cookie, $value, $expire = 0) {
  */
 function hostsite_get_cookie($cookie, $default = FALSE) {
   $config = \Drupal::config('iform.settings');
-  $cookie = $config->get('cookie_prefix', '') . $cookie;
+  $cookie = $config->get('cookie_prefix') . $cookie;
   return (isset($_COOKIE[$cookie]) ? $_COOKIE[$cookie] : $default);
 }
 
@@ -832,7 +832,7 @@ function hostsite_cache_set($key, $data, array $tags, $expireAfter) {
  * @param array $tags
  *   Request options that will be used to double check the cache entry is for
  *   the correct request.
- * @param int $expireEarlyIfLoggedIn
+ * @param int|null $expireEarlyIfLoggedIn
  *   Number of seconds earlier a cached item is treated as expired if the user
  *   is logged in. This is useful for reducing the load on the server on pages
  *   that are hit by a high volume of anonymous users where you want the data
@@ -843,7 +843,7 @@ function hostsite_cache_set($key, $data, array $tags, $expireAfter) {
  * @return array|bool
  *   Cached data, or FALSE if not found.
  */
-function hostsite_cache_get($key, array $tags, int $expireEarlyIfLoggedIn = NULL) {
+function hostsite_cache_get($key, array $tags, ?int $expireEarlyIfLoggedIn = NULL) {
   // Check for a cache entry. Allow invalid set to TRUE as we manage our own
   // expiry.
   $cached = \Drupal::cache('iform')->get($key, TRUE);
