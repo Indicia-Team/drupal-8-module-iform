@@ -1,14 +1,14 @@
 name: Indicia forms
 description: Provides the Indicia Forms content type.
 core_version_requirement: ^10 || ^11
-version: "9.18.1"
+version: "9.19.0"
 package: "Indicia"
 configure: iform.settings
 type: module
 dependencies:
-  - iform_inlinejs
-  - jquery_ui
-  - jquery_ui_tabs
-  - jquery_ui_draggable
-  - options
-  - path
+  - iform:iform_inlinejs
+  - jquery_ui:jquery_ui
+  - jquery_ui_tabs:jquery_ui_tabs
+  - jquery_ui_draggable:jquery_ui_draggable
+  - drupal:options
+  - drupal:path
