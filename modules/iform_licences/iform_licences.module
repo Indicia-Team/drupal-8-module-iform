@@ -1,7 +1,12 @@
 <?php
 
-use Drupal\Core\Link;
+/**
+ * @file
+ * Licence settings integration for IForm user workflows.
+ */
+
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Link;
 use Drupal\user\UserInterface;
 
 /**
@@ -15,15 +20,14 @@ function iform_licences_form_iform_settings_form_alter(&$form, FormStateInterfac
   $default = $config->get('licences_mode');
   $default = $default ? $default : 'media';
   $form['iform_licences_mode'] = [
-    '#type' => 'details',
     '#title' => t('Indicia licence choices'),
     '#description' => t('Option to apply user licence choice for records and/or media separately.'),
     '#type' => 'radios',
-    '#options' => array(
+    '#options' => [
       'records' => t('User can select licence for records only'),
       'media' => t('User can select licence for media (photos etc) only'),
       'records+media' => t('User can select licence for records and media separately'),
-    ),
+    ],
     '#default_value' => $default,
     '#weight' => 49,
   ];
@@ -32,8 +36,16 @@ function iform_licences_form_iform_settings_form_alter(&$form, FormStateInterfac
 
 /**
  * Save the mode option on Iform settings form submit.
+ *
+ * @param array $form
+ *   The form structure.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The form state.
+ *
+ * @return void
+ *   No return value.
  */
-function iform_licences_iform_settings_form_submit($form, FormStateInterface &$form_state) {
+function iform_licences_iform_settings_form_submit($form, FormStateInterface $form_state) {
   $config = \Drupal::configFactory()->getEditable('iform_licences.settings');
   $values = $form_state->getValues();
   $config->set('licences_mode', $values['iform_licences_mode']);
@@ -65,14 +77,14 @@ function iform_licences_form_alter(&$form, FormStateInterface $form_state, $form
       $currentLicenceId = NULL;
       $currentMediaLicenceId = NULL;
       if ($indiciaUserId) {
-        $current = helper_base::get_population_data(array(
+        $current = helper_base::get_population_data([
           'table' => 'users_website',
-          'extraParams' => $readAuth + array(
+          'extraParams' => $readAuth + [
             'user_id' => $indiciaUserId,
             'columns' => 'licence_id,media_licence_id',
-          ),
+          ],
           'caching' => FALSE,
-        ));
+        ]);
         $currentLicenceId = $current[0]['licence_id'];
         $currentMediaLicenceId = $current[0]['media_licence_id'];
       }
@@ -84,9 +96,9 @@ function iform_licences_form_alter(&$form, FormStateInterface $form_state, $form
         $label = $licenceFor === 'records' ? t('records') : t('photos and other media');
         $thisLicenceId = $licenceFor === 'records' ? $currentLicenceId : $currentMediaLicenceId;
         $description = t('Select the licence to apply to your @label.', ['@label' => $label]) . ' ';
-        // For media only, add some text to recommend CC0 and avoiding commercially valuable images
+        // Recommend a permissive option for media, where appropriate.
         if ($licenceFor !== 'records') {
-          $description .=  t('If you are happy to select a CC0 or CC BY licence option, that will provide the best chance for your photos to be used in research and conservation. ');
+          $description .= t('If you are happy to select a CC0 or CC BY licence option, that will provide the best chance for your photos to be used in research and conservation.') . ' ';
         }
         if ($form_id === 'user_profile_form') {
           // Extra warning shown when changing existing setting.
@@ -107,7 +119,7 @@ function iform_licences_form_alter(&$form, FormStateInterface $form_state, $form
             )) . '</strong>';
             if ($licenceFor === 'media') {
               $description .= strtoupper(
-                t(' If you have many thousands of images, it may take a few minutes to apply.',
+                t('If you have many thousands of images, it may take a few minutes to apply.',
                 [
                   '@label' => $label,
                   '@site' => $siteName,
@@ -116,14 +128,14 @@ function iform_licences_form_alter(&$form, FormStateInterface $form_state, $form
             }
           }
         }
-        $form["field_iform_licence_$licenceFor"] = array(
+        $form["field_iform_licence_$licenceFor"] = [
           '#type' => 'radios',
           '#title' => t('<span id="licenceopts">Licence for your @label</span>', ['@label' => $label]),
           '#options' => $options,
           '#description' => $description,
-          '#required' => $form_id === 'user_register_form' ? TRUE: FALSE,
+          '#required' => $form_id === 'user_register_form' ? TRUE : FALSE,
           '#default_value' => $thisLicenceId,
-        );
+        ];
         foreach (array_keys($form['actions']) as $action) {
           if ($action != 'preview' && isset($form['actions'][$action]['#type']) && $form['actions'][$action]['#type'] === 'submit') {
             $form['actions'][$action]['#submit'][] = 'iform_licences_user_form_submit';
@@ -138,23 +150,30 @@ function iform_licences_form_alter(&$form, FormStateInterface $form_state, $form
  * Submit handler for the register and user profile forms.
  *
  * Saves the licence setting.
+ *
+ * @param array $form
+ *   The form structure.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The form state.
+ *
+ * @return void
+ *   No return value.
  */
-function iform_licences_user_form_submit($form, FormStateInterface &$form_state) {
+function iform_licences_user_form_submit($form, FormStateInterface $form_state) {
   iform_load_helpers(['submission_builder', 'data_entry_helper']);
   $conn = iform_get_connection_details(NULL);
   $auth = helper_base::get_read_write_auth($conn['website_id'], $conn['password']);
   $indiciaUserId = hostsite_get_user_field('indicia_user_id');
-  $conn = iform_get_connection_details();
   if ($indiciaUserId) {
     $formValues = $form_state->getValues();
-    $current = helper_base::get_population_data(array(
+    $current = helper_base::get_population_data([
       'table' => 'users_website',
-      'extraParams' => $auth['read'] + array(
+      'extraParams' => $auth['read'] + [
         'user_id' => $indiciaUserId,
         'columns' => 'id,licence_id,media_licence_id',
-      ),
-      'caching' => FALSE
-    ));
+      ],
+      'caching' => FALSE,
+    ]);
     $values = [];
     if (count($current)) {
       $currentUw = $current[0];
@@ -167,7 +186,7 @@ function iform_licences_user_form_submit($form, FormStateInterface &$form_state)
       ];
       $values = [
         'user_id' => $indiciaUserId,
-        'website_id' => $conn('website_id', ''),
+        'website_id' => $conn['website_id'],
       ];
     }
     $change = FALSE;
@@ -182,7 +201,7 @@ function iform_licences_user_form_submit($form, FormStateInterface &$form_state)
       $change = TRUE;
     }
     if ($change) {
-      $s = submission_builder::build_submission($values, array('model' => 'users_website'));
+      $s = submission_builder::build_submission($values, ['model' => 'users_website']);
       $r = data_entry_helper::forward_post_to('users_website', $s, $auth['write_tokens']);
       if (!isset($r['success'])) {
         \Drupal::logger('iform')->error('Error occurred when saving a user licence: ' . var_export($r, TRUE));
@@ -199,18 +218,18 @@ function iform_licences_user_form_submit($form, FormStateInterface &$form_state)
  * Adds a message if the user has not configured their licence settings.
  */
 function iform_licences_user_login(UserInterface $account) {
-  if (!empty($account->field_indicia_user_id->value)) {
+  if (!empty($account->get('field_indicia_user_id')->value)) {
     iform_load_helpers(['helper_base']);
     $conn = iform_get_connection_details();
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
-    $current = helper_base::get_population_data(array(
+    $current = helper_base::get_population_data([
       'table' => 'users_website',
       'extraParams' => $readAuth + [
-        'user_id' => $account->field_indicia_user_id->value,
-        'columns' => 'media_licence_id'
+        'user_id' => $account->get('field_indicia_user_id')->value,
+        'columns' => 'media_licence_id',
       ],
       'caching' => FALSE,
-    ));
+    ]);
     $currentMediaLicenceId = $current[0]['media_licence_id'];
     if (!isset($currentMediaLicenceId)) {
       \Drupal::messenger()->addMessage(t('You have not yet specified a media licence. This limits the usefulness of your images. @link',
