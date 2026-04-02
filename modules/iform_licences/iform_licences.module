@@ -118,7 +118,7 @@ function iform_licences_form_alter(&$form, FormStateInterface $form_state, $form
               ]
             )) . '</strong>';
             if ($licenceFor === 'media') {
-              $description .= strtoupper(
+              $description .= ' ' . strtoupper(
                 t('If you have many thousands of images, it may take a few minutes to apply.',
                 [
                   '@label' => $label,
