@@ -1207,7 +1207,8 @@ function iform_load_helpers(array $files, $base_url='') {
  */
 function iform_setup_cache_folder() {
   // Path unique to the warehouse, so no problems if we switch warehouse.
-  $folder = preg_replace("/[^a-zA-Z0-9]+/", "", helper_base::$base_url);
+  // Default folder just specified to avoid errors if iform not yet configured.
+  $folder = preg_replace("/[^a-zA-Z0-9]+/", "", helper_base::$base_url ?? 'default');
   // cache folder into private file path if specified as its more secure, otherwise public.
   $filepath = PrivateStream::basePath();
   if (!$filepath) {
