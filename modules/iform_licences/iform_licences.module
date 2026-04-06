@@ -64,17 +64,14 @@ function iform_licences_form_alter(&$form, FormStateInterface $form_state, $form
     iform_load_helpers(['helper_base']);
     $conn = iform_get_connection_details();
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
-    $licences = helper_base::get_population_data([
-      'table' => 'licence',
-      'extraParams' => $readAuth + [
-        'orderby' => 'permissiveness_sort_order, title',
-        'sortdir' => 'DESC,ASC',
-      ],
-      'cachePerUser' => FALSE,
-    ]);
+    $licences = iform_get_licences($readAuth);
     $licencesMode = $config->get('licences_mode');
     $licencesMode = $licencesMode ? $licencesMode : 'media';
     $licencesApplyTo = explode('+', $licencesMode);
+    $morePermissiveLicenceIds = [
+      'records' => [],
+      'media' => [],
+    ];
     if (count($licences)) {
       $indiciaUserId = hostsite_get_user_field('indicia_user_id');
       $currentLicenceId = NULL;
@@ -91,9 +88,23 @@ function iform_licences_form_alter(&$form, FormStateInterface $form_state, $form
         $currentLicenceId = $current[0]['licence_id'];
         $currentMediaLicenceId = $current[0]['media_licence_id'];
       }
+      if (!empty($currentLicenceId) && isset($licences[$currentLicenceId])) {
+        foreach ($licences as $id => $licence) {
+          if ($licence['permissiveness_sort_order'] > $licences[$currentLicenceId]['permissiveness_sort_order']) {
+            $morePermissiveLicenceIds['records'][] = (string) $id;
+          }
+        }
+      }
+      if (!empty($currentMediaLicenceId) && isset($licences[$currentMediaLicenceId])) {
+        foreach ($licences as $id => $licence) {
+          if ($licence['permissiveness_sort_order'] > $licences[$currentMediaLicenceId]['permissiveness_sort_order']) {
+            $morePermissiveLicenceIds['media'][] = (string) $id;
+          }
+        }
+      }
       $options = [];
-      foreach ($licences as $licence) {
-        $options[$licence['id']] = "$licence[code]: <a href='$licence[url_readable]'>$licence[title]</a>";
+      foreach ($licences as $id => $licence) {
+        $options[$id] = "$licence[code]: <a href='$licence[url_readable]'>$licence[title]</a>";
       }
       foreach ($licencesApplyTo as $licenceFor) {
         $label = $licenceFor === 'records' ? t('records') : t('photos and other media');
@@ -139,14 +150,69 @@ function iform_licences_form_alter(&$form, FormStateInterface $form_state, $form
           '#required' => $form_id === 'user_register_form' ? TRUE : FALSE,
           '#default_value' => $thisLicenceId,
         ];
-        foreach (array_keys($form['actions']) as $action) {
-          if ($action != 'preview' && isset($form['actions'][$action]['#type']) && $form['actions'][$action]['#type'] === 'submit') {
-            $form['actions'][$action]['#submit'][] = 'iform_licences_user_form_submit';
+
+        if (!empty($thisLicenceId)) {
+          $morePermissiveStates = [];
+          foreach ($morePermissiveLicenceIds[$licenceFor] as $licenceId) {
+            if (!empty($morePermissiveStates)) {
+              $morePermissiveStates[] = 'or';
+            }
+            $morePermissiveStates[] = [
+              ":input[name=\"field_iform_licence_$licenceFor\"]" => ['value' => $licenceId],
+            ];
           }
+
+          if (!empty($morePermissiveStates)) {
+            $applyFieldName = "field_iform_apply_more_permissive_to_existing_$licenceFor";
+            $applyTitle = $licenceFor === 'records'
+              ? t('You are selecting a more permissive records licence. Would you like to apply this licence to your existing records?')
+              : t('You are selecting a more permissive media licence. Would you like to apply this licence to your existing media?');
+            $form[$applyFieldName] = [
+              '#type' => 'checkbox',
+              '#title' => $applyTitle,
+              '#default_value' => 0,
+              '#attributes' => [
+                'class' => ['form-check-input'],
+              ],
+              '#wrapper_attributes' => [
+                'class' => ['alert', 'alert-info', 'form-check', 'form-switch'],
+              ],
+              '#states' => [
+                'visible' => $morePermissiveStates,
+              ],
+            ];
+          }
+        }
+      }
+      foreach (array_keys($form['actions']) as $action) {
+        if ($action != 'preview' && isset($form['actions'][$action]['#type']) && $form['actions'][$action]['#type'] === 'submit') {
+          $form['actions'][$action]['#submit'][] = 'iform_licences_user_form_submit';
         }
       }
     }
   }
+}
+
+/**
+ * Get the list of licences to populate the user form options.
+ *
+ * @param array $readAuth
+ *   Read authorisation tokens for the warehouse.
+ *
+ * @return array
+ *   List of licences, keyed by ID.
+ */
+function iform_get_licences(array $readAuth) {
+  $licences = helper_base::get_population_data([
+    'table' => 'licence',
+    'extraParams' => $readAuth + [
+      'orderby' => 'permissiveness_sort_order, title',
+      'sortdir' => 'DESC,ASC',
+    ],
+    'cachePerUser' => FALSE,
+  ]);
+
+  return array_column($licences, NULL, 'id');
 }
 
 /**
@@ -193,22 +259,36 @@ function iform_licences_user_form_submit($form, FormStateInterface $form_state) 
       ];
     }
     $change = FALSE;
+    $licenceChangeIsMorePermissive = [
+      'records' => FALSE,
+      'media' => FALSE,
+    ];
+    $licences = iform_get_licences($auth['read']);
     if (!empty($formValues['field_iform_licence_records']) &&
         $formValues['field_iform_licence_records'] !== $currentUw['licence_id']) {
       $values['licence_id'] = $formValues['field_iform_licence_records'];
       $change = TRUE;
+      $licenceChangeIsMorePermissive['records'] = !empty($currentUw['licence_id']) &&
+        $licences[$formValues['field_iform_licence_records']]['permissiveness_sort_order'] > $licences[$currentUw['licence_id']]['permissiveness_sort_order'];
     }
     if (!empty($formValues['field_iform_licence_media']) &&
         $formValues['field_iform_licence_media'] !== $currentUw['media_licence_id']) {
       $values['media_licence_id'] = $formValues['field_iform_licence_media'];
       $change = TRUE;
+      $licenceChangeIsMorePermissive['media'] = !empty($currentUw['media_licence_id']) &&
+        $licences[$formValues['field_iform_licence_media']]['permissiveness_sort_order'] > $licences[$currentUw['media_licence_id']]['permissiveness_sort_order'];
     }
     if ($change) {
       $s = submission_builder::build_submission($values, ['model' => 'users_website']);
+      if (!empty($formValues['field_iform_apply_more_permissive_to_existing_records'])) {
+        $s['metaFields']['apply_licence_to_existing_records'] = TRUE;
+      }
+      if (!empty($formValues['field_iform_apply_more_permissive_to_existing_media'])) {
+        $s['metaFields']['apply_licence_to_existing_media'] = TRUE;
+      }
       $r = data_entry_helper::forward_post_to('users_website', $s, $auth['write_tokens']);
       if (!isset($r['success'])) {
         \Drupal::logger('iform')->error('Error occurred when saving a user licence: ' . var_export($r, TRUE));
-        hostsite_show_message(var_export($r, TRUE), 'error');
       }
     }
   }
