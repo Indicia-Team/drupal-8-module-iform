@@ -401,7 +401,7 @@ TXT;
     elseif (!empty($values['password'])) {
       // Test the connection to the warehouse.
       $urls = $this->getWarehouseUrls($values);
-      \data_entry_helper::$base_url = $urls['base_url'];
+      \data_entry_helper::$base_url = $this->tidyBaseUrl($urls['base_url']);
       // Clear the cache if the linked warehouse changes.
       if ($config->get('base_url') !== $urls['base_url']) {
         hostsite_cache_clear();
@@ -445,7 +445,7 @@ TXT;
     $values = $form_state->getValues();
     $config->set('warehouse', $values['warehouse']);
     $urls = $this->getWarehouseUrls($values);
-    $config->set('base_url', $urls['base_url']);
+    $config->set('base_url', $this->tidyBaseUrl($urls['base_url']));
     $config->set('geoserver_url', $urls['geoserver_url']);
     $config->set('allow_connection_override', $values['allow_connection_override']);
     $config->set('website_id', $values['website_id']);
@@ -475,6 +475,23 @@ TXT;
     $config->set('spatial_systems', $systems);
     $config->save();
     $this->messenger()->addMessage($this->t('The Indicia configuration settings have been saved.'));
+  }
+
+  /**
+   * Ensure base URL does not have index.php but does have trailing slash.
+   *
+   * @param string $url
+   *   The URL to tidy.
+   *
+   * @return string
+   *   The tidied URL.
+   */
+
+  private function tidyBaseUrl($url): string {
+    $baseUrl = trim($url);
+    $baseUrl = preg_replace('#/index\.php/?$#i', '/', $baseUrl);
+    $baseUrl = rtrim($baseUrl, '/') . '/';
+    return $baseUrl;
   }
 
   /**
@@ -562,7 +579,7 @@ TXT;
       'list' => [],
       'other' => [],
     ];
-    $var = explode(',', $config->get('spatial_systems'));
+    $var = explode(',', $config->get('spatial_systems') ?? '');
     foreach ($var as $sys) {
       // Check if this is one on the list, or should go in other.
       if (isset($systems[$sys])) {
