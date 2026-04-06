@@ -66,7 +66,10 @@ function iform_licences_form_alter(&$form, FormStateInterface $form_state, $form
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
     $licences = helper_base::get_population_data([
       'table' => 'licence',
-      'extraParams' => $readAuth,
+      'extraParams' => $readAuth + [
+        'orderby' => 'permissiveness_sort_order, title',
+        'sortdir' => 'DESC,ASC',
+      ],
       'cachePerUser' => FALSE,
     ]);
     $licencesMode = $config->get('licences_mode');
