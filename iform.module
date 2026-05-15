@@ -871,6 +871,7 @@ function iform_build_node_specific_libraries(&$libraries) {
   $nodes = $node_storage->loadMultiple($nids);
   $helperPath = realpath(iform_client_helpers_path());
   $filePath = hostsite_get_public_file_path();
+  $publicFileSystemPath = \Drupal::service('file_system')->realpath('public://');
   foreach ($nodes as $node) {
     $nid = $node->id();
     $lib = "node_$nid";
@@ -887,7 +888,7 @@ function iform_build_node_specific_libraries(&$libraries) {
       $libraries[$lib]['css']['base']["client_helpers/prebuilt_forms/css/$form.css"] = [];
     }
     // Node specific CSS
-    if (file_exists("$filePath/indicia/css/node.$nid.css")) {
+    if ($publicFileSystemPath && file_exists("$publicFileSystemPath/indicia/css/node.$nid.css")) {
       $libraries[$lib]['css']['base']["/$filePath/indicia/css/node.$nid.css"] = [];
     }
     if (file_exists("$helperPath/prebuilt_forms/css/node.$nid.css")) {
@@ -918,7 +919,7 @@ function iform_build_node_specific_libraries(&$libraries) {
       $libraries[$lib]['js']["client_helpers/prebuilt_forms/js/$form.js"] = [];
     }
     // Node specific JS
-    if (file_exists("$filePath/indicia/js/node.$nid.js")) {
+    if ($publicFileSystemPath && file_exists("$publicFileSystemPath/indicia/js/node.$nid.js")) {
       $libraries[$lib]['js']["/$filePath/indicia/js/node.$nid.js"] = [];
     }
     if (file_exists("$helperPath/prebuilt_forms/js/node.$nid.js")) {
@@ -1072,12 +1073,19 @@ function iform_load_language_files($iform, $nid) {
   else {
     $languageId = \Drupal::service('language.default')->get()->getId();
   }
-  $moduleLangFilePath = iform_client_helpers_path() . "prebuilt_forms/lang/";
-  $filepath = PrivateStream::basePath();
-  if (!$filepath) {
-    $filepath = PublicStream::basePath();
+  $fileSystem = \Drupal::service('file_system');
+  $moduleLangPath = iform_client_helpers_path() . 'prebuilt_forms/lang/';
+  $moduleLangFilePath = realpath($moduleLangPath);
+  if ($moduleLangFilePath === FALSE) {
+    // Ensure we use an absolute path even if realpath cannot resolve yet.
+    $moduleLangFilePath = \Drupal::root() . '/' . ltrim($moduleLangPath, '/');
   }
-  $filesLangFilePath = "$filepath/indicia/lang/";
+  $moduleLangFilePath = rtrim($moduleLangFilePath, '/') . '/';
+  $filepath = $fileSystem->realpath('private://');
+  if (!$filepath) {
+    $filepath = $fileSystem->realpath('public://');
+  }
+  $filesLangFilePath = $filepath ? rtrim($filepath, '/') . '/indicia/lang/' : NULL;
   $formLangFileName = $iform . '.' . $languageId . '.php';
   $nodeLangFileName = 'node.' . $nid . '.' . $languageId . '.php';
   $formFallbackFileName = $iform . '.en.php';
@@ -1086,7 +1094,8 @@ function iform_load_language_files($iform, $nid) {
   // Look for files provided by iform_custom_forms module.
   $langFiles = [];
   if (\Drupal::moduleHandler()->moduleExists('iform_custom_forms')) {
-    $iformCustomFormsPath = \Drupal::service('extension.list.module')->getPath('iform_custom_forms');
+    $iformCustomFormsPath = \Drupal::service('extension.path.resolver')->getPath('module', 'iform_custom_forms');
+    $iformCustomFormsPath = \Drupal::root() . '/' . ltrim($iformCustomFormsPath, '/');
     $iformCustomFormsList = \Drupal::service('iform_custom_forms.list');
     $customLangFiles = $iformCustomFormsList->getCustomisations()['lang'];
     if (array_key_exists($nodeLangFileName, $customLangFiles)) {
@@ -1104,24 +1113,27 @@ function iform_load_language_files($iform, $nid) {
   }
 
   // Define a priority ordered list of file names that could contain the custom terms list.
-  $langFiles = array_merge($langFiles, [
-    $filesLangFilePath . $nodeLangFileName,
-    $filesLangFilePath . $formLangFileName,
-    $filesLangFilePath . $nodeFallbackFileName,
-    $filesLangFilePath . $formFallbackFileName,
-    $filesLangFilePath . 'default.' . $languageId . '.php',
-    $moduleLangFilePath . $nodeLangFileName,
-    $moduleLangFilePath . $formLangFileName,
-    $moduleLangFilePath . $nodeFallbackFileName,
-    $moduleLangFilePath . $formFallbackFileName
-  ]);
+  $priorityLangFiles = [];
+  if ($filesLangFilePath) {
+    $priorityLangFiles[] = $filesLangFilePath . $nodeLangFileName;
+    $priorityLangFiles[] = $filesLangFilePath . $formLangFileName;
+    $priorityLangFiles[] = $filesLangFilePath . $nodeFallbackFileName;
+    $priorityLangFiles[] = $filesLangFilePath . $formFallbackFileName;
+    $priorityLangFiles[] = $filesLangFilePath . 'default.' . $languageId . '.php';
+  }
+  $priorityLangFiles[] = $moduleLangFilePath . $nodeLangFileName;
+  $priorityLangFiles[] = $moduleLangFilePath . $formLangFileName;
+  $priorityLangFiles[] = $moduleLangFilePath . $nodeFallbackFileName;
+  $priorityLangFiles[] = $moduleLangFilePath . $formFallbackFileName;
+  $langFiles = array_merge($langFiles, $priorityLangFiles);
 
   $custom_terms = []; // this is an array of key value pairs
   $custom_term_overrides = []; // this is an array with each item a subarray of key value pairs.
   // start at the highest priority possible language file name and loop through until we find one that defines the set of custom terms.
   foreach ($langFiles as $langFile) {
-    if (file_exists($langFile)) // Found a file to include. It might define custom_terms, or might define an entry in the custom_term_overrides array
-    {
+    if (file_exists($langFile)) {
+      // Found a file to include. It might define custom_terms, or might define
+      // an entry in the custom_term_overrides array.
       require $langFile;
     }
     // finish when we have loaded an array of custom terms.
