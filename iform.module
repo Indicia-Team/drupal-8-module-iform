@@ -872,12 +872,24 @@ function iform_build_node_specific_libraries(&$libraries) {
   $helperPath = realpath(iform_client_helpers_path());
   $filePath = hostsite_get_public_file_path();
   $publicFileSystemPath = \Drupal::service('file_system')->realpath('public://');
+  if ($publicFileSystemPath && file_exists("$publicFileSystemPath/indicia/VERSION.txt")) {
+    $version = file_get_contents("$publicFileSystemPath/indicia/VERSION.txt");
+    // Validate the version string to ensure it is a valid semantic version.
+    if (!preg_match('/^\d+\.\d+\.\d+$/', $version)) {
+      $version = 'VERSION';
+      \Drupal::logger('iform')->warning("Version file found at $publicFileSystemPath/indicia/VERSION.txt, but the version string '$version' is not a valid semantic version. Using VERSION as the version string.");
+    }
+  }
+  else {
+    $version = 'VERSION';
+  }
+
   foreach ($nodes as $node) {
     $nid = $node->id();
     $lib = "node_$nid";
     $form = $node->field_iform->value;
     $libraries[$lib] = [
-      'version' => 'VERSION',
+      'version' => $version,
       'js' => [],
       'css' => [
         'base' => []
