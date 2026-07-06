@@ -857,6 +857,35 @@ function iform_build_client_helper_libraries(&$libraries) {
 }
 
 /**
+ * Find the version number to use for node-specific libraries.
+ *
+ * Returns VERSION (use the Drupal version number) unless
+ * files/indicia/VERSION.txt found which contains a semantic verion number.
+ *
+ * @return string
+ *   Version string.
+ */
+function iform_get_node_specific_library_version() {
+  $publicFileSystemPath = \Drupal::service('file_system')->realpath('public://');
+  if ($publicFileSystemPath && file_exists("$publicFileSystemPath/indicia/VERSION.txt")) {
+    $version = file_get_contents("$publicFileSystemPath/indicia/VERSION.txt");
+    if (!$version) {
+      $version = 'VERSION';
+      \Drupal::logger('iform')->warning("Version file found at $publicFileSystemPath/indicia/VERSION.txt, but could not be read. Using VERSION as the version string.");
+    }
+    // Validate the version string to ensure it is a valid semantic version.
+    if (!preg_match('/^\d+\.\d+\.\d+$/', $version)) {
+      $version = 'VERSION';
+      \Drupal::logger('iform')->warning("Version file found at $publicFileSystemPath/indicia/VERSION.txt, but the version string '$version' is not a valid semantic version. Using VERSION as the version string.");
+    }
+  }
+  else {
+    $version = 'VERSION';
+  }
+  return $version;
+}
+
+/**
  * Creates the asset libraries for Drupal which provide the JS and CSS files specific
  * to each node.
  * @param $libraries Array of library definitions to which the required libraries will
@@ -872,18 +901,7 @@ function iform_build_node_specific_libraries(&$libraries) {
   $helperPath = realpath(iform_client_helpers_path());
   $filePath = hostsite_get_public_file_path();
   $publicFileSystemPath = \Drupal::service('file_system')->realpath('public://');
-  if ($publicFileSystemPath && file_exists("$publicFileSystemPath/indicia/VERSION.txt")) {
-    $version = file_get_contents("$publicFileSystemPath/indicia/VERSION.txt");
-    // Validate the version string to ensure it is a valid semantic version.
-    if (!preg_match('/^\d+\.\d+\.\d+$/', $version)) {
-      $version = 'VERSION';
-      \Drupal::logger('iform')->warning("Version file found at $publicFileSystemPath/indicia/VERSION.txt, but the version string '$version' is not a valid semantic version. Using VERSION as the version string.");
-    }
-  }
-  else {
-    $version = 'VERSION';
-  }
-
+  $version = iform_get_node_specific_library_version();
   foreach ($nodes as $node) {
     $nid = $node->id();
     $lib = "node_$nid";
