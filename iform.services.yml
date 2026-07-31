@@ -16,3 +16,8 @@ services:
       - { name: cache.bin }
     factory: ['@cache_factory', 'get']
     arguments: [iform]
+  iform.maintenance_mode_subscriber:
+    class: Drupal\iform\EventSubscriber\MaintenanceModeSubscriber
+    arguments: ['@maintenance_mode']
+    tags:
+    - { name: event_subscriber }
