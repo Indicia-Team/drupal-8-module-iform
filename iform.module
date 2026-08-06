@@ -242,7 +242,7 @@ function iform_form_node_form_alter(&$form, FormStateInterface $form_state, $for
         '#suffix' => '</div>',
         '#weight' => 36,
       ];
-      form_helper::enable_validation('node-form');
+      form_helper::enableValidation('node-form');
     }
     else {
       $form['form-params'] = [
