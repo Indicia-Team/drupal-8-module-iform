@@ -2,7 +2,7 @@ name: Indicia Licences
 type: module
 description: A module that allows user selection of a licence to apply to their records.
 core_version_requirement: ^10 || ^11
-version: "9.11.0"
+version: "9.26.0"
 package: "Indicia"
 dependencies:
   - iform

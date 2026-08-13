@@ -242,7 +242,7 @@ function iform_form_node_form_alter(&$form, FormStateInterface $form_state, $for
         '#suffix' => '</div>',
         '#weight' => 36,
       ];
-      form_helper::enable_validation('node-form');
+      form_helper::enableValidation('node-form');
     }
     else {
       $form['form-params'] = [
@@ -497,7 +497,18 @@ function iform_node_view(array &$build, EntityInterface $entity, EntityViewDispl
       global $indicia_theme_path;
       $indicia_theme_path = iform_media_folder_path() . 'themes/';
       $connection = iform_get_connection_details($entity);
-      $readAuth = form_helper::get_read_auth($connection['website_id'], $connection['password']);
+      try {
+        $readAuth = form_helper::get_read_auth($connection['website_id'], $connection['password']);
+      }
+      catch (Exception $e) {
+        \Drupal::logger('iform')->error('Error getting read auth tokens: ' . $e->getMessage());
+        // We are only handling service unavailable exceptions at this point.
+        if ($e->getCode() === 503) {
+          iform_handle_warehouse_503($build, $e);
+          return;
+        }
+        throw $e;
+      }
       $args['base_url'] = $connection['base_url'];
       $args['website_id'] = $connection['website_id'];
       $args['password'] = $connection['password'];
@@ -588,6 +599,10 @@ function iform_node_view(array &$build, EntityInterface $entity, EntityViewDispl
         \Drupal::logger('iform')->notice('Error occurred loading form');
         \Drupal::logger('iform')->notice($e->getMessage());
         \Drupal::logger('iform')->notice($e->getTraceAsString());
+        if ($e->getCode() === 503) {
+          iform_handle_warehouse_503($build, $e);
+          return;
+        }
         $r .= $e->getMessage();
       }
       ob_end_clean();
@@ -609,6 +624,27 @@ function iform_node_view(array &$build, EntityInterface $entity, EntityViewDispl
       ];
     }
   }
+}
+
+/**
+ * Handle warehouse Service Unavailable responses.
+ *
+ * @param array $build
+ *   Drupal render array to add the error message to.
+ * @param Exception $e
+ *   Exception thrown by the warehouse.
+ */
+function iform_handle_warehouse_503(array &$build, Exception $e) {
+  global $indicia_templates;
+  $build['iform'] = [
+    '#markup' => str_replace('{message}', $e->getMessage(), $indicia_templates['warningBox']),
+    // Don't cache the page for long as the warehouse might come back online
+    // later.
+    '#cache' => [
+      'max-age' => 60,
+    ],
+  ];
+  ob_end_clean();
 }
 
 /**
