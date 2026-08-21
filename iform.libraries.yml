@@ -1,6 +1,5 @@
 # core iform libraries
 base:
-  version: VERSION
   js:
     media/js/indicia.functions.js: {}
   css:
@@ -12,24 +11,20 @@ base:
     - jquery_ui_tabs/tabs
     - jquery_ui_draggable/draggable
 admin:
-  version: VERSION
   js:
     iform.admin.js: {}
   dependencies:
     - iform/base
     - iform/indiciaMapPanel
 theme.generic:
-  version: VERSION
   css:
     component:
       media/css/theme-generic.css: {}
 theme.bootstrap-3:
-  version: VERSION
   css:
     component:
       media/css/theme-bootstrap-3.css: {}
 theme.bootstrap-5:
-  version: VERSION
   css:
     component:
       media/css/theme-bootstrap-5.css: {}
