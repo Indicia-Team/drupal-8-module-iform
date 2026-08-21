@@ -851,23 +851,32 @@ function iform_library_info_build() {
 }
 
 /**
- * Creates the asset libraries for Drupal which provide the JS and CSS files for
- * client helper resource.
- * @param $libraries Array of library definitions to which the required libraries will
- * be appended.
+ * Create Drupal libraries for client helper code.
+ *
+ * Creates the asset libraries for Drupal which provide the JS and CSS files
+ * for client helper resources.
+ *
+ * @param array $libraries
+ *   Array of library definitions to which the required libraries will be
+ *   appended.
  */
-function iform_build_client_helper_libraries(&$libraries) {
-  iform_load_helpers(array('data_entry_helper'));
+function iform_build_client_helper_libraries(array &$libraries) {
+  iform_load_helpers(['data_entry_helper']);
   global $_iform_base_resources;
   $resources = data_entry_helper::get_resources();
-  $fullPaths = array(data_entry_helper::$css_path, data_entry_helper::$js_path, 'http://');
-  $shortPaths = array('media/css/', 'media/js/', '//');
+  $fullPaths = [data_entry_helper::$css_path, data_entry_helper::$js_path, 'http://'];
+  $shortPaths = ['media/css/', 'media/js/', '//'];
+  // Get the module version.
+  $info = \Drupal::service('extension.list.module')->getExtensionInfo('iform');
+  $version = $info['version'] ?? NULL;
   foreach ($resources as $name => $def) {
-    // some resources are always included, forcing the Drupal version of jQuery.
-    if (in_array($name, $_iform_base_resources))
+    // Some resources are always included, forcing the Drupal version of
+    // jQuery.
+    if (in_array($name, $_iform_base_resources)) {
       continue;
+    }
     $libraries[$name] = [
-      'version' => 'VERSION'
+      'version' => $version,
     ];
     if (!empty($def['javascript'])) {
       $libraries[$name]['js'] = [];
@@ -893,41 +902,16 @@ function iform_build_client_helper_libraries(&$libraries) {
 }
 
 /**
- * Find the version number to use for node-specific libraries.
+ * Node specific asset library build.
  *
- * Returns VERSION (use the Drupal version number) unless
- * files/indicia/VERSION.txt found which contains a semantic verion number.
+ * Creates the asset libraries for Drupal which provide the JS and CSS files
+ * specific to each node.
  *
- * @return string
- *   Version string.
+ * @param array $libraries
+ *   Array of library definitions to which the required libraries will be
+ *   appended.
  */
-function iform_get_node_specific_library_version() {
-  $publicFileSystemPath = \Drupal::service('file_system')->realpath('public://');
-  if ($publicFileSystemPath && file_exists("$publicFileSystemPath/indicia/VERSION.txt")) {
-    $version = file_get_contents("$publicFileSystemPath/indicia/VERSION.txt");
-    if (!$version) {
-      $version = 'VERSION';
-      \Drupal::logger('iform')->warning("Version file found at $publicFileSystemPath/indicia/VERSION.txt, but could not be read. Using VERSION as the version string.");
-    }
-    // Validate the version string to ensure it is a valid semantic version.
-    if (!preg_match('/^\d+\.\d+\.\d+$/', $version)) {
-      $version = 'VERSION';
-      \Drupal::logger('iform')->warning("Version file found at $publicFileSystemPath/indicia/VERSION.txt, but the version string '$version' is not a valid semantic version. Using VERSION as the version string.");
-    }
-  }
-  else {
-    $version = 'VERSION';
-  }
-  return $version;
-}
-
-/**
- * Creates the asset libraries for Drupal which provide the JS and CSS files specific
- * to each node.
- * @param $libraries Array of library definitions to which the required libraries will
- * be appended.
- */
-function iform_build_node_specific_libraries(&$libraries) {
+function iform_build_node_specific_libraries(array &$libraries) {
   $nids = \Drupal::entityQuery('node')
     ->condition('type', 'iform_page')
     ->accessCheck(FALSE)
@@ -937,23 +921,22 @@ function iform_build_node_specific_libraries(&$libraries) {
   $helperPath = realpath(iform_client_helpers_path());
   $filePath = hostsite_get_public_file_path();
   $publicFileSystemPath = \Drupal::service('file_system')->realpath('public://');
-  $version = iform_get_node_specific_library_version();
   foreach ($nodes as $node) {
     $nid = $node->id();
     $lib = "node_$nid";
     $form = $node->field_iform->value;
     $libraries[$lib] = [
-      'version' => $version,
       'js' => [],
       'css' => [
-        'base' => []
-      ]
+        'base' => [],
+        'component' => [],
+      ],
     ];
-    // Prebuilt form specific CSS
+    // Prebuilt form specific CSS.
     if (file_exists("$helperPath/prebuilt_forms/css/$form.css")) {
       $libraries[$lib]['css']['base']["client_helpers/prebuilt_forms/css/$form.css"] = [];
     }
-    // Node specific CSS
+    // Node specific CSS.
     if ($publicFileSystemPath && file_exists("$publicFileSystemPath/indicia/css/node.$nid.css")) {
       $libraries[$lib]['css']['base']["/$filePath/indicia/css/node.$nid.css"] = [];
     }
@@ -965,48 +948,44 @@ function iform_build_node_specific_libraries(&$libraries) {
       // @todo Theme path replacement
       // @todo Also need to implement way to get to public::indicia/css folder.
       foreach ($cssFiles as $file) {
-        $file = str_replace([
-            '{mediacss}',
-            //'{theme}',
-            '{prebuiltformcss}',
-          ],
-          [
-            'media/css',
-            //path_to_theme(),
-            'client_helpers/prebuilt_forms/css',
-          ],
+        $file = str_replace(
+          ['{mediacss}', '{prebuiltformcss}'],
+          ['media/css', 'client_helpers/prebuilt_forms/css'],
           $file
         );
         $libraries[$lib]['css']['component'][$file] = [];
       }
     }
-    // Prebuilt form specific JS
+    // Prebuilt form specific JS.
     if (file_exists("$helperPath/prebuilt_forms/js/$form.js")) {
       $libraries[$lib]['js']["client_helpers/prebuilt_forms/js/$form.js"] = [];
     }
-    // Node specific JS
+    // Node specific JS.
     if ($publicFileSystemPath && file_exists("$publicFileSystemPath/indicia/js/node.$nid.js")) {
       $libraries[$lib]['js']["/$filePath/indicia/js/node.$nid.js"] = [];
     }
     if (file_exists("$helperPath/prebuilt_forms/js/node.$nid.js")) {
       $libraries[$lib]['js']["client_helpers/prebuilt_forms/js/node.$nid.js"] = [];
     }
-    // Extension classes can be referred to in the form structure parameter of any page
-    // and can contain JS or CSS code in addition to the PHP class.
+    // Extension classes can be referred to in the form structure parameter of
+    // any page and can contain JS or CSS code in addition to the PHP class.
     if (!empty($node->params['structure'])) {
       if (preg_match_all('/\[[a-z_]+\.[a-z_]+\]/', $node->params['structure'], $extensions)) {
         foreach ($extensions[0] as $extension) {
           preg_match('/\[(?P<class>[a-z_]+)/', $extension, $matches);
-          if (file_exists("$helperPath/prebuilt_forms/extensions/$matches[class].js"))
+          if (file_exists("$helperPath/prebuilt_forms/extensions/$matches[class].js")) {
             $libraries[$lib]['js']["client_helpers/prebuilt_forms/extensions/$matches[class].js"] = [];
+          }
           if (file_exists("$helperPath/prebuilt_forms/extensions/$matches[class].css")) {
             $libraries[$lib]['css']['base']["client_helpers/prebuilt_forms/extensions/$matches[class].css"] = [];
           }
         }
       }
     }
-    // Skip any unnecessary empty libraries
-    if (empty($libraries[$lib]['css']['base']) && empty($libraries[$lib]['js'])) {
+    // Skip any unnecessary empty libraries.
+    if (empty($libraries[$lib]['css']['base'])
+        && empty($libraries[$lib]['css']['component'])
+        && empty($libraries[$lib]['js'])) {
       unset($libraries[$lib]);
     }
   }
