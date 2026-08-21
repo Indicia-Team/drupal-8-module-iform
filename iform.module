@@ -851,21 +851,27 @@ function iform_library_info_build() {
 }
 
 /**
- * Creates the asset libraries for Drupal which provide the JS and CSS files for
- * client helper resource.
- * @param $libraries Array of library definitions to which the required libraries will
- * be appended.
+ * Create Drupal libraries for client helper code.
+ *
+ * Creates the asset libraries for Drupal which provide the JS and CSS files
+ * for client helper resources.
+ *
+ * @param array $libraries
+ *   Array of library definitions to which the required libraries will be
+ *   appended.
  */
-function iform_build_client_helper_libraries(&$libraries) {
-  iform_load_helpers(array('data_entry_helper'));
+function iform_build_client_helper_libraries(array &$libraries) {
+  iform_load_helpers(['data_entry_helper']);
   global $_iform_base_resources;
   $resources = data_entry_helper::get_resources();
-  $fullPaths = array(data_entry_helper::$css_path, data_entry_helper::$js_path, 'http://');
-  $shortPaths = array('media/css/', 'media/js/', '//');
+  $fullPaths = [data_entry_helper::$css_path, data_entry_helper::$js_path, 'http://'];
+  $shortPaths = ['media/css/', 'media/js/', '//'];
   foreach ($resources as $name => $def) {
-    // some resources are always included, forcing the Drupal version of jQuery.
-    if (in_array($name, $_iform_base_resources))
+    // Some resources are always included, forcing the Drupal version of
+    // jQuery.
+    if (in_array($name, $_iform_base_resources)) {
       continue;
+    }
     $libraries[$name] = [
       'version' => 'VERSION'
     ];
