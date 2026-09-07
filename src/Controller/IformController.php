@@ -7,6 +7,7 @@ use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Render\Markup;
 use Drupal\node\Entity\Node;
+use IForm\WarehouseRequestException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -144,6 +145,14 @@ class IformController extends ControllerBase {
     }
     catch (\ElasticSearchProxyAbort $e) {
       return new JsonResponse(['msg' => $e->getMessage()], $e->getCode());
+    }
+    catch (WarehouseRequestException $e) {
+      $body = json_decode($e->responseBody, TRUE);
+
+      return new JsonResponse(
+        is_array($body) ? $body : ['msg' => $e->getMessage()],
+        $e->httpStatus ?: 500
+      );
     }
   }
 
