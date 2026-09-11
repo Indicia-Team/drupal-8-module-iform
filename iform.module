@@ -16,6 +16,7 @@ use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Markup;
 use IForm\ValidationException;
+use IForm\WarehouseRequestException;
 
 require_once 'iform.hostsite_api.inc';
 
@@ -62,6 +63,7 @@ function iform_preprocess_page_title(&$variables) {
     $variables['title'] = $_iform_page_title;
   }
 }
+
 /**
  * Implements hook_preprocess_node().
  *
@@ -758,7 +760,20 @@ function iform_handle_posted_form($node, array $args, &$response) {
         $r .= data_entry_helper::dump_errors(['errors' => $errors]);
       }
       else {
-        $response = data_entry_helper::forward_post_to('save', $s);
+        try {
+          $response = data_entry_helper::forward_post_to('save', $s);
+        }
+        catch (WarehouseRequestException $e) {
+          $warehouseResponse = json_decode($e->responseBody, TRUE);
+          // Handle validation responses.
+          if (in_array($e->httpStatus, [400, 422], TRUE)
+              && is_array($warehouseResponse)
+              && isset($warehouseResponse['errors'])) {
+            $r .= data_entry_helper::dump_errors($warehouseResponse, TRUE);
+            return $r;
+          }
+          throw $e;
+        }
         // Clear the Drupal cache tag so user record based reports refresh.
         Cache::invalidateTags(['user_records:' . hostsite_get_user_field('indicia_user_id')]);
         if (is_array($response) && array_key_exists('success', $response)) {
