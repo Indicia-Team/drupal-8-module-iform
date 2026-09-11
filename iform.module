@@ -1052,13 +1052,15 @@ function iform_page_attachments(array &$attachments) {
     $baseTheme = $baseTheme ? $baseTheme : 'generic';
     $attachments['#attached']['library'][] = "iform/theme.$baseTheme";
     foreach (helper_base::$required_resources as $resource) {
-      // exclude resources covered by iform/base
+      // Exclude resources covered by iform/base.
       if (!in_array($resource, $_iform_base_resources)) {
         $attachments['#attached']['library'][] = "iform/$resource";
       }
     }
+    $routeName = \Drupal::routeMatch()->getRouteName();
     $node = \Drupal::request()->attributes->get('node');
-    if ($node) {
+    // If on the View tab of a node.
+    if ($node && $routeName === 'entity.node.canonical') {
       $nid = $node->id();
       $attachments['#attached']['library'][] = "iform/node_$nid";
     }
