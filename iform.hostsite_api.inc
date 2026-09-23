@@ -903,3 +903,18 @@ function hostsite_cache_expire_entry($key) {
 function hostsite_cache_clear_tag($tag) {
   Cache::invalidateTags([$tag]);
 }
+
+/**
+ * Log a message into the host CMS.
+ *
+ * @param string $severity
+ *   Message severity. Options are debug, info, notice, warning, error,
+ *   critical, alert, emergency.
+ * @param string $message
+ *   The log message.
+ * @param array $placeholders
+ *   An array of placeholders to replace in the message.
+ */
+function hostsite_log($severity, $message, array $placeholders = []) {
+  \Drupal::logger('iform')->log($severity, $message, $placeholders);
+}
