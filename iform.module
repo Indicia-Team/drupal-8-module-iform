@@ -878,7 +878,7 @@ function iform_library_info_build() {
 function iform_build_client_helper_libraries(array &$libraries) {
   iform_load_helpers(['data_entry_helper']);
   global $_iform_base_resources;
-  $resources = data_entry_helper::get_resources();
+  $resources = data_entry_helper::getResources();
   $fullPaths = [data_entry_helper::$css_path, data_entry_helper::$js_path, 'http://'];
   $shortPaths = ['media/css/', 'media/js/', '//'];
   // Get the module version.
@@ -908,9 +908,7 @@ function iform_build_client_helper_libraries(array &$libraries) {
     $libraries[$name]['dependencies'] = ['iform/base'];
     if (!empty($def['deps'])) {
       foreach ($def['deps'] as $dependency) {
-        if (!in_array($dependency, $_iform_base_resources)) {
-          $libraries[$name]['dependencies'][] = "iform/$dependency";
-        }
+        $libraries[$name]['dependencies'][] = "iform/$dependency";
       }
     }
   }
