@@ -505,8 +505,8 @@ function iform_node_view(array &$build, EntityInterface $entity, EntityViewDispl
       catch (Exception $e) {
         \Drupal::logger('iform')->error('Error getting read auth tokens: ' . $e->getMessage());
         // We are only handling service unavailable exceptions at this point.
-        if ($e->getCode() === 503) {
-          iform_handle_warehouse_503($build, $e);
+        if ($e instanceof WarehouseRequestException && $e->isUnavailable()) {
+          iform_handle_warehouse_unavailable($build, $e);
           return;
         }
         throw $e;
@@ -601,8 +601,8 @@ function iform_node_view(array &$build, EntityInterface $entity, EntityViewDispl
         \Drupal::logger('iform')->notice('Error occurred loading form');
         \Drupal::logger('iform')->notice($e->getMessage());
         \Drupal::logger('iform')->notice($e->getTraceAsString());
-        if ($e->getCode() === 503) {
-          iform_handle_warehouse_503($build, $e);
+        if ($e instanceof WarehouseRequestException && $e->isUnavailable()) {
+          iform_handle_warehouse_unavailable($build, $e);
           return;
         }
         $r .= $e->getMessage();
@@ -636,7 +636,7 @@ function iform_node_view(array &$build, EntityInterface $entity, EntityViewDispl
  * @param Exception $e
  *   Exception thrown by the warehouse.
  */
-function iform_handle_warehouse_503(array &$build, Exception $e) {
+function iform_handle_warehouse_unavailable(array &$build, Exception $e) {
   global $indicia_templates;
   $build['iform'] = [
     '#markup' => str_replace('{message}', $e->getMessage(), $indicia_templates['warningBox']),
