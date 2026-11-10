@@ -1,21 +1,35 @@
 services:
-    # The MySQL database container for Drupal
-    # Don't use version 8 as no stable Debian client for it yet.
     mysql:
-        image: mysql:5
+        image: mariadb:11.8
         environment:
-            MYSQL_ROOT_PASSWORD: password
-            MYSQL_DATABASE: drupal
-            MYSQL_USER: user
-            MYSQL_PASSWORD: password
-        volumes: 
-            # Persist the database content in a volume.
+            MARIADB_DATABASE: drupal
+            MARIADB_USER: user
+            MARIADB_PASSWORD: password
+            MARIADB_ROOT_PASSWORD: password
+        volumes:
             - drupal_mysql:/var/lib/mysql
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "healthcheck.sh",
+                    "--connect",
+                    "--innodb_initialized"
+                ]
+            interval: 5s
+            timeout: 5s
+            retries: 20
 
     # The Drupal container.
-    # Accessible on http://localhost:8090
+    # Accessible on http://localhost:8091
     drupal:
-        build: ./drupal
+        build:
+            context: ./drupal
+            args:
+                UID: ${HOST_UID:?HOST_UID is required}
+                GID: ${HOST_GID:?HOST_GID is required}
+                USER: ${HOST_USER:?HOST_USER is required}
+                GROUP: ${HOST_GROUP:?HOST_GROUP is required}
         volumes:
             # Persist the Drupal config in volumes
             - drupal_modules:/var/www/drupal/web/modules
@@ -25,7 +39,10 @@ services:
             # Mount the code of this project in the docker container
             - ..:/var/www/drupal/web/modules/drupal-8-module-iform
         ports: 
-            - "8090:80"
+            - "8091:80"
+        depends_on:
+            mysql:
+                condition: service_healthy
 
 volumes:
     drupal_mysql:
