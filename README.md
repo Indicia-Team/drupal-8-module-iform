@@ -66,13 +66,17 @@ For information on step debugging, see the
 [configuration instructions](https://ddev.readthedocs.io/en/latest/users/debugging-profiling/step-debugging/).
 
 ## Connecting to a development warehouse
+If you have used Docker to create a warehouse and Drupal + iForm local development enviroment, you can connect them as follows,
 
-If you have used Docker to run up a local warehouse then you can configure
-things to connect it for iForm development.
+First create a network bridge, and connect both the warehouse and Drupal containers to this bridge,
+```
+docker network create drupal-bridge
+docker network connect drupal-bridge indicia-warehouse-1
+docker network connect drupal-bridge docker-drupal-1
+```
 
-First add the Drupal web server to the warehouse network with
-`docker network connect {indicia_network_name}{drupal_container_name}` e.g.
-`docker network connect indicia_default ddev-iform-web`
+Check to see both containers are now connected to this network bridge,
+`docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Networks}}'`
 
 In Admin > Configuration > Indicia Settings, set
 the Warehouse URL to `http://warehouse_container_name:warehouse_port/` e.g.
@@ -83,14 +87,7 @@ You will get a curl error about SSL if you are using https to browse the Drupal 
 browsing the Drupal site with http.
 
 You will get JavaScript errors when your browser tries to make Ajax calls to the
-warehouse. A work around to this is to add the warehouse to your /etc/hosts
-file. To get the IP address of the warehouse run
+warehouse. A work around is to map http://indicia-warehouse-1 to resolve to the same address as http://localhost
 
-```
-docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' warehouse_container_name`
-```
-
-Now add a line to /etc/hosts like `warehouse_ip warehouse_container_name` e.g.
-`172.19.0.8 indicia-warehouse-1`
-
-
+Add a line to /etc/hosts
+`127.0.0.1 indicia-warehouse-1`
